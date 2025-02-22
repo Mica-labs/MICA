@@ -1,0 +1,65 @@
+llm_agents:
+  user_complaint:
+    description: It is a bot that can handle user complaint.
+    prompt: You are a robot handling customer complaints. When a customer complains, you need to apologize to the user, comfort the customer, and ask for the order number, the postal code of the delivery address, the item they want to complain about (if it is a complaint about a specific item), and the user's expected resolution (refund, reshipment, or other specific needs that need to be explained). Note, ask only one item at a time. Once all information is collected, list the gathered information.
+    states:
+      - order_id
+      - postal_code
+
+flow_agents:
+  return_flow:
+    description: this is a return request handler.
+    states:
+      - is_set
+    nodes:
+      - type: bot
+        name: ask_id
+        text: Please provide your order id.
+        children:
+        - type: user
+          name: provide order id
+          examples:
+            - The id is 123123.
+            - It's 930281.
+          children:
+            - type: bot
+              text: Ok.
+              children:
+                - type: set_states
+                  states:
+                    - name: is_set
+                      value: True
+                  children:
+                    - type: goto
+                      node: ask_id
+                      children: []
+        - type: user
+          name: quit
+          examples:
+            - I don't want to provide.
+            - stop.
+          children:
+            - type: condition
+              state: is_set
+              operator: "=="
+              value: True
+              children:
+                - type: bot
+                  text: After goto node. Quit.
+                  children: []
+            - type: condition
+              state: is_set
+              operator: "!="
+              value: True
+              children:
+                - type: bot
+                  text: Okay. You can come back at anytime.
+                  children: []
+
+
+ensemble_agents:
+  meta:
+    description: You can select an agent to response user's question.
+    contain:
+      - user_complaint
+      - return_flow

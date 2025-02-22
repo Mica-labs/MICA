@@ -1,0 +1,4 @@
+DEFAULT_MODEL_ENGINE = "openai"
+OPENAI_API_KEY = "OPENAI_API_KEY"
+
+MAIN_FLOW = "main_flow"

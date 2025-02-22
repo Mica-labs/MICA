@@ -1,0 +1,34 @@
+ensemble_agents:
+  meta:
+    description: You can select an agent to response user's question.
+    contain:
+      - Return Processing
+      - Order Status Inquiry
+      - Customer Complaint Handling
+    steps:
+      - user
+
+
+llm_agents:
+  Return Processing:
+    description: This is an agent that handles returns for a department store.
+    prompt: |
+      This is an agent that handles returns for a department store. 
+      It needs to ask the user for their order number, the items to be returned, 
+      and the reason for the return, in that order.
+  Order Status Inquiry:
+    description: This is an agent that checks order status.
+    prompt: |
+      This is an agent that checks order status. 
+      It will ask the user for the order number, and once provided, 
+      it will request the recipient’s name and shipping address postal code for verification. 
+      After verification, it will inform the user of the order’s shipping status.
+  Customer Complaint Handling:
+    description: This is an agent that processes customer complaints.
+    prompt: |
+      This is an agent that processes customer complaints. 
+      It will ask the user for details of their complaint and, if it involves any orders, 
+      it will collect the order number and item details. The agent should also apologize to the user.
+
+main:
+  call: meta

@@ -1,0 +1,18 @@
+llm_agents:
+  User Interface Agent:
+    description: Handles initial user interactions and directs them to the help center agent based on their needs.
+    prompt: |
+      You are a user interface agent that handles all interactions with the user. 
+      Call this agent for general questions and when no other agent is correct for the user query.
+
+  Help Center Agent:
+    description: Provides detailed help and support using various tools and integrated with a Qdrant VectorDB for documentation retrieval.
+    prompt: |
+      You are an OpenAI help center agent who deals with questions about OpenAI products, 
+      such as GPT models, DALL-E, Whisper, etc.
+
+ensemble_agents:
+  main:
+    contain:
+      - User Interface Agent
+      - Help Center Agent

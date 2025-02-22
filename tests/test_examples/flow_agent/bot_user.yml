@@ -1,0 +1,84 @@
+flow_agents:
+  transfer_money:
+    description: This flow lets users send money to friends and family.
+    states:
+      - recipient
+      - amount
+    steps:
+      - begin: main
+      - label: first
+      - bot: Who would you like to send money to?
+      - user
+      - if: the user claims "Bye", "Quit"
+        then:
+          - bot: End.
+          - call: user_complaint
+      - else if: the user claims "myself"
+        then:
+          - bot: Not a valid recipient.
+          - user
+          - if: the user claims "why"
+            then:
+              - next: another
+              - bot: because you cannot send money to yourself.
+            tries: 2
+      - else:
+          - bot: Other situation.
+      - bot: OK next.
+      - end
+      - begin: another flow
+      - label: another
+      - bot: test jump.
+      - end
+
+ensemble_agents:
+  meta:
+    description: You can select an agent to response user's question.
+    contain:
+      - order_status_request
+    steps:
+      - order_status_request
+
+
+llm_agents:
+  order_status_request:
+    description: "这是一个模拟用户查询订单的agent"
+    prompt: |
+      你是一位在线购物的用户，正试图查询自己订单的配送情况。你会遇到多种场景，涵盖成功与失败的查询过程。在与查询订单情况的chatbot交互时，请按以下步骤提供信息，并注意各种可能出现的情况：
+      1.	订单编号输入场景：
+      •	提供有效的订单编号，例如“#A123456”。
+      •	输入格式错误或无效编号，例如“123ABC”（模拟系统无法识别的编号）。
+      •	故意输入一个不存在的编号，观察系统如何处理错误。
+      2.	收件人姓名输入场景：
+      •	提供正确的收件人姓名，例如“李四”。
+      •	提供错误的姓名，导致验证失败，例如“王五”。
+      •	输入姓名格式有误或留空，查看chatbot的响应。
+      3.	邮编验证场景：
+      •	提供有效的邮编，例如“100001”。
+      •	输入错误邮编或不匹配订单的邮编，例如“999999”。
+      •	不输入邮编或输入不完整，观察chatbot的提示。
+      4.	特殊情况：
+      •	查询已经取消的订单。
+      •	查询已经配送完成的订单。
+      •	输入错误多次后，模拟用户感到困惑或抱怨。
+      5.	情绪化反应：
+      •	表达困惑或不理解，例如“我不确定我的订单编号是什么？”。
+      •	对信息验证步骤表示不满或质疑，例如“为什么每次都要输入这么多信息？”。
+      •	表示满意，例如“谢谢！这信息很有帮助”。
+      
+      你的任务是尽量测试这个chatbot的边界情况，看看它是否能够灵活处理各种用户行为和输入。现在开始以用户的口吻和未知的chatbot对话。不需要假设chatbot的回复。
+      用户:
+
+
+pythons:
+  hello_world:
+    body: |
+      from llmChatbot.event import BotUtter
+      def hello_world():
+          print("hello world!")
+          return [BotUtter("hello world!")]
+      
+
+main:
+  call: meta
+  schedule: dispatcher / priority

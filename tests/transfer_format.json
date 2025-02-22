@@ -1,0 +1,30 @@
+{
+  "project_name": "xxx",
+  "data": {
+    "llm_agents": {
+      "agent_name": { // key是agent的名字
+        "description": "简要描述这个agent的功能，必填",
+        "prompt": "具体的prompt，必填",
+        "states": [  // 这个agent需要填充的slot名
+          "a"
+        ],
+        "config": { // 自定义llm model参数，选填
+          "model": "GPT-4",
+          "temperature": 0.1, // float
+          "top_p": 0.1,  // float
+          "presence_penalty": 0.1,  // float
+          "frequency_penalty": 0.1,  // float
+          "max_tokens": 512  // int
+        }
+      }
+    },
+    "ensemble_agents": {  // 这个部分是固定的 每个project都需要有这个字段
+      "meta": { // 固定值
+        "description": "You can select an agent to response user's question." // default
+        "contain": [
+          "agent_name"  // 上面的所有agent名都要包含在这里
+        ]
+      }
+    }
+  }
+}

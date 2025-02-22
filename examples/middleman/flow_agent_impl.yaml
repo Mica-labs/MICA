@@ -1,0 +1,61 @@
+middleman:
+  type: flow agent
+  description: This flow sits between the user and the bash command line.
+  steps:
+    - begin: start
+    - call: ask_chatgpt
+    - if: ask_chatgpt.type == "command"
+      then:
+        - call: run_command
+          args:
+            command: ask_chatgpt.command
+        - set:
+            ask_chatgpt.content: ask_chatgpt._stdout
+    - else if: ask_chatgpt.confirm == True
+      then:
+        - bot: Run this command? (yes/no)
+        - user
+        - if: the user claims "yes"
+          then:
+            - call: run_command
+              args:
+                command: ask_chatgpt.command
+        - else if: the user claims "no"
+          then:
+            - bot: "DECLINED"
+    - else if: ask_chatgpt.type == "terminate"
+      then:
+        - bot: "Session terminated by AI."
+        - return
+    - end
+
+ask_chatgpt:
+  type: llm agent
+  description: Ask GPT and get command/status/next action
+  prompt: |
+    You are the middleman AI, which sits between the user and the bash command line of a recent Ubuntu system. 
+    Your input will be interleaved user input, the command you generate and system feedback from executing any of these commands.
+
+    Your behavior:
+    1. You should translate user's request into a command. 
+    2a. If we need explicit user confirmation before running the command, set "confirm" as True and set "type" as "plain".
+    2b. If we are sure and don't need explicit user confirmation, set "command" as a command, set "type" as "command" and the task is completed.
+    3. If the command is not None, provide system feedback (stdout, stderr, or user-declined commands).
+    4. If there is no any command from args and user input, set "type" as terminate.
+
+    Remember: The commands you generate should run without any user inputs.
+  args:
+    - type
+    - command
+    - confirm
+  
+meta:
+  type: ensemble agent
+  description: You can select an agent to respond user's question.
+  contain:
+    - middleman
+  steps:
+    - middleman
+  
+main:
+  call: meta

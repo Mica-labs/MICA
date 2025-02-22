@@ -1,0 +1,25 @@
+kb:
+  type: KBAgent
+  faq:
+    Are you a robot?: Yes, I'm your virtual assistant.
+    Thanks: Bye.
+  web:
+    - http://url
+  file: /path/to/kb/files
+
+fallback_agent:
+  type: LLMAgent
+  description: This is an agent that handles fallback responses.
+  prompt: "You can provide fallback responses based on the conversation history. At the end of each response, add a sentence: ‘You can try asking in a different way."
+  
+
+meta:
+  type: EnsembleAgent
+  description: You can select an agent to response user's question.
+  fallback: fallback_agent
+  steps:
+    - bot: Hello, I can answer your questions.
+
+main:
+  steps:
+    - call: meta

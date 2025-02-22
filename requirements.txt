@@ -1,0 +1,7 @@
+gradio==4.37.2
+langchain
+langchain-community
+pypdf
+beautifulsoup4
+tiktoken
+faiss-cpu

@@ -1,0 +1,77 @@
+project_name: test1
+account:
+  gptConfig:
+    headers:
+      Content-Type: application/json
+    server: "https://api.openai.com/v1/chat/completions"
+data:
+  flow_agents:
+    transfer_money:
+      description: This flow lets users send money to friends and family.
+      states:
+        - recipient
+        - amount
+      steps:
+        - begin: main
+        - label: xxx
+        - bot: Who would you like to send money to?
+        - user
+        - if: the user claims "I change my mind."
+          then:
+            - bot: Your transfer has been cancelled.
+            - next: feedback_process
+            - return: error, <msg>
+        - else if: the user claims "everyone"
+          then:
+            - set:
+                recipient: ALL
+        - else:
+            - set:
+                amount: 0
+        - bot: How much do you want to send?
+        - user
+        - next: confirm_process
+        - call: check_sufficient_funds
+          args:
+            recipient: recipient
+            amount: amount
+        - end
+
+        - begin: feedback_process
+        - bot: How many stars do you think for this service?
+        - user
+        - bot: Thank you for your time.
+        - end
+
+        - begin: confirm_process
+        - label: repeat
+        - bot: "Please confirm: you want to transfer {amount} to {recipient}?"
+        - user
+        - if: the user claims "No"
+          then:
+            - next: repeat
+              tries: 2
+            - bot: after repeat....
+        - end
+
+  functions:
+    check_sufficient_funds:
+      description: get user's fund
+      args:
+        - recipient
+        - amount
+      required:
+        - recipient
+        - amount
+
+
+  ensemble_agents:
+    meta:
+      description: You can select an agent to response user's question.
+      contain:
+        - transfer_money
+      steps:
+        - transfer_money
+
+  main:
+    call: meta
