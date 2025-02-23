@@ -3,9 +3,6 @@ import glob
 import json
 import os
 import sys
-import tkinter as tk
-from tkinter import filedialog
-from PyQt5.QtWidgets import QApplication, QFileDialog
 
 import gradio as gr
 import yaml
@@ -24,11 +21,6 @@ from mica.utils import logger
 def generate_random_string(length=6):
     letters = string.ascii_letters
     return ''.join(random.choice(letters) for i in range(length))
-
-
-def save_text_to_file(text):
-
-    return f"./"
 
 
 def generate_bot(bot_name, yaml_input, code=None):
@@ -55,7 +47,7 @@ def generate_bot(bot_name, yaml_input, code=None):
 def save_bot(bot_name: str, agents: str, tools: str = None):
     try:
         # Create folder if it doesn't exist
-        base_path = os.path.join("../bot_output", bot_name)
+        base_path = os.path.join("./bot_output", bot_name)
         os.makedirs(base_path, exist_ok=True)
 
         # Save agents.yml
@@ -130,25 +122,11 @@ def display_tracker_state(bot, user_id):
     return json.dumps(bot.tracker_store.retrieve(user_id).args, indent=2)
 
 
-def load_example_bot_names(file_path="../examples"):
-    # make sure the file path exists
-    if not os.path.exists(file_path):
-        logger.error(f"Path {file_path} does not exists.")
-        return
-
-    # get all the bot names (directory names)
-    directories = [d for d in os.listdir(file_path)
-                   if os.path.isdir(os.path.join(file_path, d))]
-
-    return directories or []
-
-
 if __name__ == '__main__':
-    examples = load_example_bot_names()
     with gr.Blocks(theme=gr.themes.Base()) as demo:
         with gr.Row():
             with gr.Column():
-                file_loader = gr.FileExplorer(root_dir="../examples", glob="*", label="Open")
+                file_loader = gr.FileExplorer(root_dir="./examples", glob="*", label="Open")
                 bot_name = gr.Textbox(label="Enter Bot Name", lines=1, value="Default bot")
                 yaml_input = gr.Code(value="""book_restaurant:
   type: llm agent
@@ -186,10 +164,6 @@ main:
                 with gr.Row():
                     submit_btn = gr.Button("Run")
                     save_btn = gr.Button("Save")
-                # folder_dropdown = gr.Dropdown(
-                #     choices=examples,
-                #     label="Generate from Examples"
-                # )
                 tracker = gr.Textbox(label="States", interactive=False, lines=1)
                 chatbot = gr.Chatbot(height=600)
                 msg = gr.Textbox(label="You")
@@ -201,6 +175,6 @@ main:
             save_btn.click(save_bot, [bot_name, yaml_input, code_input])
             file_loader.change(load_bot, inputs=file_loader, outputs=[bot, bot_name, yaml_input, code_input])
 
-    import uvloop  # 替代默认的 asyncio 循环，提升性能
+    import uvloop
     uvloop.install()
     demo.launch(share=False)

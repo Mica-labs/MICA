@@ -15,7 +15,7 @@ export OPENAI_API_KEY=<your key>
 ```
 Then, start the service:
 ```bash
-python demo.py
+python -m mica.demo
 ```
 You can visit `http://localhost:8760` and start to design.
 
@@ -53,10 +53,5 @@ export OPENAI_API_KEY=<your key>
 ```
 Finally, start the service:
 ```bash
-python server.py
-```
-If you want to run the service in the background, you can use the following command. All logs will be stored in server.log in the current directory.
-```bash
-nohup python -u server.py > server.log 2>&1 &
-tail -f server.log
+python -m mica.server
 ```
