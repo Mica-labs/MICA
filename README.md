@@ -5,7 +5,7 @@ MICA (Multiple Intelligent Conversational Agents) is designed to simplify the de
 You can access MICA's documentation [here](https://mica-labs.github.io/).
 
 ## Local GUI Frontend
-You can design and test the bot through a local GUI, which requires Python 3.8 or higher. Please execute the following command to install the required dependencies:
+You can design and test the bot through a local GUI, which requires Python 3.9 or higher. Please execute the following command to install the required dependencies:
 ```bash
 pip install -r requirement.txt
 ```
@@ -17,7 +17,7 @@ Then, start the service:
 ```bash
 python -m mica.demo
 ```
-You can visit `http://localhost:8760` and start to design.
+You can visit `http://localhost:8760` and start to design. If the port `8760` is occupied, another port will be assigned automatically, and the specific address will be displayed in the logging information.
 
 ## GUI Feature Introduction
 The local GUI provides features for online editing, testing, loading bots from local files, and saving bots to local storage.
@@ -42,7 +42,7 @@ You can save all bots from the left panel to a local file. Clicking the `Save` b
 
 ## Locally Deployment
 If you need to deploy the bot as a service, you can set up a server using the following steps.  
-First, ensure your Python version is 3.8 or higher. The process is similar to the GUI setup:
+First, ensure your Python version is 3.9 or higher. The process is similar to the GUI setup:
 
 ```bash
 pip install -r requirement.txt
