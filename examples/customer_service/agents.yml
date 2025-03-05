@@ -29,7 +29,7 @@ exchange:
 
 meta:
   type: ensemble agent
-  description: You can select an agent to response user's question.
+  description: You can select an agent to answer user's question.
   contains:
     - customer_complain
     - return
