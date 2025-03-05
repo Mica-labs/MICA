@@ -150,9 +150,6 @@ class LLMAgent(Agent):
     def _generate_agent_prompt(self, tracker: Tracker, is_tool=False):
         all_agents = list(tracker.args.keys())
         all_agents.remove(self.name)
-        if self.uses:
-            for func in self.uses:
-                all_agents.remove(func)
         current_event = tracker.peek_agent()
         if current_event.metadata is not None:
             flow_name = current_event.metadata["flow"]
@@ -214,11 +211,17 @@ class LLMAgent(Agent):
         return last_agent_response != last_bot_response
 
     def _generate_function_prompt(self,
-                                  agents: Optional[Any] = None,
+                                  tools: Optional[Any] = None,
                                   **kwargs) -> Union[List, None]:
+        if self.uses is None:
+            return []
         functions = []
-        if self.uses is not None:
-            for function_name in self.uses:
-                func = agents.get(function_name)
-                functions.append(func.function_prompt())
+        for function_name in self.uses:
+            func = tools.get(function_name)
+            if func is None:
+                logger.error(
+                    f"No corresponding function: {function_name} was found. "
+                    f"Please check your Python code snippet.")
+                return functions
+            functions.append(func.function_prompt())
         return functions

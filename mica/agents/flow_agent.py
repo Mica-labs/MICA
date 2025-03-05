@@ -1,7 +1,7 @@
 import copy
 import json
 import traceback
-from typing import Optional, Dict, Text, Any, List, Union
+from typing import Optional, Dict, Text, Any, List, Union, Tuple
 
 from mica import event
 from mica.agents.agent import Agent
@@ -135,7 +135,7 @@ class FlowAgent(Agent):
         return self.args
 
     async def run(self, tracker: Tracker,
-                  agents=None,
+                  agents: Optional[Dict[Text, Agent]] = None,
                   current_nodes=None,
                   **kwargs):
         info = tracker.get_or_create_flow_agent(self.name)
@@ -253,7 +253,10 @@ class FlowAgent(Agent):
         return AgentComplete(provider=self.name)
 
     # TODO: use LLM to get the intent of latest message
-    async def get_message_args(self, tracker: Tracker, agents: Optional[Dict] = None) -> Union[None, List[Event]]:
+    async def get_message_args(self,
+                               tracker: Tracker,
+                               agents: Optional[Dict[Text, Agent]] = None
+                               ) -> Union[None, List[Event]]:
         prompt = self._generate_prompt(tracker, agents)
         logger.debug("Flow agent prompt: %s", json.dumps(prompt, indent=2, ensure_ascii=False))
 
@@ -274,7 +277,10 @@ class FlowAgent(Agent):
                     return [AgentFail(provider=self.name)]
         return
 
-    def _generate_prompt(self, tracker: Tracker, agents: Optional[Dict] = None):
+    def _generate_prompt(self,
+                         tracker: Tracker,
+                         agents: Optional[Dict[Text, Agent]] = None
+                         ) -> List[Dict[Any, Any]]:
         all_agents = list(tracker.args.keys())
         all_agents.remove(self.name)
         for agent_name in self._all_related_agent(agents):
@@ -310,7 +316,7 @@ class FlowAgent(Agent):
         }]
         return prompt
 
-    def _all_related_agent(self, bot_agents: Optional[Dict] = None) -> List[Text]:
+    def _all_related_agent(self, bot_agents: Optional[Dict[Text, Agent]] = None) -> List[Text]:
         agents = []
 
         def traverse(steps):
@@ -319,10 +325,6 @@ class FlowAgent(Agent):
                     traverse(step.then)
                 if isinstance(step, Call):
                     agents.append(step.name)
-                    agent_obj = bot_agents.get(step.name)
-                    if isinstance(agent_obj, LLMAgent) and agent_obj.uses:
-                        for i in agent_obj.uses:
-                            agents.append(i)
 
         for subflow_name, subflow in self.subflows.items():
             traverse(subflow.steps)

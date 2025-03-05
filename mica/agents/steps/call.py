@@ -1,9 +1,10 @@
 import json
 import re
-from typing import Optional, Dict, Text, List
+from typing import Optional, Dict, Text, List, Tuple, Any
 
 import requests
 
+from mica.agents.agent import Agent
 from mica.agents.steps.base import Base
 from mica.agents.functions import Function
 from mica.event import BotUtter, CurrentAgent, SetSlot, AgentFail
@@ -42,10 +43,14 @@ class Call(Base):
                   info: Optional[FlowInfo] = None,
                   **kwargs
                   ):
+        from mica.agents.flow_agent import FlowAgent
+        from mica.agents.llm_agent import LLMAgent
+        from mica.agents.ensemble_agent import EnsembleAgent
+
         if info is not None:
             info.is_listen = False
-        agents = kwargs.get("agents")
-        if isinstance(agents[self.name], Function):
+        agents: Dict[Text, Agent] = kwargs.get("agents")
+        if agents.get(self.name) is None:
             result = []
             tools: SafePythonExecutor = kwargs.get("tools")
             if tools is None:

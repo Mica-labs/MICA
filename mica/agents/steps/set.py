@@ -24,9 +24,9 @@ class Set(Base):
         return f"Set(data={self.data})"
 
     async def run(self,
-            tracker: Optional[Tracker] = None,
-            info: Optional[FlowInfo] = None,
-            **kwargs):
+                  tracker: Optional[Tracker] = None,
+                  info: Optional[FlowInfo] = None,
+                  **kwargs):
         if info is not None:
             info.is_listen = False
         result = []

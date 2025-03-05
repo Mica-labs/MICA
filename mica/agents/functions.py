@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Text, List, Dict, Union
+from typing import Optional, Text, List, Dict, Union, Any
 
 from mica.agents.agent import Agent
 
@@ -9,7 +9,7 @@ class Function(Agent):
                  name: Optional[Text] = None,
                  body: Optional[Text] = None,
                  description: Optional[Text] = None,
-                 args: Optional[List] = None,
+                 args: Optional[Dict[Text, Any]] = None,
                  required: Optional[List] = None,
                  **kwargs):
         self.body = body
@@ -43,22 +43,22 @@ class Function(Agent):
         prompt = {
             "name": self.name
         }
-        if self.description is not None:
+        if self.description is not None and len(self.description) > 0:
             prompt["description"] = self.description
         args = {}
-        if self.args is not None:
-            for arg in self.args:
-                if type(arg) == str:
-                    attr = {"type": "string"}
-                    args[arg] = attr
-                else:
-                    name = list(arg.keys())[0]
-                    attr = arg[name]
-                    attr["type"] = "string"
-                    args[name] = attr
-            prompt["parameters"] = {
-                "type": "object",
-                "properties": args,
-                "required": self.required
-            }
+        # if self.args is not None:
+        #     for arg in self.args:
+        #         if type(arg) == str:
+        #             attr = {"type": "string"}
+        #             args[arg] = attr
+        #         else:
+        #             name = list(arg.keys())[0]
+        #             attr = arg[name]
+        #             attr["type"] = "string"
+        #             args[name] = attr
+        prompt["parameters"] = {
+            "type": "object",
+            "properties": self.args,
+            "required": self.required
+        }
         return prompt

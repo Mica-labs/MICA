@@ -358,7 +358,7 @@ class FlowAgentValidator(AgentValidator):
 
         # 验证步骤
         if 'steps' in content:
-            errors.extend(self.validate_steps(content['steps'], f"{path}/steps"))
+            errors.extend(self.validate_steps(content['steps'], f"{path}/steps", context))
 
         return errors
 

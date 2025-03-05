@@ -17,6 +17,7 @@ from mica.utils import logger
 class NoValidRequestHeader(Exception):
     """Exception that can be raised when valid request headers are not provided."""
 
+
 class OpenAIModel(BaseModel):
     def __init__(self,
                  model: Optional[Text] = "gpt-4",
@@ -37,7 +38,7 @@ class OpenAIModel(BaseModel):
         self.max_tokens = max_tokens
         self.server = server or OPENAI_CHAT_URL
         self.headers = headers or {}
-        self.client = httpx.AsyncClient()
+        self.client = httpx.AsyncClient(timeout=10)
 
         if headers is None:
             if api_key is None:

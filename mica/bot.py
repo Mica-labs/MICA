@@ -4,7 +4,7 @@ import os.path
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional, Text, List, Union, Dict, Any
+from typing import Optional, Text, List, Union, Dict, Any, Tuple
 
 from mica import utils
 from mica.agents.agent import Agent, Main
@@ -53,72 +53,72 @@ class Bot(object):
         self.sum_rsp_time = 0
         self.tools = tools
 
-    @classmethod
-    def from_path(cls, path: Union[Text, Path]):
-        path = os.path.abspath(path)
-
-        if not path or os.path.isfile(path) or not os.path.isdir(path):
-            raise InvalidBot(
-                "Please provide a valid path"
-            )
-        # bot name is the dir name
-        bot_name = os.path.basename(path)
-
-        # get all the configuration from multi files
-        config_files = utils.find_config_files(path)
-        flows_data = {}
-        for file in config_files:
-            config = utils.read_yaml_file(file)
-            for item, value in config.items():
-                if flows_data.get(item):
-                    flows_data[item].update(value)
-                else:
-                    flows_data[item] = value
-
-        # get schedule method
-        from mica.processor import DispatcherProcessor, PriorityProcessor
-        scheduler_create = {
-            "priority": PriorityProcessor.create,
-            "dispatcher": DispatcherProcessor.create
-        }
-        scheduler = scheduler_create.get(flows_data.get("main").get("schedule") or "priority")()
-        entrypoint = flows_data.get("main").get("call")
-        flows_data.pop("main")
-
-        llm_model = OpenAIModel.create()
-        agents = dict()
-        if all(key not in flows_data for key in ["llm_agents", "ensemble_agents", "flow_agents"]):
-            create_agents = {
-                "llm_agent": LLMAgent.create,
-                "ensemble_agent": EnsembleAgent.create,
-                "flow_agent": FlowAgent.create,
-                "function": Function.create
-            }
-            agents = {name: create_agents[value.get('type')](name=name, **value, llm_model=llm_model)
-                      for name, value in agents.items()
-                      if value.get('type') is not None}
-        else:
-            create_agents = {
-                "llm_agents": LLMAgent.create,
-                "ensemble_agents": EnsembleAgent.create,
-                "flow_agents": FlowAgent.create,
-                "pythons": Function.create,
-                "functions": Function.create
-            }
-            agents = {
-                name: create_agents[kind](name=name, **value, llm_model=llm_model)
-                for kind, agents in flows_data.items()
-                for name, value in agents.items()}
-
-        # transfer main agent name to agent object
-        entrypoint = agents.get(entrypoint)
-
-        cls.save_custom_functions_to_local(agents)
-        subprocess.call(["bash", "action/restart_server.sh"])
-
-        tracker_store = InMemoryTrackerStore.create()
-
-        return cls(bot_name, tracker_store=tracker_store, agents=agents, scheduler=scheduler, entrypoint=entrypoint)
+    # @classmethod
+    # def from_path(cls, path: Union[Text, Path]):
+    #     path = os.path.abspath(path)
+    #
+    #     if not path or os.path.isfile(path) or not os.path.isdir(path):
+    #         raise InvalidBot(
+    #             "Please provide a valid path"
+    #         )
+    #     # bot name is the dir name
+    #     bot_name = os.path.basename(path)
+    #
+    #     # get all the configuration from multi files
+    #     config_files = utils.find_config_files(path)
+    #     flows_data = {}
+    #     for file in config_files:
+    #         config = utils.read_yaml_file(file)
+    #         for item, value in config.items():
+    #             if flows_data.get(item):
+    #                 flows_data[item].update(value)
+    #             else:
+    #                 flows_data[item] = value
+    #
+    #     # get schedule method
+    #     from mica.processor import DispatcherProcessor, PriorityProcessor
+    #     scheduler_create = {
+    #         "priority": PriorityProcessor.create,
+    #         "dispatcher": DispatcherProcessor.create
+    #     }
+    #     scheduler = scheduler_create.get(flows_data.get("main").get("schedule") or "priority")()
+    #     entrypoint = flows_data.get("main").get("call")
+    #     flows_data.pop("main")
+    #
+    #     llm_model = OpenAIModel.create()
+    #     agents = dict()
+    #     if all(key not in flows_data for key in ["llm_agents", "ensemble_agents", "flow_agents"]):
+    #         create_agents = {
+    #             "llm_agent": LLMAgent.create,
+    #             "ensemble_agent": EnsembleAgent.create,
+    #             "flow_agent": FlowAgent.create,
+    #             "function": Function.create
+    #         }
+    #         agents = {name: create_agents[value.get('type')](name=name, **value, llm_model=llm_model)
+    #                   for name, value in agents.items()
+    #                   if value.get('type') is not None}
+    #     else:
+    #         create_agents = {
+    #             "llm_agents": LLMAgent.create,
+    #             "ensemble_agents": EnsembleAgent.create,
+    #             "flow_agents": FlowAgent.create,
+    #             "pythons": Function.create,
+    #             "functions": Function.create
+    #         }
+    #         agents = {
+    #             name: create_agents[kind](name=name, **value, llm_model=llm_model)
+    #             for kind, agents in flows_data.items()
+    #             for name, value in agents.items()}
+    #
+    #     # transfer main agent name to agent object
+    #     entrypoint = agents.get(entrypoint)
+    #
+    #     cls.save_custom_functions_to_local(agents)
+    #     subprocess.call(["bash", "action/restart_server.sh"])
+    #
+    #     tracker_store = InMemoryTrackerStore.create()
+    #
+    #     return cls(bot_name, tracker_store=tracker_store, agents=agents, scheduler=scheduler, entrypoint=entrypoint)
 
     @classmethod
     def from_json(cls,
@@ -143,30 +143,18 @@ class Bot(object):
             config['server'] = config['server'] + "/rpc/rasa/message" \
                 if "openai" not in config["server"] else config["server"]
         llm_model = OpenAIModel.create(config)
-        if all(key not in data for key in ["llm_agents", "ensemble_agents", "flow_agents"]):
-            create_agents = {
-                "llm agent": LLMAgent.create,
-                "ensemble agent": EnsembleAgent.create,
-                "flow agent": FlowAgent.create,
-                "function": Function.create,
-                "kb agent": KBAgent.create
-            }
-            agents = {name: create_agents[value.get('type')](name=name, **value, **config, llm_model=llm_model)
-                      for name, value in data.items()
-                      if value.get('type') is not None}
-        else:
-            create_agents = {
-                "llm agents": LLMAgent.create,
-                "ensemble agents": EnsembleAgent.create,
-                "flow agents": FlowAgent.create,
-                "pythons": Function.create,
-                "functions": Function.create,
-                "kb agents": KBAgent.create
-            }
-            agents = {
-                name: create_agents[kind](name=name, **value, **config, llm_model=llm_model)
-                for kind, agents in data.items()
-                for name, value in agents.items()}
+
+        # create agent objs
+        create_agents = {
+            "llm agent": LLMAgent.create,
+            "ensemble agent": EnsembleAgent.create,
+            "flow agent": FlowAgent.create,
+            "function": Function.create,
+            "kb agent": KBAgent.create
+        }
+        agents = {name: create_agents[value.get('type')](name=name, **value, **config, llm_model=llm_model)
+                  for name, value in data.items()
+                  if value.get('type') is not None}
 
         for name, agent in list(agents.items()):
             if isinstance(agent, EnsembleAgent):
@@ -178,7 +166,7 @@ class Bot(object):
                         else:
                             exit_agent = agents.get(agent.exit_agent)
                         if exit_agent is None:
-                            raise ValueError(f"{name} fail to initialize: Exit agent {agent.fallback} not found")
+                            raise ValueError(f"{name} fail to initialize: Exit agent {agent.exit_agent} not found")
                         agent.exit_agent = exit_agent
                     elif isinstance(agent.exit_agent, Dict):
                         exit_agent = DefaultExitAgent.create(name= f"ExitAgent_{agent.name}",
@@ -220,8 +208,9 @@ class Bot(object):
                 raise InvalidBot('Not a valid chatbot')
 
             func_info = load_func_info_from_str(tool_code)
-            for func in func_info:
-                agents[func['name']] = Function.create(**func)
+            # for func in func_info:
+            #     func_obj = Function.create(**func)
+            #     agents[(type(func_obj), func_obj.name)] = func_obj
 
         tracker_store = InMemoryTrackerStore.create()
         logger.debug(f"here are all the registered agents: {agents}")
@@ -251,7 +240,7 @@ class Bot(object):
         print("####avg time:", self.sum_rsp_time / self.count)
         return response
 
-    def _find_all_args(self, agents: Dict):
+    def _find_all_args(self, agents: Dict[Text, Agent]):
         all_args = {
             "sender": "",
             "bot_name": self.name
@@ -264,7 +253,7 @@ class Bot(object):
             if args is None:
                 continue
             for arg in args:
-                if isinstance(arg, dict):
+                if isinstance(arg, Dict):
                     arg_name = list(arg.keys())[0]
                     all_args[name][arg_name] = None
                 else:
@@ -285,22 +274,4 @@ class Bot(object):
             return list(self.agents.values())[0]
 
         return ensembles[0]
-
-    @classmethod
-    def save_custom_functions_to_local(cls, agents):
-        code_data = []
-        for name, agent in agents.items():
-            if isinstance(agent, Function):
-                python_name, python_body = agent.save()
-                if python_body is None:
-                    continue
-                code_data.append([python_name, python_body])
-        mapping = ", ".join([f"\"{c[0]}\": {c[0]}" for c in code_data])
-        append_content = "\n" \
-                         "def point_to_func(func_name, **kwargs):\n" \
-                         f"    func = {{{mapping}}}\n" \
-                         f"    return func.get(func_name)(**kwargs)\n"
-        code = "\n\n".join([c[1] for c in code_data])
-        code += append_content
-        save_file("action/custom_functions.py", code)
 

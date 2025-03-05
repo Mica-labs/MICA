@@ -5,7 +5,9 @@ import contextlib
 import io
 import re
 import ast
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Text
+
+from mica.agents.functions import Function
 
 
 class ImportTransformer(ast.NodeTransformer):
@@ -53,10 +55,11 @@ class SafePythonExecutor:
             'datetime', 'time', 're', 'json',
             'itertools', 'functools', 'collections',
             'requests', 'urllib', 'subprocess', 'sqlite3',
-            'mysql.connector'
+            'mysql.connector', 'logging', 'pathlib', 'typing'
         ]
-        self.script_namespace: Dict[str, Any] = {}
-        self.imported_modules: Dict[str, Any] = {}
+        self.script_namespace: Dict[Text, Any] = {}
+        self.imported_modules: Dict[Text, Any] = {}
+        self.functions: Dict[Text, Function] = {}
 
     def _safe_import(self, name, *args, **kwargs):
         """安全导入函数"""
@@ -95,6 +98,7 @@ class SafePythonExecutor:
             '__name__': '__main__',
             '__doc__': None,
             '__package__': None,
+            '__file__': '<string>',
         }
 
         return namespace
@@ -112,7 +116,6 @@ class SafePythonExecutor:
         # 安全性检查模式
         dangerous_patterns = [
             r'(exec|eval)\s*\(',
-            r'(open|file)\s*\(',
             r'__import__\s*\(',
             r'\bos\.',
             r'\bsys\.',
@@ -131,6 +134,10 @@ class SafePythonExecutor:
             # 分析和转换导入语句
             transformer = ImportTransformer(self.allowed_modules)
             transformed_tree = transformer.visit(tree)
+
+            # function definition
+            formatted_functions = self._extract_functions_from_script(tree)
+            self.functions = {func["name"]: Function.create(**func) for func in formatted_functions}
 
             # 编译转换后的代码
             compiled_code = compile(transformed_tree, '<string>', 'exec')
@@ -195,3 +202,53 @@ class SafePythonExecutor:
                 'stderr': error_output.getvalue(),
                 'traceback': traceback.format_exc()
             }
+
+    def get(self, func_name):
+        return self.functions.get(func_name)
+
+    @staticmethod
+    def _extract_functions_from_script(tree):
+        functions = []
+
+        for node in tree.body:
+            if isinstance(node, ast.FunctionDef):
+                description = ""
+                if (
+                        node.body
+                        and isinstance(node.body[0], ast.Expr)
+                        and isinstance(node.body[0].value, ast.Constant)
+                        and isinstance(node.body[0].value.value, str)
+                ):
+
+                    description = node.body[0].value.value
+
+                func_name = node.name
+                args = {}
+                required = []
+                defaults = node.args.defaults
+                num_defaults = len(defaults)
+                total_args = len(node.args.args)
+                for i, arg in enumerate(node.args.args):
+                    arg_name = arg.arg
+                    arg_type = ast.unparse(arg.annotation) if arg.annotation else "string"
+                    if arg_type in ["int", "float"]:
+                        arg_type = "number"
+                    elif arg_type == "bool":
+                        arg_type = "boolean"
+
+                    # if it is not a default parameter, then it will not in the required list
+                    default_index = i - (total_args - num_defaults)
+                    if default_index < 0:
+                        required.append(arg_name)
+                    args[arg_name] = {
+                        "type": arg_type
+                    }
+                functions.append({
+                        "name": func_name,
+                        "description": description,
+                        "args": args,
+                        "required": required
+                    }
+                )
+
+        return functions

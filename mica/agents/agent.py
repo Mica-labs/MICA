@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Text, Any, List
+from typing import Optional, Dict, Text, Any, List, Tuple
 
 from mica.tracker import Tracker
 
@@ -47,7 +47,7 @@ class Main(Agent):
 
         return cls(name, description, steps)
 
-    async def run(self, tracker: Tracker, agents: Optional[Any] = None, **kwargs):
+    async def run(self, tracker: Tracker, agents: Optional[Dict[Text, Agent]] = None, **kwargs):
         is_end = False
         result = []
         for step in self.steps:

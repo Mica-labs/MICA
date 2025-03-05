@@ -95,7 +95,7 @@ class PriorityProcessor(Processor):
 
         if tracker.is_agent_stack_empty():
             # run the entrypoint
-            _, response = await bot.entrypoint.run(tracker, agents=bot.agents)
+            _, response = await bot.entrypoint.run(tracker, agents=bot.agents, tools=bot.tools)
 
         while not is_end:
             current_event = tracker.peek_agent()

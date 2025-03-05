@@ -33,9 +33,9 @@ class Return(Base):
         return f"Return(status={self.status}, msg={self.msg})"
 
     async def run(self,
-            tracker: Optional[Tracker] = None,
-            info: Optional[FlowInfo] = None,
-            **kwargs):
+                  tracker: Optional[Tracker] = None,
+                  info: Optional[FlowInfo] = None,
+                  **kwargs):
         rst = []
         if self.status == "success":
             rst.append(AgentComplete(provider=self.flow_name, metadata=self.msg))
