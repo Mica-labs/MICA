@@ -73,16 +73,17 @@ class EnsembleAgent(Agent):
                   agents: Optional[Dict[Text, Agent]] = None,
                   **kwargs
                   ):
+        result = []
         # when the conversation start, first execute self.step
         if len(tracker.events) == 1 and self.steps is not None and not isinstance(self.steps[0], User):
             is_end = True
-            result = []
             for step in self.steps:
                 step_flag, step_result = await step.run(tracker, agents=agents, **kwargs)
                 result.extend(step_result)
                 if step_flag in ["Await"]:
                     is_end = False
-            return is_end, result
+            if tracker.latest_message.text == '/init':
+                return is_end, result
         # # when this turn already has response, which means don't have to predict next
         # if tracker.has_bot_response_after_user_input():
         #     return True, []
@@ -98,7 +99,7 @@ class EnsembleAgent(Agent):
                     break
 
         is_end = False
-        agent_result = []
+        agent_result = result
         next_agent = await self._select_followup_agent(tracker, agents, rag_result)
         if next_agent is not None:
             if next_agent in self.contains:
@@ -134,7 +135,7 @@ class EnsembleAgent(Agent):
 
     def _generate_agent_prompt(self,
                                tracker: Tracker,
-                               agents: Dict[Text, Agent],
+                               agents: Dict[Text, Any],
                                candidates: Set[Text],
                                rag_result: Optional[Any] = None):
         valid_states_info = ""

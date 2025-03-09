@@ -56,7 +56,10 @@ class LLMAgent(Agent):
         logger.debug("LLM agent prompt: \n%s", json.dumps(prompt, indent=2, ensure_ascii=False))
         functions = self._generate_function_prompt(**kwargs)
         logger.debug("LLM agent functions prompt: \n%s", json.dumps(functions, indent=2, ensure_ascii=False))
-        llm_result = await self.llm_model.generate_message(prompt, functions=functions, tracker=tracker, provider=self.name)
+        llm_result = await self.llm_model.generate_message(prompt,
+                                                           functions=functions,
+                                                           tracker=tracker,
+                                                           provider=self.name)
         is_end = True
         final_result = []
 
@@ -118,8 +121,8 @@ class LLMAgent(Agent):
                     response = {
                         "bot": event.text
                     }
-
-                tracker.set_conv_history(self.name, {"role": "assistant", "content": event.text})
+                if len(llm_result) == 1:
+                    tracker.set_conv_history(self.name, {"role": "assistant", "content": event.text})
                 data = response.get("data")
                 bot_reply = response.get("bot")
                 status = response.get("status")
@@ -176,7 +179,7 @@ class LLMAgent(Agent):
                  f"{agent_names} or user want to quit, output: " \
                  f"{{\"bot\": \"\", \"status\": \"quit\"}}\n" \
                  "- Once all the data has been collected, " \
-                 "end the current conversation directly: {\"status\": \"complete\"}.\n" \
+                 "end the current conversation directly: {\"status\": \"complete\"}.\n"
 
         if self.args is not None and len(self.args) > 0:
             args = ", ".join(self.args)
@@ -185,7 +188,7 @@ class LLMAgent(Agent):
                  f"\"bot\": \"your reply\", \"status\": \"running\"}}\n"
         else:
             system += f"- Typically, the output should be: {{\"bot\": \"Your reply\", \"status\": \"running\"}}\n"
-        system += "Now, begin the conversation."
+        system += "Only output JSON structure. Do not output other content. Do not use Markdown format."
 
         prompt = [{"role": "system", "content": system}]
         history = tracker.get_or_create_agent_conv_history(self.name)
@@ -208,6 +211,9 @@ class LLMAgent(Agent):
             if isinstance(tracker.events[i], BotUtter):
                 last_bot_response = tracker.events[i].text
                 break
+        print("!@#!@#!@#", last_bot_response)
+        print("!@$!@#!@#", last_agent_response)
+        print("tracker", tracker.events)
         return last_agent_response != last_bot_response
 
     def _generate_function_prompt(self,
