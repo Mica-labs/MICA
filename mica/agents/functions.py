@@ -56,9 +56,10 @@ class Function(Agent):
         #             attr = arg[name]
         #             attr["type"] = "string"
         #             args[name] = attr
-        prompt["parameters"] = {
-            "type": "object",
-            "properties": self.args,
-            "required": self.required
-        }
+        if self.args is not None and len(self.args) > 0:
+            prompt["parameters"] = {
+                "type": "object",
+                "properties": self.args,
+                "required": self.required
+            }
         return prompt

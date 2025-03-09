@@ -73,13 +73,14 @@ class AgentValidator(ABC):
         self.type_specs: Dict[Text, TypeSpec] = {}
         self.step_schema: Dict[Text, Any] = {
             'keywords': {'bot', 'user', 'if', 'else if', 'else', 'then', 'tries',
-                         'begin', 'end', 'call', 'next', 'label', 'return'},
+                         'begin', 'end', 'call', 'next', 'label', 'return', 'args',
+                         'set'},
             'string_literals': {'begin', 'end', 'user'},
             'compound_keys': {'bot', 'if', 'begin'}
         }
 
     @abstractmethod
-    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any]) -> List[ValidationError]:
+    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
         """
         验证代理配置
         content: 当前代理的配置
@@ -167,10 +168,10 @@ class AgentValidator(ABC):
 
         return errors
 
-    def validate_ref(self, agent_name: Text, path: Text, context: Dict[Text, Any]) -> List[ValidationError]:
+    def validate_ref(self, agent_name: Text, path: Text, context: Dict[Text, Any], code_str=None) -> List[ValidationError]:
         errors = []
         all_agents = context.get('all_agents', set())  # 获取所有已定义的agent名称
-        if agent_name not in all_agents:
+        if agent_name not in all_agents and (code_str is not None and agent_name not in code_str):
             errors.append(ValidationError(
                 self.__class__.__name__,
                 f"Referenced agent '{agent_name}' is not defined in this file",
@@ -187,7 +188,8 @@ class AgentValidator(ABC):
     def validate_steps(self, steps: List[Any],
                        path: str,
                        context: Dict[Text, Any],
-                       in_condition: bool = False) -> List[ValidationError]:
+                       in_condition: bool = False,
+                       code_str = None) -> List[ValidationError]:
         """validate steps list"""
         errors = []
         found_begin = False
@@ -248,7 +250,7 @@ class AgentValidator(ABC):
                                 ))
 
                     if key == 'call':
-                        errors.extend(self.validate_ref(step['call'], f"{step_path}", context=context))
+                        errors.extend(self.validate_ref(step['call'], f"{step_path}", context=context, code_str=code_str))
 
         if not in_condition:
             if found_begin ^ found_end:
@@ -276,7 +278,7 @@ class EnsembleAgentValidator(AgentValidator):
             "steps": TypeSpec(List)
         }
 
-    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any]) -> List[ValidationError]:
+    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
         errors = []
 
         # 验证必需的键
@@ -325,7 +327,7 @@ class KBAgentValidator(AgentValidator):
             "faq": TypeSpec(List)
         }
 
-    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any]) -> List[ValidationError]:
+    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
         errors = []
 
         errors.extend(self.validate_required_keys(content, self.required_keys, path))
@@ -349,7 +351,7 @@ class FlowAgentValidator(AgentValidator):
             'compound_keys': {'bot', 'if', 'begin'}
         }
 
-    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any]) -> List[ValidationError]:
+    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
         errors = []
 
         # 验证必需的键
@@ -377,7 +379,7 @@ class LLMAgentValidator(AgentValidator):
             "uses": TypeSpec(List)
         }
 
-    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any]) -> List[ValidationError]:
+    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
         errors = []
 
         errors.extend(self.validate_required_keys(content, self.required_keys, path))
@@ -396,7 +398,7 @@ class MainAgentValidator(AgentValidator):
             "steps": TypeSpec(List)
         }
 
-    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any]) -> List[ValidationError]:
+    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
         errors = []
 
         # validate format problem: required_key/type
@@ -443,7 +445,7 @@ class Validator:
             'main': MainAgentValidator
         }
 
-    def validate(self, agents_dict: Dict) -> List[ValidationError]:
+    def validate(self, agents_dict: Dict, code_str: Text = None) -> List[ValidationError]:
         """验证YAML内容"""
         if not isinstance(agents_dict, Dict):
             return [ValidationError("BasicValidation", f"Invalid agents.yml structure.")]
@@ -465,7 +467,8 @@ class Validator:
                 errors.extend(validator.validate(
                     agent_content,
                     f"agent[{agent_name}]",
-                    context
+                    context,
+                    code_str
                 ))
                 continue
             if not isinstance(agent_content, Dict):
@@ -499,7 +502,8 @@ class Validator:
             errors.extend(validator.validate(
                 agent_content,
                 f"agent[{agent_name}]",
-                context
+                context,
+                code_str
             ))
 
         return errors

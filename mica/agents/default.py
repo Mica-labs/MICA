@@ -120,7 +120,7 @@ class DefaultExitAgent(LLMAgent):
     async def check_user_timeout(self, tracker: Tracker) -> bool:
         current_time = time.time()
         latest_event = tracker.events[-1]
-        retry_count = tracker.get_arg(self.name, RETRY_COUNT)
+        retry_count, _ = tracker.get_arg(self.name, RETRY_COUNT)
         if retry_count > self.retry:
             return True
         if current_time - latest_event.timestamp > self.timeout:

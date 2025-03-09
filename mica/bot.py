@@ -3,6 +3,7 @@ import json
 import os.path
 import subprocess
 import time
+from itertools import chain
 from pathlib import Path
 from typing import Optional, Text, List, Union, Dict, Any, Tuple
 
@@ -52,73 +53,10 @@ class Bot(object):
         self.count = 0
         self.sum_rsp_time = 0
         self.tools = tools
-
-    # @classmethod
-    # def from_path(cls, path: Union[Text, Path]):
-    #     path = os.path.abspath(path)
-    #
-    #     if not path or os.path.isfile(path) or not os.path.isdir(path):
-    #         raise InvalidBot(
-    #             "Please provide a valid path"
-    #         )
-    #     # bot name is the dir name
-    #     bot_name = os.path.basename(path)
-    #
-    #     # get all the configuration from multi files
-    #     config_files = utils.find_config_files(path)
-    #     flows_data = {}
-    #     for file in config_files:
-    #         config = utils.read_yaml_file(file)
-    #         for item, value in config.items():
-    #             if flows_data.get(item):
-    #                 flows_data[item].update(value)
-    #             else:
-    #                 flows_data[item] = value
-    #
-    #     # get schedule method
-    #     from mica.processor import DispatcherProcessor, PriorityProcessor
-    #     scheduler_create = {
-    #         "priority": PriorityProcessor.create,
-    #         "dispatcher": DispatcherProcessor.create
-    #     }
-    #     scheduler = scheduler_create.get(flows_data.get("main").get("schedule") or "priority")()
-    #     entrypoint = flows_data.get("main").get("call")
-    #     flows_data.pop("main")
-    #
-    #     llm_model = OpenAIModel.create()
-    #     agents = dict()
-    #     if all(key not in flows_data for key in ["llm_agents", "ensemble_agents", "flow_agents"]):
-    #         create_agents = {
-    #             "llm_agent": LLMAgent.create,
-    #             "ensemble_agent": EnsembleAgent.create,
-    #             "flow_agent": FlowAgent.create,
-    #             "function": Function.create
-    #         }
-    #         agents = {name: create_agents[value.get('type')](name=name, **value, llm_model=llm_model)
-    #                   for name, value in agents.items()
-    #                   if value.get('type') is not None}
-    #     else:
-    #         create_agents = {
-    #             "llm_agents": LLMAgent.create,
-    #             "ensemble_agents": EnsembleAgent.create,
-    #             "flow_agents": FlowAgent.create,
-    #             "pythons": Function.create,
-    #             "functions": Function.create
-    #         }
-    #         agents = {
-    #             name: create_agents[kind](name=name, **value, llm_model=llm_model)
-    #             for kind, agents in flows_data.items()
-    #             for name, value in agents.items()}
-    #
-    #     # transfer main agent name to agent object
-    #     entrypoint = agents.get(entrypoint)
-    #
-    #     cls.save_custom_functions_to_local(agents)
-    #     subprocess.call(["bash", "action/restart_server.sh"])
-    #
-    #     tracker_store = InMemoryTrackerStore.create()
-    #
-    #     return cls(bot_name, tracker_store=tracker_store, agents=agents, scheduler=scheduler, entrypoint=entrypoint)
+        self._func_args_config = {name: {} for name in self.tools.functions.keys()} or {}
+        self._global_args = list(chain.from_iterable(
+            a.contains_args() for a in agents.values() if isinstance(a, EnsembleAgent)
+        ))
 
     @classmethod
     def from_json(cls,
@@ -227,7 +165,10 @@ class Bot(object):
                              user_id: Text,
                              message: Any,
                              channel: ChatChannel = None):
-        tracker = self.tracker_store.get_or_create_tracker(user_id, args=copy.deepcopy(self._args_config))
+        tracker = self.tracker_store.get_or_create_tracker(user_id,
+                                                           args=copy.deepcopy(self._args_config),
+                                                           functions=copy.deepcopy(self._func_args_config),
+                                                           global_args=self._global_args)
         user_event = UserInput(text=message, metadata=channel)
         tracker.update(user_event)
         tracker.latest_message = user_event
