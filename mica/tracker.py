@@ -1,8 +1,10 @@
+import json
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Text, Any, Union
+from typing import Optional, List, Dict, Text, Any, Union, Tuple
 
 from mica.event import Event, UserInput, BotUtter, AgentFail
+from mica.utils import logger
 
 
 @dataclass
@@ -69,23 +71,30 @@ class Tracker(object):
     def __init__(self,
                  user_id,
                  events: Optional[List[Event]] = None,
-                 args: Optional[Dict[Text, Any]] = None
+                 args: Optional[Dict[Text, Any]] = None,
+                 functions: Optional[Dict[Text, Any]] = None,
+                 global_args: Optional[List[Text]] = None
                  ):
         self.user_id = user_id
         self.events = events or []
         self.args = args or {}
+        self.func_args = functions or {}
+        self.global_args = global_args or []
         self.agent_stack = OrderedDict()
         self.latest_message = None
         self.flow_info = {}
         self.agent_conv_history = {}
+        self.predicted_responses = []
 
     @classmethod
     def create(cls,
                user_id: Text,
                events: Optional[List[Event]] = None,
-               args: Optional[Dict[Text, Any]] = None
+               args: Optional[Dict[Text, Any]] = None,
+               functions: Optional[Dict[Text, Any]] = None,
+               global_args: Optional[List[Text]] = None
                ):
-        return cls(user_id, events, args)
+        return cls(user_id, events, args, functions, global_args)
 
     def update(self, event: Event):
         self.events.append(event)
@@ -139,20 +148,43 @@ class Tracker(object):
         self.flow_info.pop(flow_name)
 
     def set_arg(self, agent_name, arg_name, arg_value):
-        if arg_name[0] != '_' and (
-                agent_name not in self.args
-                or arg_name not in self.args[agent_name]):
+        if arg_name[0] != '_' and (agent_name not in self.args and agent_name not in self.func_args):
+            logger.error(f"Cannot find agent: {agent_name} when setting argument value.")
             return False
+        if agent_name in self.args and (arg_name[0] != '_' and arg_name not in self.args[agent_name]):
+            logger.error(f"Didn't find argument: {arg_name} in agent: {agent_name}")
+            return False
+
+        if agent_name in self.func_args:
+            self.func_args[agent_name][arg_name] = arg_value
+            logger.debug(f"Set argument Success. This is an argument in Functions: {self.func_args}")
+            return True
+
         self.args[agent_name][arg_name] = arg_value
+        if arg_name not in self.global_args:
+            logger.debug(f"Set argument Success. Current agents' arguments: {self.args}")
+            return True
+        # set the same name
+        for _, args in self.args.items():
+            if args and arg_name in args:
+                args[arg_name] = arg_value
+        logger.debug(f"同步所有同名argument, {self.args}")
         return True
 
     def get_args(self, agent_name):
         return self.args.get(agent_name)
 
-    def get_arg(self, agent_name, arg_name):
-        if (agent_name not in self.args) or (arg_name not in self.args[agent_name]):
-            return None
-        return self.args[agent_name][arg_name]
+    def get_arg(self, agent_name, arg_name) -> Tuple[Any, bool]:
+        if agent_name not in self.args and agent_name not in self.func_args:
+            logger.error(f"Cannot find agent: {agent_name}.")
+            return None, False
+        if agent_name in self.args and arg_name not in self.args[agent_name]:
+            logger.error(f"Cannot find argument: {arg_name}.")
+            return None, False
+
+        if agent_name in self.func_args:
+            return self.func_args[agent_name].get(arg_name), True
+        return self.args[agent_name][arg_name], True
 
     def has_bot_response_after_user_input(self):
         for evt in reversed(self.events):

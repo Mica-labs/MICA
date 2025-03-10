@@ -40,11 +40,8 @@ class Set(Base):
             else:
                 source_arg_info = arg_format(source, self.flow_name)
 
-                if tracker.get_args(source_arg_info["flow_name"]) and \
-                        source_arg_info["arg_name"] in tracker.get_args(source_arg_info["flow_name"]).keys():
-                    source_value = tracker.get_arg(source_arg_info["flow_name"],
-                                                   source_arg_info["arg_name"])
-                else:
+                source_value, source_exist = tracker.get_arg(source_arg_info["flow_name"], source_arg_info["arg_name"])
+                if not source_exist:
                     source_value = source
 
             tracker.set_arg(target_arg_info["flow_name"],
