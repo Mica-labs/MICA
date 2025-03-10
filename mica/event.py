@@ -126,7 +126,7 @@ class AgentRunResult(Event):
                  metadata: Optional[Any] = None):
         self.timestamp = timestamp or time.time()
         self.provider = provider
-        self.result = result
+        self.result = result or []
         self.status = status
 
         super().__init__(timestamp, metadata)
