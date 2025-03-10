@@ -1,6 +1,6 @@
 import time
 from abc import ABC
-from typing import Text, Optional, Any, Dict
+from typing import Text, Optional, Any, Dict, List
 
 
 class Event(ABC):
@@ -115,6 +115,24 @@ class AgentFail(Event):
 
     def __repr__(self):
         return f"AgentFail(provider={self.provider})"
+
+
+class AgentRunResult(Event):
+    def __init__(self,
+                 timestamp: Optional[float] = None,
+                 provider: Optional[Text] = None,
+                 result: Optional[List[Event]] = None,
+                 status: Optional[Text] = "active",
+                 metadata: Optional[Any] = None):
+        self.timestamp = timestamp or time.time()
+        self.provider = provider
+        self.result = result or []
+        self.status = status
+
+        super().__init__(timestamp, metadata)
+
+    def __repr__(self):
+        return f"AgentRunResult(provider={self.provider}, status={self.status}, result={self.result})"
 
 
 class AgentException(Event):

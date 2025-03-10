@@ -93,7 +93,7 @@ class Call(Base):
             # set args to target agent
             if self.args is not None:
                 for target, source in self.args.items():
-                    value = tracker.get_arg(source["flow_name"], source["arg_name"])
+                    value, _ = tracker.get_arg(source["flow_name"], source["arg_name"])
                     tracker.set_arg(self.name, target, value)
             return "Await", []
 
@@ -109,6 +109,6 @@ class Call(Base):
         kwargs = {}
         if self.args is not None:
             for target, source in self.args.items():
-                value = tracker.get_arg(source["flow_name"], source["arg_name"])
+                value, _ = tracker.get_arg(source["flow_name"], source["arg_name"])
                 kwargs[target] = value
         return kwargs

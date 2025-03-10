@@ -28,7 +28,7 @@ def generate_bot(bot_name, yaml_input, code=None):
         parsed_yaml = yaml.safe_load(yaml_input)
         # validate
         validator = Validator()
-        result = validator.validate(parsed_yaml)
+        result = validator.validate(parsed_yaml, code)
         assert result == [], "Did not pass the validation."
         # convert
         parsed_agents = parser.parse_agents(parsed_yaml)
@@ -81,7 +81,7 @@ def load_bot(files):
                 try:
                     if file_path.endswith('.py'):
                         with open(file_path, 'r', encoding='utf-8') as f:
-                            tools += f.read()
+                            tools += f.read() + "\n"
 
                     if file_path.endswith('.yml') or file_path.endswith('.yaml'):
                         with open(file_path, 'r', encoding='utf-8') as f:
@@ -95,6 +95,7 @@ def load_bot(files):
         logger.error(f"Failed to load bot: {bot_name} from disk, {e}")
         return None, "", "", ""
 
+
 async def get_response(message, history, bot, user_id):
     if not isinstance(bot, Bot) or not message:
         return "", history, user_id, None
@@ -105,7 +106,6 @@ async def get_response(message, history, bot, user_id):
     bot_message = "\n".join(bot_response)
     await gradio_channel.send_message(bot_message, user=message)
     # history.append((message, bot_message))
-    print("updated history", history)
     return "", history, user_id, display_tracker_state(bot, user_id)
 
 
