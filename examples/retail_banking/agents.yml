@@ -1,3 +1,7 @@
+kb:
+  type: kb agent
+  file: ./examples/retail_banking/docs
+
 what_can_you_do:
   type: flow agent
   description: This flow addresses user inquiries about the assistant's capabilities.
@@ -121,6 +125,22 @@ block_card:
     - action_ask_card
     - action_update_card_status
 
+add_payee:
+  type: llm agent
+  description: Add a new payee to the user’s account
+  prompt: |
+    1. 依次询问payee_name, account_number, payee_type(person/business), reference(a short note to identify the payee or purpose)
+    2. 确认所有信息是否正确。如果正确，call "action_add_payee"。
+    3. 如果返回成功，则回复用户"{payee_name} has been successfully added to your list of authorised payees"，
+    否则回复"I'm sorry, but there was an error adding {payee_name}. Please try again later or contact Customer Support"
+  args:
+    - username
+    - payee_name
+    - account_number
+    - payee_type
+    - reference
+  uses:
+    - action_add_payee
 
 meta:
   type: ensemble agent
@@ -131,6 +151,7 @@ meta:
     - what_can_you_do
     - list_payees
     - block_card
+    - add_payee
   args:
     - username
     - segment

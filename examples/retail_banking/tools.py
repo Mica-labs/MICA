@@ -491,3 +491,30 @@ def action_ask_card(username):
     print(f"{message}: {content}")
 
     return
+
+
+def action_add_payee(username, payee_name, account_number, payee_type, reference):
+    sort_code = "111111"
+    db = Database()
+    user_query = "SELECT id FROM users WHERE name = ?"
+    user_result = db.run_query(user_query, (username,), one_record=True)
+    user_id = user_result[0]
+
+    insert_query = """
+            INSERT INTO payees (user_id, name, sort_code, account_number, type, reference)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """
+    db.run_query(
+        insert_query,
+        (
+            user_id,
+            payee_name,
+            sort_code,
+            account_number,
+            payee_type,
+            reference,
+        ),
+        one_record=False,
+    )
+    db.connection.commit()
+    return

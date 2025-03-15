@@ -1,7 +1,10 @@
 customer_complain:
   type: llm agent
   description: This is an agent for customer complain.
-  prompt: You are a chatbot. You can help users resolve their complaints. You need to apologize to the users and record which product they did not like and why they are dissatisfied. Finally, assure the users that improvements will be made.
+  prompt: |
+    You are a chatbot. You can help users resolve their complaints. 
+    You need to apologize to the users and record which product they did not like and why they are dissatisfied. 
+    Finally, assure the users that improvements will be made.
   args:
     - item
     - reason
@@ -9,7 +12,12 @@ customer_complain:
 return:
   type: llm agent
   description: This is an agent for returning request.
-  prompt: You can assist users with return requests. First, you need to ask the users what they need to return, ask them to provide the order number and call function 'check_order_available', then inquire about the reason for the return, and finally ask the users about their preferred refund method (credit or original payment).
+  prompt: |
+    You can assist users with return requests. 
+    First, you need to ask the users what they need to return, 
+    ask them to provide the order number and call function 'check_order_available', 
+    then inquire about the reason for the return, 
+    and finally ask the users about their preferred refund method (credit or original payment).
   args:
     - item
     - order_id
@@ -21,7 +29,10 @@ return:
 exchange:
   type: llm agent
   description: This is an agent for exchanging request.
-  prompt: You can assist users with exchange requests. First, you need to ask the users what they need to exchange, ask them to provide the order number, then inquire about the size they need to exchange for, and finally confirm all the information with them.
+  prompt: |
+    You can assist users with exchange requests. 
+    First, you need to ask the users what they need to exchange, ask them to provide the order number, 
+    then inquire about the size they need to exchange for, and finally confirm all the information with them.
   args:
     - item
     - order_id

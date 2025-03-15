@@ -10,7 +10,7 @@ shopping_flow:
     - user
     - if: the user claims "Is there any discount?"
       then:
-        - call: discount
+        - next: discount
         - if: discount.success
           then:
             - bot: We are glad to tell you that your get 10% discount.
@@ -22,11 +22,11 @@ shopping_flow:
         - call: shipment
         - call: submit_info
           args:
-            - user_name: meta.user_name
-            - items: order.items
-            - discount: discount
-            - address: shipment.address
-            - contact: shipment.contact
+            user_name: meta.user_name
+            items: order.items
+            discount: discount
+            address: shipment.address
+            contact: shipment.contact
       else:
         - bot: "You can ask me something like \"Any discount?\" or \"Start shopping.\"."
         - call: start

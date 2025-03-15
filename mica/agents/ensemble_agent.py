@@ -111,15 +111,16 @@ class EnsembleAgent(Agent):
 
         # if agent fail to answer and there are no response from the user input
         if tracker.events[-1] == tracker.latest_message:
-            fallback_response = []
             if self.fallback is not None:
                 _, fallback_response = await self.fallback.run(tracker)
+                agent_result.extend(fallback_response)
             is_end = True
-            return is_end, fallback_response
-        exit_response = []
-        if self.exit_agent is not None:
+            return is_end, agent_result
+
+        if self.exit_agent is not None and len(agent_result) == 0:
             _, exit_response = await self.exit_agent.run(tracker)
-        return True, exit_response
+            agent_result.extend(exit_response)
+        return True, agent_result
 
     def _is_agent_found(self, event):
         llm_result_name = event.text.strip()
@@ -180,12 +181,12 @@ class EnsembleAgent(Agent):
         rag_info = "\nHere is some potentially relevant knowledge base content. " \
                    "If you think the user’s input is related to this knowledge, " \
                    "you can generate an answer based on the following content. " \
-                   "Output format: [FAQ] Your answer.\n" \
+                   "Output format: \"[FAQ] Your answer.\"\n" \
                    "## KNOWLEDGE BASE:\n"
 
         if rag_result is not None:
             for idx, item in enumerate(rag_result.get('matches')):
-                rag_info += f"No. {idx+1}: {item.get('content')}\n"
+                rag_info += f"{idx+1}. {item.get('content')}\n"
             system += rag_info
 
         # conversation history
@@ -231,7 +232,7 @@ class EnsembleAgent(Agent):
                 agents_up_to_now.append(evt.provider)
         agents_remain = set(self.contains) - set(agents_up_to_now)
         # if there is no candidate, don't need to ask llm. quit.
-        if len(agents_remain) == 0:
+        if len(agents_remain) == 0 and rag_result is None:
             return None
 
         prompt = self._generate_agent_prompt(tracker, agents, agents_remain, rag_result)

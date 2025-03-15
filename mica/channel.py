@@ -33,4 +33,4 @@ class GradioChannel(ChatChannel):
 
     async def send_message(self, message: str, user: Optional[Text] = "") -> None:
         self.history.append((user, message))
-        print("from output channel", self.history)
+        # print("from output channel", self.history)

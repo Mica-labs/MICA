@@ -22,10 +22,10 @@ middleman:
 meta:
   type: ensemble agent
   description: You can select an agent to respond user's question.
-  contain:
+  contains:
     - middleman
   steps:
-    - middleman
+    - call: middleman
   
 main:
   steps:
