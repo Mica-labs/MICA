@@ -5,6 +5,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+#  Some parts of the code are from Rasa.
+#  Repo: https://github.com/rasa-customers/starterpack-retail-banking-en
+
 class Database:
     table_definitions = {
         "users": {
