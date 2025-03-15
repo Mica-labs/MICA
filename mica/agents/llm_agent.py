@@ -9,7 +9,7 @@ from mica.event import BotUtter, SetSlot, AgentFail, AgentComplete, FunctionCall
 from mica.exec_tool import SafePythonExecutor
 from mica.llm.openai_model import OpenAIModel
 from mica.tracker import Tracker
-from mica.utils import arg_format, replace_args_in_string, logger, safe_json_loads
+from mica.utils import arg_format, logger, safe_json_loads
 
 
 class LLMAgent(Agent):

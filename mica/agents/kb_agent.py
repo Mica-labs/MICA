@@ -90,17 +90,18 @@ class KBAgent(Agent):
 
         # Load documents if directory provided
         if files_dir and os.path.exists(files_dir):
-            for filename in os.listdir(files_dir):
-                filepath = os.path.join(files_dir, filename)
-                if filename.endswith('.pdf'):
-                    loader = PyPDFLoader(filepath)
-                    documents.extend(loader.load())
-                elif filename.endswith('.txt'):
-                    loader = TextLoader(filepath)
-                    documents.extend(loader.load())
-                elif filename.endswith('.csv'):
-                    loader = CSVLoader(filepath)
-                    documents.extend(loader.load())
+            for root, _, filenames in os.walk(files_dir):  # 递归遍历所有子目录
+                for filename in filenames:
+                    filepath = os.path.join(root, filename)
+                    if filename.endswith('.pdf'):
+                        loader = PyPDFLoader(filepath)
+                        documents.extend(loader.load())
+                    elif filename.endswith('.txt'):
+                        loader = TextLoader(filepath)
+                        documents.extend(loader.load())
+                    elif filename.endswith('.csv'):
+                        loader = CSVLoader(filepath)
+                        documents.extend(loader.load())
 
         # Load web content if URLs provided
         if web_urls:
@@ -110,6 +111,7 @@ class KBAgent(Agent):
         # Split documents into chunks
         if documents:
             texts = self.text_splitter.split_documents(documents)
+            print(texts)
             # Create vector store
             self.vector_store = FAISS.from_documents(texts, self.embeddings)
             logger.debug(f"Indexed {len(texts)} text chunks from {len(documents)} documents")
