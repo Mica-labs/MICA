@@ -3,11 +3,16 @@ import glob
 import json
 import os
 import sys
+import traceback
 
 import gradio as gr
 import yaml
 
+import mica
 from mica import parser
+from mica.agents.ensemble_agent import EnsembleAgent
+from mica.agents.flow_agent import FlowAgent
+from mica.agents.steps.call import Call
 from mica.bot import Bot
 
 import random
@@ -23,7 +28,7 @@ def generate_random_string(length=6):
     return ''.join(random.choice(letters) for i in range(length))
 
 
-def generate_bot(bot_name, yaml_input, code=None):
+async def generate_bot(bot_name, yaml_input, code, user_id):
     try:
         parsed_yaml = yaml.safe_load(yaml_input)
         # validate
@@ -34,7 +39,8 @@ def generate_bot(bot_name, yaml_input, code=None):
         parsed_agents = parser.parse_agents(parsed_yaml)
         bot = Bot.from_json(name=bot_name, data=parsed_agents, tool_code=code)
         gr.Info(f"Success generate bot {bot_name}", duration=3)
-        return bot
+        _, chatbot, user_id, tracker = await init_conversation(bot, [], user_id)
+        return bot, chatbot, user_id, tracker
     except AssertionError as e:
         msgs = [f"Error Type: {err.rule_name}, Message: {err.message}" for err in result]
         msgs_str = '\n'.join(msgs)
@@ -42,6 +48,33 @@ def generate_bot(bot_name, yaml_input, code=None):
                        f"Identified the following potential issues: {msgs_str}", duration=5)
     except yaml.YAMLError as e:
         raise gr.Error(f"A valid YAML structure is required.", duration=5)
+    except Exception as e:
+        tb = traceback.format_exc()
+        error_message = f"Unexpected error: {str(e)}\n\nTraceback:\n{tb}"
+        raise gr.Error(error_message, duration=5)
+
+
+async def init_conversation(bot: Bot, chatbot, user_id):
+    from mica.agents.steps.bot import Bot as BotStep
+    tracker = ""
+    main = bot.entrypoint
+    if main.steps:
+        for step in main.steps:
+            if isinstance(step, BotStep):
+                _, chatbot, user_id, tracker = await get_response("/init", chatbot, bot, user_id)
+            if isinstance(step, Call):
+                initial_agent = bot.agents[step.name]
+                if isinstance(initial_agent, EnsembleAgent):
+                    if initial_agent.steps is not None:
+                        for step in initial_agent.steps:
+                            if isinstance(step, BotStep):
+                                _, chatbot, user_id, tracker = await get_response("/init", chatbot, bot, user_id)
+                if isinstance(initial_agent, FlowAgent):
+                    for step in initial_agent.subflows[initial_agent.main_flow_name].steps:
+                        if isinstance(step, BotStep):
+                            _, chatbot, user_id, tracker = await get_response("/init", chatbot, bot, user_id)
+
+    return "", chatbot, user_id, tracker
 
 
 def save_bot(bot_name: str, agents: str, tools: str = None):
@@ -65,9 +98,9 @@ def save_bot(bot_name: str, agents: str, tools: str = None):
         raise gr.Error(f"Error creating folders or saving files: {str(e)}", duration=5)
 
 
-def load_bot(files):
+async def load_bot(files, chatbot, user_id):
     if len(files) == 0:
-        return None, "", "", ""
+        return None, "", "", "", "", user_id, ""
 
     try:
         tools = ""
@@ -88,12 +121,14 @@ def load_bot(files):
                             agents = f.read()
                 except Exception as e:
                     gr.Error(f"Cannot load file {file_path}: {str(e)}\n")
-
-        return generate_bot(bot_name, agents, tools), bot_name, agents, tools
+        bot, chatbot, user_id, tracker = await generate_bot(bot_name, agents, tools, user_id)
+        return bot, bot_name, agents, tools, chatbot, user_id, tracker
 
     except Exception as e:
         logger.error(f"Failed to load bot: {bot_name} from disk, {e}")
-        return None, "", "", ""
+        logger.error(traceback.format_exc())
+        gr.Error(f"Failed")
+        return None, "", "", "", "", user_id, ""
 
 
 async def get_response(message, history, bot, user_id):
@@ -104,8 +139,9 @@ async def get_response(message, history, bot, user_id):
     gradio_channel = GradioChannel(history)
     bot_response = await bot.handle_message(user_id, message, channel=gradio_channel)
     bot_message = "\n".join(bot_response)
+    if message == "/init":
+        message = ""
     await gradio_channel.send_message(bot_message, user=message)
-    # history.append((message, bot_message))
     return "", history, user_id, display_tracker_state(bot, user_id)
 
 
@@ -157,7 +193,7 @@ main:
   - call: meta
     schedule: priority
 """, label="Enter agents.yml", language="yaml", lines=15)
-                code_input = gr.Code(label="Enter tools.py", language="python", lines=10)
+                code_input = gr.Code(label="Enter tools.py", language="python", lines=10, value=None)
                 bot = gr.State(None)
 
             with gr.Column():
@@ -165,15 +201,15 @@ main:
                     submit_btn = gr.Button("Run")
                     save_btn = gr.Button("Save")
                 tracker = gr.Textbox(label="States", interactive=False, lines=1)
-                chatbot = gr.Chatbot(height=600)
+                chatbot = gr.Chatbot(height=600, layout="panel")
                 msg = gr.Textbox(label="You")
                 clear = gr.ClearButton([msg, chatbot], value="Clear the conversation")
                 user_id = gr.State("default")
 
             msg.submit(get_response, [msg, chatbot, bot, user_id], [msg, chatbot, user_id, tracker])
-            submit_btn.click(generate_bot, [bot_name, yaml_input, code_input], [bot])
+            submit_btn.click(generate_bot, [bot_name, yaml_input, code_input, user_id], [bot, chatbot, user_id, tracker])
             save_btn.click(save_bot, [bot_name, yaml_input, code_input])
-            file_loader.change(load_bot, inputs=file_loader, outputs=[bot, bot_name, yaml_input, code_input])
+            file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, chatbot, user_id, tracker])
 
     import uvloop
     uvloop.install()

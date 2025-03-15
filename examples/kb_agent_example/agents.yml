@@ -1,24 +1,18 @@
 kb:
-  type: KBAgent
+  type: kb agent
   faq:
-    Are you a robot?: Yes, I'm your virtual assistant.
+    what can you do?: I can help you answer some common tax questions.
     Thanks: Bye.
   web:
-    - http://url
-  file: /path/to/kb/files
-
-fallback_agent:
-  type: LLMAgent
-  description: This is an agent that handles fallback responses.
-  prompt: "You can provide fallback responses based on the conversation history. At the end of each response, add a sentence: ‘You can try asking in a different way."
-  
+    - https://www.irs.gov/faqs
+  file: ./examples/kb_agent_example/database_file
 
 meta:
-  type: EnsembleAgent
+  type: ensemble agent
   description: You can select an agent to response user's question.
-  fallback: fallback_agent
+  contains: []
   steps:
-    - bot: Hello, I can answer your questions.
+    - bot: Hello, I can help you answer some common tax questions. Feel free to ask me!
 
 main:
   steps:
