@@ -268,7 +268,7 @@ class EnsembleAgentValidator(AgentValidator):
 
     def __init__(self):
         super().__init__()
-        self.required_keys = {'type', 'contains'}
+        self.required_keys = {'type'}
         self.valid_keys = {'description', 'args', 'steps', 'type', 'contains', 'fallback', 'exit'}
         self.type_specs = {
             "type": TypeSpec(Text),
@@ -324,7 +324,7 @@ class KBAgentValidator(AgentValidator):
             "type": TypeSpec(Text),
             "web": TypeSpec(List),
             "file": TypeSpec(Text),
-            "faq": TypeSpec(List)
+            "faq": TypeSpec(Dict)
         }
 
     def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
@@ -346,7 +346,7 @@ class FlowAgentValidator(AgentValidator):
         self.valid_keys = {'description', 'args', 'type', 'steps', 'fallback'}
         self.step_schema = {
             'keywords': {'bot', 'user', 'if', 'else if', 'else', 'then', 'tries',
-                         'begin', 'end', 'call', 'next', 'label', 'return'},
+                         'begin', 'end', 'call', 'next', 'label', 'return', 'set', 'args'},
             'string_literals': {'begin', 'end', 'user'},
             'compound_keys': {'bot', 'if', 'begin'}
         }

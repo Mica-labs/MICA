@@ -11,6 +11,7 @@ from mica.agents.steps.condition import If, ElseIf, Else
 from mica.agents.steps.label import Label
 from mica.agents.steps.next import Next
 from mica.agents.steps.step_loader import StepLoader
+from mica.agents.steps.subflow import Subflow
 from mica.agents.steps.termination import Return
 from mica.agents.steps.user import User
 from mica.agents.llm_agent import LLMAgent
@@ -30,7 +31,7 @@ class FlowAgent(Agent):
                  name: Optional[Text] = None,
                  description: Optional[Text] = None,
                  config: Optional[Dict[Text, Any]] = None,
-                 subflows: Optional[Dict] = None,
+                 subflows: Optional[Dict[Text, Subflow]] = None,
                  main_flow_name: Optional[Text] = None,
                  args: Optional[List[Any]] = None,
                  llm_model: Optional[Any] = None,

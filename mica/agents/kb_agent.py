@@ -73,7 +73,7 @@ class KBAgent(Agent):
 
         Args:
             faq_data: FAQ dict
-            docs_dir: Directory containing documents (PDF, TXT)
+            files_dir: Directory containing documents (PDF, TXT, CSV)
             web_urls: List of web URLs to scrape
         """
         documents = []
