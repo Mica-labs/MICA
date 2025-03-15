@@ -55,7 +55,7 @@ class Bot(object):
         self.tools = tools
         self._func_args_config = {name: {} for name in self.tools.functions.keys()} or {}
         self._global_args = list(chain.from_iterable(
-            a.contains_args() for a in agents.values() if isinstance(a, EnsembleAgent)
+            a.contains_args() or [] for a in agents.values() if isinstance(a, EnsembleAgent)
         ))
 
     @classmethod
