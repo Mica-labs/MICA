@@ -78,14 +78,6 @@ class LLMAgent(Agent):
                     is_end = True
                     return is_end, []
 
-                if tool_rst['stdout'] is not None and len(tool_rst['stdout']) > 0:
-                    tracker.set_conv_history(self.name, {"role": "tool",
-                                                         "tool_call_id": event.call_id,
-                                                         "name": event.function_name,
-                                                         "content": tool_rst['stdout']
-                                                         })
-                    is_end, sec_call_result = await self.run(tracker, is_tool=True, **kwargs)
-                    final_result.extend(sec_call_result)
                 if tool_rst['result'] is not None:
                     tool_rst_states = tool_rst['result']
                     if isinstance(tool_rst_states, Text):
@@ -101,6 +93,14 @@ class LLMAgent(Agent):
                                 tracker.set_arg(slot_info.get("flow_name"), slot_info.get("arg_name"), setslot.value)
                             if evt.get('text') is not None:
                                 final_result.append(BotUtter.from_dict(evt))
+                if tool_rst['stdout'] is not None and len(tool_rst['stdout']) > 0:
+                    tracker.set_conv_history(self.name, {"role": "tool",
+                                                         "tool_call_id": event.call_id,
+                                                         "name": event.function_name,
+                                                         "content": tool_rst['stdout']
+                                                         })
+                    is_end, sec_call_result = await self.run(tracker, is_tool=True, **kwargs)
+                    final_result.extend(sec_call_result)
 
             if isinstance(event, SetSlot):
                 tracker.set_arg(self.name, event.slot_name, event.value)

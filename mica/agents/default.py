@@ -33,10 +33,8 @@ class DefaultFallbackAgent(LLMAgent):
     @classmethod
     def create(cls,
                config: Optional[Dict[Text, Any]] = None,
-               prompt: Optional[Text] = None,
-               args: Optional[List[Any]] = None,
-               uses: Optional[List[Text]] = None,
                llm_model: Optional[Any] = None,
+               prompt: Optional[Text] = None,
                **kwargs
                ):
         if kwargs.get("server") and kwargs.get("headers"):
@@ -46,7 +44,7 @@ class DefaultFallbackAgent(LLMAgent):
             config["headers"] = kwargs.get("headers")
         name = "DefaultFallbackAgent"
         description = "This agent can generate a default fallback response."
-        return cls(name, description, config, prompt, args, uses, llm_model)
+        return cls(name, description, config=config, llm_model=llm_model, prompt=prompt)
 
     def _generate_agent_prompt(self, tracker: Tracker, is_tool=False):
         prompt = [{'role': 'system',
@@ -61,6 +59,9 @@ class DefaultFallbackAgent(LLMAgent):
         return prompt
 
     async def run(self, tracker: Tracker, is_tool=False, **kwargs):
+        # directly output self.prompt content
+        if self.prompt is not None:
+            return True, [BotUtter(text=self.prompt, provider=self.name)]
         prompt = self._generate_agent_prompt(tracker)
         logger.debug("Default fallback agent prompt: \n%s", json.dumps(prompt, indent=2, ensure_ascii=False))
         llm_result = await self.llm_model.generate_message(prompt, tracker=tracker,

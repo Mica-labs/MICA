@@ -105,7 +105,7 @@ class EnsembleAgent(Agent):
             if next_agent in self.contains:
                 agent_result.append(FollowUpAgent(provider=self.name, next_agent=next_agent))
                 return is_end, agent_result
-            else:
+            elif isinstance(next_agent, str):
                 agent_result.append(BotUtter(text=next_agent, provider=self.name))
                 return True, agent_result
 
