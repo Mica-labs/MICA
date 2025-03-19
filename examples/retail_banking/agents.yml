@@ -129,9 +129,9 @@ add_payee:
   type: llm agent
   description: Add a new payee to the user’s account
   prompt: |
-	1.	Prompt the user sequentially for payee_name, account_number, payee_type (person/business), and reference (a short note to identify the payee or purpose).
-	2.	Confirm whether all the provided information is correct. If correct, call “action_add_payee”.
-	3.	If the action is successful, respond with ”{payee_name} has been successfully added to your list of authorized payees.”
+    1.	Prompt the user sequentially for payee_name, account_number, payee_type (person/business), and reference (a short note to identify the payee or purpose).
+    2.	Confirm whether all the provided information is correct. If correct, call “action_add_payee”.
+    3.	If the action is successful, respond with ”{payee_name} has been successfully added to your list of authorized payees.”
     Otherwise, respond with “I’m sorry, but there was an error adding {payee_name}. Please try again later or contact Customer Support.”
   args:
     - username
