@@ -8,7 +8,6 @@ import traceback
 import gradio as gr
 import yaml
 
-import mica
 from mica import parser
 from mica.agents.ensemble_agent import EnsembleAgent
 from mica.agents.flow_agent import FlowAgent

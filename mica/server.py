@@ -115,4 +115,4 @@ async def chat_ws(websocket: WebSocket, bot):
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", port=5001, host="0.0.0.0", log_level="info")
+    uvicorn.run("mica.server:app", port=5001, host="0.0.0.0", log_level="info")
