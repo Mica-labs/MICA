@@ -127,7 +127,7 @@ async def load_bot(files, chatbot, user_id):
         logger.error(f"Failed to load bot: {bot_name} from disk, {e}")
         logger.error(traceback.format_exc())
         gr.Error(f"Failed")
-        return None, "", "", "", "", user_id, ""
+        return None, bot_name or "", agents or "", tools or "", "", user_id, ""
 
 
 async def get_response(message, history, bot, user_id):
@@ -161,7 +161,7 @@ if __name__ == '__main__':
     with gr.Blocks(theme=gr.themes.Base()) as demo:
         with gr.Row():
             with gr.Column():
-                file_loader = gr.FileExplorer(root_dir="./examples", glob="*", label="Open")
+                file_loader = gr.FileExplorer(root_dir="./examples", glob="**/*.*", label="Open")
                 bot_name = gr.Textbox(label="Enter Bot Name", lines=1, value="Default bot")
                 yaml_input = gr.Code(value="""book_restaurant:
   type: llm agent
@@ -208,7 +208,7 @@ main:
             msg.submit(get_response, [msg, chatbot, bot, user_id], [msg, chatbot, user_id, tracker])
             submit_btn.click(generate_bot, [bot_name, yaml_input, code_input, user_id], [bot, chatbot, user_id, tracker])
             save_btn.click(save_bot, [bot_name, yaml_input, code_input])
-            file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, chatbot, user_id, tracker])
+            file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, chatbot, user_id, tracker], trigger_mode="once", show_progress="hidden")
 
     import uvloop
     uvloop.install()

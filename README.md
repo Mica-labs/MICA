@@ -60,10 +60,6 @@ Monitor the conversation state and agent arguments in real-time.
 **6. Local Deployment**:
 Deploy your bot as a service on your own infrastructure.
 
-## Documentation
-
-For detailed instructions and advanced usage, refer to our [comprehensive documentation](https://mica-labs.github.io/).
-
 ## Using MICA
 
 ### Local GUI Frontend
