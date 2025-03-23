@@ -134,6 +134,8 @@ class LLMAgent(Agent):
                 if status is not None and status == "quit":
                     is_end = False
                     event = AgentFail(provider=self.name)
+                    if bot_reply is not None:
+                        final_result.append(BotUtter(bot_reply, metadata=self.name))
                 elif status == "complete":
                     event = AgentComplete(provider=self.name)
                     tracker.clear_conv_history(self.name)
@@ -170,25 +172,26 @@ class LLMAgent(Agent):
                     valid_states_info += f"{arg_name}: {arg_value}, "
                 valid_states_info += ")\n"
 
-        system = f"{self.prompt}\n" \
-                 f"Respond STRICTLY according to the task description above.\n" \
-                 f"Try to clarify user's intent instead of quit directly.\n" \
-                 f"You already known these data: {valid_states_info}.\n" \
-                 f"Please reply in JSON format. There are several response scenarios: \n" \
-                 f"- If a user is asking about a topic that is not handled by the current agent, for example: " \
+        system = f"TASK: \n{self.prompt}\n" \
+                 f"RULES:\n1. Respond STRICTLY according to the task description above.\n" \
+                 f"2. Try to clarify user's intent instead of quit directly.\n" \
+                 f"3. Unless specified in the task, do not make assumptions about any information the user has not provided.\n" \
+                 f"INFORMATION: \n{valid_states_info}.\n" \
+                 f"OUTPUT: \n" \
+                 f"1. If a user is asking about a topic that is not handled by the current agent, for example: " \
                  f"{agent_names} or user want to quit, output: " \
                  f"{{\"bot\": \"\", \"status\": \"quit\"}}\n" \
-                 "- Once all the data has been collected, " \
+                 "2. Once all the data has been collected, " \
                  "end the current conversation directly: {\"status\": \"complete\"}.\n"
 
         if self.args is not None and len(self.args) > 0:
             args = ", ".join(self.args)
-            system += f"- If the user mentions the following data in the conversation: {args}, " \
-                 f"display them in the response. Example: {{\"data\": {{\"{self.args[0]}\": xxx, ...}}, " \
+            system += f"3. If the user mentions: {args}, " \
+                 f"extract them in the output. Example: {{\"data\": {{\"{self.args[0]}\": xxx if exists, ...}}, " \
                  f"\"bot\": \"your reply\", \"status\": \"running\"}}\n"
         else:
-            system += f"- Typically, the output should be: {{\"bot\": \"Your reply\", \"status\": \"running\"}}\n"
-        system += "Only output JSON structure. Do not output other content. Do not use Markdown format."
+            system += f"3. Generally output: {{\"bot\": \"Your reply\", \"status\": \"running\"}}\n"
+        system += "Only output JSON structure. Do not output any other content. Do not use Markdown format."
 
         prompt = [{"role": "system", "content": system}]
         history = tracker.get_or_create_agent_conv_history(self.name)
