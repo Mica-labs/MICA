@@ -1,10 +1,10 @@
-FROM hub2.20240220.xyz/python:3.9
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple fastapi gradio ruamel.yaml jsonpath langchain-community mysql-connector-python
+FROM python:3.9
+COPY requirements.txt /requirements.txt
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r /requirements.txt
 
-COPY docker/run.sh /usr/bin/run.sh
-COPY llmChatbot /llmChatbot
-
-WORKDIR /llmChatbot
+COPY /mica /mica
+WORKDIR /mica
 ENV PYTHONPATH=/
-EXPOSE 5000
-CMD ["bash", "/usr/bin/run.sh"]
+
+EXPOSE 5001
+CMD ["python", "-u", "server.py"]
