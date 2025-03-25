@@ -107,17 +107,38 @@ class LLMAgent(Agent):
             if isinstance(event, AgentFail):
                 is_end = False
             if isinstance(event, BotUtter):
-                match = re.search(r'\{.*\}', event.text, re.DOTALL)
-                if match:
-                    json_data = match.group()
+                try:
                     try:
-                        # 尝试加载 JSON 数据
-                        response = json.loads(json_data)
-                    except json.JSONDecodeError as e:
-                        logger.error(f"JSON decode error: {e}")
-                        continue
-                else:
-                    logger.error("No JSON data found, directly output event text: %s", event.text)
+                        response = json.loads(event.text)
+                    except json.JSONDecodeError:
+                        # Only look for JSON objects starting with '{'
+                        json_starts = [m.start() for m in re.finditer(r'\{', event.text)]
+                        
+                        for start in json_starts:
+                            stack = []
+                            found_end = False
+                            
+                            for i, char in enumerate(event.text[start:], start):
+                                if char == '{':
+                                    stack.append(char)
+                                elif char == '}':
+                                    stack.pop()
+                                    if not stack:  # Found matching closing bracket
+                                        json_candidate = event.text[start:i+1]
+                                        try:
+                                            response = json.loads(json_candidate)
+                                            found_end = True
+                                            break
+                                        except json.JSONDecodeError:
+                                            continue  # Try next possible ending position
+                            
+                            if found_end:
+                                break
+                        else:  # No valid JSON found
+                            raise json.JSONDecodeError("No valid JSON object found", event.text, 0)
+                            
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON extraction failed: {e}. Text: {event.text}")
                     response = {
                         "bot": event.text
                     }
