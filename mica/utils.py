@@ -175,9 +175,9 @@ def parse_and_evaluate_expression(expression, tracker=None, flow_name=None):
                 if len(parts) == 3:
                     left, operator, right = parts[0].strip(), parts[1], parts[2].strip()
                     arg_info = arg_format(left, flow_name)
-                    left_val = tracker.get_arg(agent_name=arg_info["flow_name"], arg_name=arg_info["arg_name"])
+                    left_val, _ = tracker.get_arg(agent_name=arg_info["flow_name"], arg_name=arg_info["arg_name"])
                     arg_info = arg_format(right, flow_name)
-                    right_val = tracker.get_arg(agent_name=arg_info["flow_name"], arg_name=arg_info["arg_name"])
+                    right_val, _ = tracker.get_arg(agent_name=arg_info["flow_name"], arg_name=arg_info["arg_name"])
                     parsed_expression.append(f"{left_val} {operator} {right_val}")
                 i += len(token)
             else:
@@ -240,7 +240,10 @@ def replace_args_in_string(input_str, flow_name, tracker):
     def replace_match(match):
         arg = match.group(1)
         arg_info = arg_format(arg, flow_name)
-        return str(tracker.get_arg(arg_info["flow_name"], arg_info["arg_name"]))
+        value, exist = tracker.get_arg(arg_info["flow_name"], arg_info["arg_name"])
+        if not exist or value is None:
+            return ""
+        return str(value)
 
     # Replace all occurrences of the pattern
     result = pattern.sub(replace_match, input_str)
