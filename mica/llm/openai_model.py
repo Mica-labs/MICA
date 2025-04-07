@@ -21,7 +21,7 @@ class NoValidRequestHeader(Exception):
 class OpenAIModel(BaseModel):
     def __init__(self,
                  model: Optional[Text] = "gpt-4",
-                 temperature: Optional[float] = 0.2,
+                 temperature: Optional[float] = 0.0,
                  top_p: Optional[float] = 0.8,
                  presence_penalty: Optional[float] = 0.1,
                  frequency_penalty: Optional[float] = 0.1,
