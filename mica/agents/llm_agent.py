@@ -76,7 +76,7 @@ class LLMAgent(Agent):
                 logger.debug(f"Execute function: {event.function_name}, get result: {tool_rst}")
                 if tool_rst['status'] == 'error':
                     is_end = True
-                    return is_end, []
+                    return is_end, [BotUtter("function call ["+event.function_name+"] error: "+tool_rst['error'], provider=self.name)]
 
                 if tool_rst['result'] is not None:
                     tool_rst_states = tool_rst['result']
@@ -202,7 +202,7 @@ class LLMAgent(Agent):
                  f"1. If a user is asking about a topic that is not handled by the current agent, for example: " \
                  f"{agent_names} or user want to quit, output: " \
                  f"{{\"bot\": \"\", \"status\": \"quit\"}}\n" \
-                 "2. Once all the data has been collected, " \
+                 "2. Once the TASK has been completed, " \
                  "end the current conversation directly: {\"status\": \"complete\"}.\n"
 
         if self.args is not None and len(self.args) > 0:
