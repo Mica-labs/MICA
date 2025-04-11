@@ -76,7 +76,7 @@ class LLMAgent(Agent):
                 logger.debug(f"Execute function: {event.function_name}, get result: {tool_rst}")
                 if tool_rst['status'] == 'error':
                     is_end = True
-                    return is_end, []
+                    return is_end, [BotUtter("function call ["+event.function_name+"] error: "+tool_rst['error'], provider=self.name)]
 
                 if tool_rst['result'] is not None:
                     tool_rst_states = tool_rst['result']
