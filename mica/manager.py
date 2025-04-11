@@ -36,6 +36,7 @@ class Manager:
             msgs_str = '\n'.join(msgs)
             logger.error(f"Did not pass the validation. "
                          f"Identified the following potential issues: {msgs_str}")
+            raise Exception(msgs_str)
 
     # @classmethod
     # def load(cls, path: Text,
