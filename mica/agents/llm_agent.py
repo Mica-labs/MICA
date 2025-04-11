@@ -158,6 +158,7 @@ class LLMAgent(Agent):
                     if bot_reply is not None:
                         final_result.append(BotUtter(bot_reply, metadata=self.name))
                 elif status == "complete":
+                    is_end = False
                     event = AgentComplete(provider=self.name)
                     tracker.clear_conv_history(self.name)
 
@@ -193,17 +194,17 @@ class LLMAgent(Agent):
                     valid_states_info += f"{arg_name}: {arg_value}, "
                 valid_states_info += ")\n"
 
-        system = f"TASK: \n{self.prompt}\n" \
-                 f"RULES:\n1. Respond STRICTLY according to the task description above.\n" \
+        system = f"You can talk to the user and act according to the instruction below: \n{self.prompt}\n" \
+                 f"## RULES\n1. Respond STRICTLY according to the instruction above.\n" \
                  f"2. Try to clarify user's intent instead of quit directly.\n" \
                  f"3. Unless specified in the task, do not make assumptions about any information the user has not provided.\n" \
-                 f"INFORMATION: \n{valid_states_info}.\n" \
-                 f"OUTPUT: \n" \
-                 f"1. If a user is asking about a topic that is not handled by the current agent, for example: " \
+                 f"## INFORMATION\n{valid_states_info}.\n" \
+                 f"## OUTPUT\n" \
+                 f"1. If a user's intent is unrelated to the current conversation and instruction, for example: " \
                  f"{agent_names} or user want to quit, output: " \
                  f"{{\"bot\": \"\", \"status\": \"quit\"}}\n" \
-                 "2. Once the TASK has been completed, " \
-                 "end the current conversation directly: {\"status\": \"complete\"}.\n"
+                 "2. Based on the conversation history, once the instruction ends, directly output: " \
+                 "{\"status\": \"complete\"}\n"
 
         if self.args is not None and len(self.args) > 0:
             args = ", ".join(self.args)
@@ -213,6 +214,8 @@ class LLMAgent(Agent):
         else:
             system += f"3. Generally output: {{\"bot\": \"Your reply\", \"status\": \"running\"}}\n"
         system += "Only output JSON structure. Do not output any other content. Do not use Markdown format."
+
+        system += f"## CONVERSATION HISTORY\n {tracker.get_history_str()}"
 
         prompt = [{"role": "system", "content": system}]
         history = tracker.get_or_create_agent_conv_history(self.name)
@@ -235,9 +238,6 @@ class LLMAgent(Agent):
             if isinstance(tracker.events[i], BotUtter):
                 last_bot_response = tracker.events[i].text
                 break
-        print("!@#!@#!@#", last_bot_response)
-        print("!@$!@#!@#", last_agent_response)
-        print("tracker", tracker.events)
         return last_agent_response != last_bot_response
 
     def _generate_function_prompt(self,

@@ -109,7 +109,7 @@ class Tracker(object):
             if isinstance(event, BotUtter):
                 conversation_history += f"{event.metadata or 'Bot'}: {event.text}\n"
             if isinstance(event, AgentFail):
-                conversation_history += f"<agent \'{event.provider}\' failed to respond.>"
+                conversation_history += f"<agent \'{event.provider}\' failed to respond.>\n"
 
         return conversation_history
 
