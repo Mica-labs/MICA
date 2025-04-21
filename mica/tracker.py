@@ -175,6 +175,8 @@ class Tracker(object):
         return self.args.get(agent_name)
 
     def get_arg(self, agent_name, arg_name) -> Tuple[Any, bool]:
+        if arg_name == "_user_input":
+            return self.latest_message.text, True
         if agent_name not in self.args and agent_name not in self.func_args:
             logger.error(f"Cannot find agent: {agent_name}.")
             return None, False
