@@ -10,6 +10,8 @@ from mica.llm.openai_model import OpenAIModel
 from mica.tracker import Tracker
 from mica.utils import logger
 
+from mica.llm.model import Model
+
 RETRY_COUNT = '_retry_count'
 
 # TODO: analyze policy, from natural language transfer to parameters here
@@ -24,7 +26,8 @@ class DefaultFallbackAgent(LLMAgent):
                  llm_model: Optional[Any] = None,
                  **kwargs
                  ):
-        self.llm_model = llm_model or OpenAIModel.create(config)
+        #self.llm_model = llm_model or OpenAIModel.create(config)
+        self.llm_model = llm_model or Model.create(config)
         self.prompt = prompt
         self.args = args
         self.uses = uses
@@ -90,7 +93,8 @@ class DefaultExitAgent(LLMAgent):
                  exit_response: Optional[Text] = None,
                  **kwargs
                  ):
-        self.llm_model = llm_model or OpenAIModel.create(config)
+        #self.llm_model = llm_model or OpenAIModel.create(config)
+        self.llm_model = llm_model or Model.create(config)
         self.prompt = prompt
         self.args = args
         self.run_flag = False

@@ -11,3 +11,4 @@ uvloop
 ruamel.yaml
 jsonpath
 mysql-connector-python
+langchain-huggingface

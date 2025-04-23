@@ -6,26 +6,30 @@ import requests as requests
 import asyncio
 import httpx
 
-from mica.constants import OPENAI_API_KEY
+from mica.constants import API_KEY
 from mica.event import BotUtter, SetSlot, AgentComplete, AgentFail, FunctionCall
 from mica.llm.base import BaseModel
-from mica.llm.constants import OPENAI_CHAT_URL
+from mica.llm.constants import CHAT_URL
 from mica.tracker import Tracker
 from mica.utils import logger
+
+
+class NoValidApiUrl(Exception):
+    """Exception that can be raised when there is no valid api url provided"""
 
 
 class NoValidRequestHeader(Exception):
     """Exception that can be raised when valid request headers are not provided."""
 
 
-class OpenAIModel(BaseModel):
+class AnthropicModel(BaseModel):
     def __init__(
         self,
-        model: Optional[Text] = "gpt-4",
+        model: Optional[Text] = None,
+        anthropic_version: Optional[Text] = None,
         temperature: Optional[float] = 0.2,
         top_p: Optional[float] = 0.8,
-        presence_penalty: Optional[float] = 0.1,
-        frequency_penalty: Optional[float] = 0.1,
+        top_k: Optional[float] = 0.8,
         max_tokens: Optional[int] = 512,
         headers: Optional[Any] = None,
         server: Optional[Text] = None,
@@ -35,21 +39,25 @@ class OpenAIModel(BaseModel):
         self.model = model
         self.temperature = temperature
         self.top_p = top_p
-        self.presence_penalty = presence_penalty
-        self.frequency_penalty = frequency_penalty
+        self.top_k = top_k
         self.max_tokens = max_tokens
-        self.server = server or OPENAI_CHAT_URL
         self.headers = headers or {}
         self.client = httpx.AsyncClient(timeout=10)
 
+        self.server = server
+        if self.server is None:
+            raise NoValidApiUrl()
+
         if headers is None:
             if api_key is None:
-                api_key = os.getenv(OPENAI_API_KEY)
+                api_key = os.getenv(API_KEY)
             if api_key is None:
                 raise NoValidRequestHeader()
+
             self.headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}",
+                "content-type": "application/json",
+                "anthropic-version": f"{anthropic_version}",
+                "x-api-key": f"{api_key}",
             }
 
     @classmethod
@@ -67,27 +75,40 @@ class OpenAIModel(BaseModel):
         **kwargs: Any,
     ) -> List:
         formatted_prompts = self._generate_prompts(prompts, functions)
+        print("Prompts: ", json.dumps(formatted_prompts, indent=4))
         llm_result = []
 
-        logger.debug(f"url: {self.server}, headers: {self.headers}")
+        logger.debug(
+            f"url: {self.server}, headers: {self.headers}, data: {formatted_prompts}"
+        )
         response = await self.client.post(
             self.server, headers=self.headers, json=formatted_prompts
         )
         logger.debug("GPT response status: %s", response.status_code)
         if response.status_code == 200:
             response_json = response.json()
+            print("Response: ", json.dumps(response_json, indent=4))
+            # print("Response: ", response_json)
             if (
                 response_json is not None
-                and response_json.get("choices") is not None
-                and len(response_json.get("choices")) > 0
+                and response_json.get("content") is not None
+                and len(response_json.get("content")) > 0
             ):
-                message: Dict = response_json.get("choices")[0].get("message")
+                message = next(
+                    (
+                        msg
+                        for msg in response_json.get("content", [])
+                        if msg.get("type") == "text"
+                    ),
+                    None,
+                )
+                # message: Dict = response_json.get("content")[0]
                 logger.debug(
                     "GPT message: \n%s",
                     json.dumps(message, indent=2, ensure_ascii=False),
                 )
-                if message.get("content") is not None:
-                    next_response_text = message.get("content")
+                if message.get("text") is not None:
+                    next_response_text = message.get("text")
                     llm_result.append(
                         BotUtter(
                             text=next_response_text,
@@ -95,12 +116,15 @@ class OpenAIModel(BaseModel):
                             additional=message,
                         )
                     )
-
-                if message.get("tool_calls") is not None:
-                    for func in message["tool_calls"]:
-                        func_details = func["function"]
-                        name = func_details.get("name")
-                        args = json.loads(func_details.get("arguments"))
+                tool_use = []
+                for item in response_json.get("content"):
+                    if item.get("type") == "tool_use":
+                        tool_use.append(item)
+                # print("Tools: ", tool_use)
+                if tool_use is not None:
+                    for func in tool_use:
+                        name = func.get("name")
+                        args = json.loads(func.get("input"))
                         call_id = func.get("id")
                         # if func.get("name") == "extract_data":
                         #     args = json.loads(func.get("arguments"))
@@ -136,15 +160,26 @@ class OpenAIModel(BaseModel):
             "messages": prompts,
             "temperature": self.temperature,
             "top_p": self.top_p,
-            "presence_penalty": self.presence_penalty,
-            "frequency_penalty": self.frequency_penalty,
             "max_tokens": self.max_tokens,
         }
+        data["system"] = prompts[0]["content"]
+        data["messages"].pop(0)
         if functions is not None and len(functions) > 0:
             tools = []
             for function in functions:
-                tools.append({"type": "function", "function": function})
+                # print("Function: ", json.dumps(function, indent=4))
+                tools.append(
+                    {
+                        "name": function.get("name"),
+                        "input_schema": {
+                            "type": function.get("parameters").get("type"),
+                            "properties": function.get("parameters").get("properties"),
+                            "required": function.get("parameters").get("required"),
+                        },
+                    }
+                )
+                # tools.append({"type": "function", "function": function})
             data["tools"] = tools
-            data["tool_choice"] = "auto"
+            data["tool_choice"] = {"type": "auto"}
 
         return data

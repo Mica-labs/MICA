@@ -6,22 +6,26 @@ import requests as requests
 import asyncio
 import httpx
 
-from mica.constants import OPENAI_API_KEY
+from mica.constants import API_KEY
 from mica.event import BotUtter, SetSlot, AgentComplete, AgentFail, FunctionCall
 from mica.llm.base import BaseModel
-from mica.llm.constants import OPENAI_CHAT_URL
+from mica.llm.constants import CHAT_URL
 from mica.tracker import Tracker
 from mica.utils import logger
+
+
+class NoValidApiUrl(Exception):
+    """Exception that can be raised when there is no valid api url provided"""
 
 
 class NoValidRequestHeader(Exception):
     """Exception that can be raised when valid request headers are not provided."""
 
 
-class OpenAIModel(BaseModel):
+class Model(BaseModel):
     def __init__(
         self,
-        model: Optional[Text] = "gpt-4",
+        model: Optional[Text] = None,
         temperature: Optional[float] = 0.2,
         top_p: Optional[float] = 0.8,
         presence_penalty: Optional[float] = 0.1,
@@ -38,15 +42,19 @@ class OpenAIModel(BaseModel):
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.max_tokens = max_tokens
-        self.server = server or OPENAI_CHAT_URL
         self.headers = headers or {}
         self.client = httpx.AsyncClient(timeout=10)
 
+        self.server = server or os.getenv(CHAT_URL)
+        if self.server is None:
+            raise NoValidApiUrl()
+
         if headers is None:
             if api_key is None:
-                api_key = os.getenv(OPENAI_API_KEY)
+                api_key = os.getenv(API_KEY)
             if api_key is None:
                 raise NoValidRequestHeader()
+
             self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key}",
@@ -67,6 +75,7 @@ class OpenAIModel(BaseModel):
         **kwargs: Any,
     ) -> List:
         formatted_prompts = self._generate_prompts(prompts, functions)
+        print("DN1:", formatted_prompts)
         llm_result = []
 
         logger.debug(f"url: {self.server}, headers: {self.headers}")
