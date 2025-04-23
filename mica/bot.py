@@ -151,7 +151,8 @@ class Bot(object):
                     if isinstance(agent.exit_agent, Text):
                         if agent.exit_agent == "default":
                             exit_agent = DefaultExitAgent.create(
-                                name=f"DefaultExitAgent_{agent.name}"
+                                name=f"DefaultExitAgent_{agent.name}",
+                                llm_model=llm_model,
                             )
                             agents[exit_agent.name] = exit_agent
                         else:

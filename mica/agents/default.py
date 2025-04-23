@@ -12,21 +12,23 @@ from mica.utils import logger
 
 from mica.llm.model import Model
 
-RETRY_COUNT = '_retry_count'
+RETRY_COUNT = "_retry_count"
+
 
 # TODO: analyze policy, from natural language transfer to parameters here
 class DefaultFallbackAgent(LLMAgent):
-    def __init__(self,
-                 name: Optional[Text] = None,
-                 description: Optional[Text] = None,
-                 config: Optional[Dict[Text, Any]] = None,
-                 prompt: Optional[Text] = None,
-                 args: Optional[List[Any]] = None,
-                 uses: Optional[List[Any]] = None,
-                 llm_model: Optional[Any] = None,
-                 **kwargs
-                 ):
-        #self.llm_model = llm_model or OpenAIModel.create(config)
+    def __init__(
+        self,
+        name: Optional[Text] = None,
+        description: Optional[Text] = None,
+        config: Optional[Dict[Text, Any]] = None,
+        prompt: Optional[Text] = None,
+        args: Optional[List[Any]] = None,
+        uses: Optional[List[Any]] = None,
+        llm_model: Optional[Any] = None,
+        **kwargs,
+    ):
+        # self.llm_model = llm_model or OpenAIModel.create(config)
         self.llm_model = llm_model or Model.create(config)
         self.prompt = prompt
         self.args = args
@@ -34,12 +36,13 @@ class DefaultFallbackAgent(LLMAgent):
         super().__init__(name, description, config, prompt, args, uses, llm_model)
 
     @classmethod
-    def create(cls,
-               config: Optional[Dict[Text, Any]] = None,
-               llm_model: Optional[Any] = None,
-               prompt: Optional[Text] = None,
-               **kwargs
-               ):
+    def create(
+        cls,
+        config: Optional[Dict[Text, Any]] = None,
+        llm_model: Optional[Any] = None,
+        prompt: Optional[Text] = None,
+        **kwargs,
+    ):
         if kwargs.get("server") and kwargs.get("headers"):
             if config is None:
                 config = {}
@@ -50,15 +53,21 @@ class DefaultFallbackAgent(LLMAgent):
         return cls(name, description, config=config, llm_model=llm_model, prompt=prompt)
 
     def _generate_agent_prompt(self, tracker: Tracker, is_tool=False):
-        prompt = [{'role': 'system',
-                   'content': 'You are an intelligent chatbot. '
-                              'Please generate a bot response according to the conversation I provide. '
-                              'What you generate is that you cannot understand. For example, you can say: '
-                              "\"I'm sorry, I didn't understand that. Can you please rephrase?\""},
-                  {'role': 'user',
-                   'content': f"Conversation: \n"
-                              f"{tracker.get_history_str()}\n"
-                              f"Bot: "}]
+        prompt = [
+            {
+                "role": "system",
+                "content": "You are an intelligent chatbot. "
+                "Please generate a bot response according to the conversation I provide. "
+                "What you generate is that you cannot understand. For example, you can say: "
+                "\"I'm sorry, I didn't understand that. Can you please rephrase?\"",
+            },
+            {
+                "role": "user",
+                "content": f"Conversation: \n"
+                f"{tracker.get_history_str()}\n"
+                f"Bot: ",
+            },
+        ]
         return prompt
 
     async def run(self, tracker: Tracker, is_tool=False, **kwargs):
@@ -66,9 +75,13 @@ class DefaultFallbackAgent(LLMAgent):
         if self.prompt is not None:
             return True, [BotUtter(text=self.prompt, provider=self.name)]
         prompt = self._generate_agent_prompt(tracker)
-        logger.debug("Default fallback agent prompt: \n%s", json.dumps(prompt, indent=2, ensure_ascii=False))
-        llm_result = await self.llm_model.generate_message(prompt, tracker=tracker,
-                                                           provider=self.name)
+        logger.debug(
+            "Default fallback agent prompt: \n%s",
+            json.dumps(prompt, indent=2, ensure_ascii=False),
+        )
+        llm_result = await self.llm_model.generate_message(
+            prompt, tracker=tracker, provider=self.name
+        )
         is_end = True
         final_result = []
         for event in llm_result:
@@ -79,21 +92,22 @@ class DefaultFallbackAgent(LLMAgent):
 
 
 class DefaultExitAgent(LLMAgent):
-    def __init__(self,
-                 name: Optional[Text] = None,
-                 description: Optional[Text] = None,
-                 config: Optional[Dict[Text, Any]] = None,
-                 prompt: Optional[Text] = None,
-                 args: Optional[List[Any]] = None,
-                 uses: Optional[List[Any]] = None,
-                 llm_model: Optional[Any] = None,
-                 timeout: Optional[Any] = 5,
-                 retry: Optional[Any] = 3,
-                 retry_response: Optional[Text] = None,
-                 exit_response: Optional[Text] = None,
-                 **kwargs
-                 ):
-        #self.llm_model = llm_model or OpenAIModel.create(config)
+    def __init__(
+        self,
+        name: Optional[Text] = None,
+        description: Optional[Text] = None,
+        config: Optional[Dict[Text, Any]] = None,
+        prompt: Optional[Text] = None,
+        args: Optional[List[Any]] = None,
+        uses: Optional[List[Any]] = None,
+        llm_model: Optional[Any] = None,
+        timeout: Optional[Any] = 5,
+        retry: Optional[Any] = 3,
+        retry_response: Optional[Text] = None,
+        exit_response: Optional[Text] = None,
+        **kwargs,
+    ):
+        # self.llm_model = llm_model or OpenAIModel.create(config)
         self.llm_model = llm_model or Model.create(config)
         self.prompt = prompt
         self.args = args
@@ -105,14 +119,15 @@ class DefaultExitAgent(LLMAgent):
         super().__init__(name, description, config, prompt, args, uses, llm_model)
 
     @classmethod
-    def create(cls,
-               config: Optional[Dict[Text, Any]] = None,
-               prompt: Optional[Text] = None,
-               args: Optional[List[Any]] = None,
-               uses: Optional[List[Text]] = None,
-               llm_model: Optional[Any] = None,
-               **kwargs
-               ):
+    def create(
+        cls,
+        config: Optional[Dict[Text, Any]] = None,
+        prompt: Optional[Text] = None,
+        args: Optional[List[Any]] = None,
+        uses: Optional[List[Text]] = None,
+        llm_model: Optional[Any] = None,
+        **kwargs,
+    ):
         if kwargs.get("server") and kwargs.get("headers"):
             if config is None:
                 config = {}
@@ -129,7 +144,7 @@ class DefaultExitAgent(LLMAgent):
         if retry_count > self.retry:
             return True
         if current_time - latest_event.timestamp > self.timeout:
-            tracker.set_arg(self.name, RETRY_COUNT, retry_count+1)
+            tracker.set_arg(self.name, RETRY_COUNT, retry_count + 1)
             if retry_count + 1 < self.retry:
                 try:
                     tracker.update(BotUtter(self.retry_response))
@@ -154,7 +169,7 @@ class DefaultExitAgent(LLMAgent):
                 break
 
     async def run(self, tracker: Tracker, is_tool=False, **kwargs):
-        tracker.set_arg(self.name, '_retry_count', 0)
+        tracker.set_arg(self.name, "_retry_count", 0)
         asyncio.create_task(self.monitor_user(tracker))
 
         return True, []
