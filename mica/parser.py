@@ -319,12 +319,13 @@ class KBAgentValidator(AgentValidator):
     def __init__(self):
         super().__init__()
         self.required_keys = {'type'}
-        self.valid_keys = {'faq', 'web', 'file', 'type'}
+        self.valid_keys = {'faq', 'web', 'file', 'sources', 'type'}
         self.type_specs = {
             "type": TypeSpec(Text),
             "web": TypeSpec(List),
             "file": TypeSpec(Text),
-            "faq": TypeSpec(Dict)
+            "faq": TypeSpec(List),
+            "sources": TypeSpec(List)
         }
 
     def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:

@@ -1,11 +1,13 @@
 kb:
   type: kb agent
   faq:
-    what can you do?: I can help you answer some common tax questions.
-    Thanks: Bye.
-  web:
+    - q: what can you do?
+      a: I can help you answer some common tax questions.
+    - q: Thanks
+      a: Bye.
+  sources:
     - https://www.irs.gov/faqs
-  file: ./examples/kb_agent_example/database_file
+    - ./examples/kb_agent_example/database_file
 
 meta:
   type: ensemble agent
