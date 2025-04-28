@@ -46,34 +46,20 @@ class FlowAgent(Agent):
         super().__init__(name, description)
 
     @classmethod
-    def from_dict(cls, data, **kwargs):
-        subflows = {}
-        subflow_steps = []
+    def from_dict(cls, steps: List, subflows=None, **kwargs):
+        all_subflows = {}
 
-        main_flow_name = None
-        for step in data:
-            if isinstance(step, str) and step == "end":
-                subflow_obj = StepLoader.create(subflow_steps, **kwargs)
-                subflow_label = subflow_obj.label
-                if subflows.get(subflow_label) is not None:
-                    raise NameRepeatError()
+        main_subflow_obj = StepLoader.create(steps, label=MAIN_FLOW, **kwargs)
+        main_flow_name = main_subflow_obj.label
+        all_subflows[main_flow_name] = main_subflow_obj
 
-                if main_flow_name is None:
-                    main_flow_name = subflow_label
-                subflows[subflow_label] = subflow_obj
-                subflow_steps = []
-                continue
-            # if isinstance(step, dict) and step.get("begin") is not None:
-            #     subflow_label = step["begin"]
-            subflow_steps.append(step)
+        if subflows is None:
+            return all_subflows, main_flow_name
 
-        # when there's only one flow, no need to write begin/end
-        if len(subflow_steps) > 0 and len(subflows) == 0:
-            subflow_obj = StepLoader.create(subflow_steps, **kwargs)
-            main_flow_name = subflow_obj.label
-            subflows[main_flow_name] = subflow_obj
+        for subflow_name, subflow_steps in subflows.items():
+            all_subflows[subflow_name] = StepLoader.create(subflow_steps, label=subflow_name, **kwargs)
 
-        return subflows, main_flow_name
+        return all_subflows, main_flow_name
 
     @classmethod
     def create(cls,
@@ -83,13 +69,18 @@ class FlowAgent(Agent):
                args: Optional[List[Any]] = None,
                config: Optional[Any] = None,
                llm_model: Optional[Any] = None,
+               server: Optional[Any] = None,
+               headers: Optional[Any] = None,
                **kwargs):
-        if kwargs.get("server") and kwargs.get("headers"):
+
+        if server and headers:
             if config is None:
                 config = {}
             config["server"] = kwargs.get("server") + "/rpc/rasa/message"
             config["headers"] = kwargs.get("headers")
-        steps, main_flow_name = cls.from_dict(steps, config=config, root_agent_name=name, llm_model=llm_model)
+        # Delete the type key to avoid creating an incorrect subflow
+        kwargs.pop("type", None)
+        steps, main_flow_name = cls.from_dict(steps, config=config, root_agent_name=name, llm_model=llm_model, subflows=kwargs)
         return cls(name=name,
                    config=config,
                    description=description,
