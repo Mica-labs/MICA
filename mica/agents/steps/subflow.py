@@ -16,17 +16,17 @@ class Subflow(Base):
         super(Subflow, self).__init__()
 
     @classmethod
-    def from_dict(cls, data: List, **kwargs):
+    def from_dict(cls, data: List, label: Text, **kwargs):
         from mica.agents.steps.step_loader import StepLoader
         # when there's no "begin" placeholder, add one
-        if (type(data[0]) == str and data[0] != 'begin') or (type(data[0]) == dict and data[0].get('begin') is None):
-            data = ['begin'] + data
-        if type(data[0]) == str:
-            label = short_uuid()
-        else:
-            label = data[0].get("begin")
+        # if (type(data[0]) == str and data[0] != 'begin') or (type(data[0]) == dict and data[0].get('begin') is None):
+        #     data = ['begin'] + data
+        # if type(data[0]) == str:
+        #     label = short_uuid()
+        # else:
+        #     label = data[0].get("begin")
         steps = []
-        for step in data[1:]:
+        for step in data:
             steps.append(StepLoader.create(step, **kwargs))
         return cls(label, steps)
 

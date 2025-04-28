@@ -97,41 +97,29 @@ class Bot(object):
         for name, agent in list(agents.items()):
             if isinstance(agent, EnsembleAgent):
                 if agent.exit_agent is not None:
-                    if isinstance(agent.exit_agent, Text):
-                        if agent.exit_agent == "default":
-                            exit_agent = DefaultExitAgent.create(name=f"DefaultExitAgent_{agent.name}")
-                            agents[exit_agent.name] = exit_agent
-                        else:
-                            exit_agent = agents.get(agent.exit_agent)
-                        if exit_agent is None:
-                            raise ValueError(f"{name} fail to initialize: Exit agent {agent.exit_agent} not found")
-                        agent.exit_agent = exit_agent
-                    elif isinstance(agent.exit_agent, Dict):
-                        exit_agent = DefaultExitAgent.create(name= f"ExitAgent_{agent.name}",
-                                                             prompt=agent.exit_agent.get('policy'),
-                                                             llm_model=llm_model)
+                    if agent.exit_agent == "default":
+                        exit_agent = DefaultExitAgent.create(name=f"DefaultExitAgent_{agent.name}")
                         agents[exit_agent.name] = exit_agent
+                    else:
+                        exit_agent = agents.get(agent.exit_agent) or \
+                                     DefaultExitAgent.create(name= f"ExitAgent_{agent.name}",
+                                                             prompt=agent.exit_agent,
+                                                             llm_model=llm_model)
 
-                        agent.exit_agent = exit_agent
+                    agent.exit_agent = exit_agent
 
             if isinstance(agent, (FlowAgent, EnsembleAgent)):
                 if agent.fallback is not None:
-                    if isinstance(agent.fallback, Text):
-                        if agent.fallback == 'default':
-                            fallback_agent = DefaultFallbackAgent.create(name=f"DefaultFallbackAgent_{agent.name}")
-                            agents[fallback_agent.name] = fallback_agent
-                        else:
-                            fallback_agent = agents.get(agent.fallback)
-                        if fallback_agent is None:
-                            raise ValueError(f"{name} fail to initialize: Fallback {agent.fallback} not found")
-                        agent.fallback = fallback_agent
-                    elif isinstance(agent.fallback, Dict):
-                        fallback_agent = DefaultFallbackAgent.create(
-                            name=f"FallbackAgent_{agent.name}",
-                            prompt=agent.fallback.get('policy'),
-                            llm_model=llm_model)
+                    if agent.fallback == 'default':
+                        fallback_agent = DefaultFallbackAgent.create(name=f"DefaultFallbackAgent_{agent.name}")
                         agents[fallback_agent.name] = fallback_agent
-                        agent.fallback = fallback_agent
+                    else:
+                        fallback_agent = agents.get(agent.fallback) or \
+                                         DefaultFallbackAgent.create(
+                                             name=f"FallbackAgent_{agent.name}",
+                                             prompt=agent.fallback,
+                                             llm_model=llm_model)
+                    agent.fallback = fallback_agent
 
         # load function tools code into memory
         tools = None

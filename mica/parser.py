@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Set, Text, Type, Optional, Union
 import yaml
 from dataclasses import dataclass
 
-
+# TODO: if there's any subflow, do the same operation
 def parse_agents(raw_agents: Dict):
     processed_agents = {}
     for agent_name, agent_content in raw_agents.items():
@@ -82,16 +82,16 @@ class AgentValidator(ABC):
     @abstractmethod
     def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
         """
-        验证代理配置
-        content: 当前代理的配置
-        path: 当前验证的路径
-        context: 包含完整YAML内容的上下文信息
+        validate agent configuration
+        content: current agent configuration
+        path: current path
+        context: contain all the context of YAML
         """
         pass
 
     def validate_required_keys(self, content: Dict[Text, Any], required_keys: Set[Text], path: Text) -> List[
         ValidationError]:
-        """验证必需的键"""
+        """verify all the required keys"""
         errors = []
         for key in required_keys:
             if key not in content:
@@ -103,11 +103,14 @@ class AgentValidator(ABC):
         return errors
 
     def validate_spelling(self, content: Dict[Text, Any], path: Text) -> List[ValidationError]:
-        """验证键的拼写"""
+        """verify the spelling of the keys"""
         errors = []
+        if "*" in self.valid_keys:
+            return errors
+
         for key in content:
             if key not in self.valid_keys:
-                # 使用get_close_matches找到最相似的有效键
+                # find the most similar valid key by get_close_matches
                 close_matches = get_close_matches(key, self.valid_keys, n=3, cutoff=0.6)
                 suggestion = f"Did you mean: {', '.join(close_matches)}" if close_matches else "No similar keys found"
 
@@ -119,13 +122,13 @@ class AgentValidator(ABC):
         return errors
 
     def validate_type(self, content: Dict[str, Any], path: str) -> List[ValidationError]:
-        """验证值的类型"""
+        """validate the type of the key"""
         errors = []
 
         def _validate_value(value: Any, type_spec: TypeSpec, current_path: str) -> List[ValidationError]:
             local_errors = []
 
-            # 处理空值
+            # null
             if value is None:
                 if not type_spec.nullable:
                     local_errors.append(ValidationError(
@@ -135,7 +138,7 @@ class AgentValidator(ABC):
                     ))
                 return local_errors
 
-            # 验证类型
+            # type validation
             if not isinstance(value, type_spec.expected_type):
                 local_errors.append(ValidationError(
                     self.__class__.__name__,
@@ -144,7 +147,7 @@ class AgentValidator(ABC):
                 ))
                 return local_errors
 
-            # 如果是字典类型且有嵌套规范，递归验证
+            # If dict type with nested schema, validate recursively
             if isinstance(value, Dict) and type_spec.nested_schema:
                 for key, nested_value in value.items():
                     if key in type_spec.nested_schema:
@@ -157,7 +160,7 @@ class AgentValidator(ABC):
 
             return local_errors
 
-        # 验证每个存在的键的值
+        # validate all the value
         for key, value in content.items():
             if key in self.type_specs:
                 errors.extend(_validate_value(
@@ -170,14 +173,14 @@ class AgentValidator(ABC):
 
     def validate_ref(self, agent_name: Text, path: Text, context: Dict[Text, Any], code_str=None) -> List[ValidationError]:
         errors = []
-        all_agents = context.get('all_agents', set())  # 获取所有已定义的agent名称
+        all_agents = context.get('all_agents', set())  # get the names of all the agents
         if agent_name not in all_agents and (code_str is not None and agent_name not in code_str):
             errors.append(ValidationError(
                 self.__class__.__name__,
                 f"Referenced agent '{agent_name}' is not defined in this file",
                 f"{path}/agent[{agent_name}]"
             ))
-        elif agent_name == path.split('[')[1].split(']')[0]:  # 检查自引用
+        elif agent_name == path.split('[')[1].split(']')[0]:  # self reference
             errors.append(ValidationError(
                 self.__class__.__name__,
                 f"Agent cannot reference itself",
@@ -192,37 +195,21 @@ class AgentValidator(ABC):
                        code_str = None) -> List[ValidationError]:
         """validate steps list"""
         errors = []
-        found_begin = False
-        found_end = False
 
         for i, step in enumerate(steps):
             step_path = f"{path}[{i}]"
 
             if isinstance(step, Text):
-                # 验证字符串类型的步骤
+                # string type step
                 if step not in self.step_schema['string_literals']:
                     errors.append(ValidationError(
                         "StepValidation",
                         f"Invalid step string '{step}'. Valid values are: {', '.join(self.step_schema['string_literals'])}",
                         step_path
                     ))
-                if step == 'begin':
-                    found_begin = True
-                elif step == 'end':
-                    # 只在非条件块中检查begin/end
-                    if not in_condition:
-                        if not found_begin:
-                            errors.append(ValidationError(
-                                "StepValidation",
-                                "Missing 'begin' in steps",
-                                path
-                            ))
-                    found_begin, found_end = False, False
 
             elif isinstance(step, Dict):
                 for key in step:
-                    if key == "begin":
-                        found_begin = True
                     if key not in self.step_schema['keywords']:
                         errors.append(ValidationError(
                             "StepValidation",
@@ -251,15 +238,6 @@ class AgentValidator(ABC):
 
                     if key == 'call':
                         errors.extend(self.validate_ref(step['call'], f"{step_path}", context=context, code_str=code_str))
-
-        if not in_condition:
-            if found_begin ^ found_end:
-                errors.append(ValidationError(
-                    "StepValidation",
-                    "'begin' and 'end' didn't match in steps",
-                    path
-                ))
-
         return errors
 
 
@@ -344,10 +322,10 @@ class FlowAgentValidator(AgentValidator):
     def __init__(self):
         super().__init__()
         self.required_keys = {'type', 'steps'}
-        self.valid_keys = {'description', 'args', 'type', 'steps', 'fallback'}
+        self.valid_keys = {'description', 'args', 'type', 'steps', 'fallback', '*'}
         self.step_schema = {
             'keywords': {'bot', 'user', 'if', 'else if', 'else', 'then', 'tries',
-                         'begin', 'end', 'call', 'next', 'label', 'return', 'set', 'args'},
+                         'call', 'next', 'label', 'return', 'set', 'args'},
             'string_literals': {'begin', 'end', 'user'},
             'compound_keys': {'bot', 'if', 'begin'}
         }
