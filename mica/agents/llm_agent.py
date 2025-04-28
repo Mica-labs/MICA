@@ -76,23 +76,17 @@ class LLMAgent(Agent):
                 logger.debug(f"Execute function: {event.function_name}, get result: {tool_rst}")
                 if tool_rst['status'] == 'error':
                     is_end = True
-                    return is_end, [BotUtter("function call ["+event.function_name+"] error: "+tool_rst['error'], provider=self.name)]
+                    return is_end, [BotUtter("function call ["+event.function_name+"] error: "+tool_rst['error'],
+                                             provider=self.name)]
 
-                if tool_rst['result'] is not None:
-                    tool_rst_states = tool_rst['result']
-                    if isinstance(tool_rst_states, Text):
-                        final_result.append(BotUtter(tool_rst_states, provider=self.name))
-                    elif isinstance(tool_rst_states, List):
-                        for evt in tool_rst_states:
-                            if isinstance(evt, str):
-                                final_result.append(BotUtter(evt, provider=self.name))
-                                continue
-                            if evt.get('slot_name') is not None:
-                                setslot = SetSlot.from_dict(evt)
-                                slot_info = arg_format(setslot.slot_name, self.name)
-                                tracker.set_arg(slot_info.get("flow_name"), slot_info.get("arg_name"), setslot.value)
-                            if evt.get('text') is not None:
-                                final_result.append(BotUtter.from_dict(evt))
+                for evt in tool_rst['result']:
+                    if isinstance(evt, BotUtter):
+                        evt.provider = self.name
+                        final_result.append(evt)
+                    elif isinstance(evt, SetSlot):
+                        slot_info = arg_format(evt.slot_name, self.name)
+                        tracker.set_arg(slot_info.get("flow_name"), slot_info.get("arg_name"), evt.value)
+
                 if tool_rst['stdout'] is not None and len(tool_rst['stdout']) > 0:
                     tracker.set_conv_history(self.name, {"role": "tool",
                                                          "tool_call_id": event.call_id,
