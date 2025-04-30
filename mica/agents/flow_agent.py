@@ -76,8 +76,8 @@ class FlowAgent(Agent):
         if server and headers:
             if config is None:
                 config = {}
-            config["server"] = kwargs.get("server") + "/rpc/rasa/message"
-            config["headers"] = kwargs.get("headers")
+            config["server"] = server + "/rpc/rasa/message"
+            config["headers"] = headers
         # Delete the type key to avoid creating an incorrect subflow
         kwargs.pop("type", None)
         steps, main_flow_name = cls.from_dict(steps, config=config, root_agent_name=name, llm_model=llm_model, subflows=kwargs)
