@@ -125,7 +125,7 @@ class PriorityProcessor(Processor):
                 if isinstance(response_event, FollowUpAgent):
                     next_agent_name = response_event.next_agent
                     next_agent = bot.agents.get(next_agent_name)
-                    tracker.push_agent(CurrentAgent(agent=next_agent))
+                    tracker.push_agent(CurrentAgent(agent=next_agent, status="initiate", metadata=0))
                 if isinstance(response_event, (AgentFail, AgentComplete)):
                     tracker.update(response_event)
                     tracker.pop_agent()

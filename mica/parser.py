@@ -352,7 +352,7 @@ class LLMAgentValidator(AgentValidator):
     def __init__(self):
         super().__init__()
         self.required_keys = {'type', 'prompt'}
-        self.valid_keys = {'description', 'prompt', 'args', 'uses', 'type'}
+        self.valid_keys = {'description', 'prompt', 'args', 'uses', 'type', 'steps'}
         self.type_specs = {
             "type": TypeSpec(Text),
             "description": TypeSpec(Text),
