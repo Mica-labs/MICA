@@ -267,36 +267,5 @@ def safe_json_loads(json_str):
         return {}
 
 
-def load_func_info_from_str(code_str: Text):
-    # 匹配函数定义的正则表达式，考虑到有默认值的情况
-    pattern = r"def (\w+)\((.*?)\):"
-
-    # 使用正则表达式查找所有匹配项
-    matches = re.findall(pattern, code_str)
-
-    rst = []
-    # 输出函数名及参数（包括默认值）
-    for match in matches:
-        function_name, parameters = match
-        # 进一步解析参数，提取默认值
-        param_pattern = r"(\w+)(?:=(.*?))?"
-        param_matches = re.findall(param_pattern, parameters)
-        params = []
-        for param in param_matches:
-            param_name, default_value = param
-            params.append(param_name)
-            # if default_value:
-            #     print(f"Parameter: {param_name} (Default: {default_value})")
-            # else:
-            #     print(f"Parameter: {param_name} (No Default)")
-
-        rst.append({
-            "name": function_name,
-            "args": params
-        })
-
-    return rst
-
-
 def short_uuid(length=8):
     return str(uuid.uuid4()).replace("-", "")[:length]

@@ -22,8 +22,7 @@ from mica.exec_tool import SafePythonExecutor
 from mica.llm.openai_model import OpenAIModel
 from mica.model_config import ModelConfig
 from mica.tracker_store import TrackerStore, InMemoryTrackerStore
-from mica.utils import find_config_files, save_file, replace_args_in_string, logger, load_func_info_from_str, \
-    short_uuid
+from mica.utils import find_config_files, save_file, replace_args_in_string, logger, short_uuid
 
 
 class InvalidBot(Exception):
@@ -54,9 +53,6 @@ class Bot(object):
         self.sum_rsp_time = 0
         self.tools = tools
         self._func_args_config = {name: {} for name in self.tools.functions.keys()} or {}
-        self._global_args = list(chain.from_iterable(
-            a.contains_args() or [] for a in agents.values() if isinstance(a, EnsembleAgent)
-        ))
 
     @classmethod
     def from_json(cls,
@@ -133,11 +129,6 @@ class Bot(object):
                 logger.error(f"Traceback: {load_rst['traceback']}")
                 raise InvalidBot('Not a valid chatbot')
 
-            func_info = load_func_info_from_str(tool_code)
-            # for func in func_info:
-            #     func_obj = Function.create(**func)
-            #     agents[(type(func_obj), func_obj.name)] = func_obj
-
         tracker_store = InMemoryTrackerStore.create()
         logger.debug(f"here are all the registered agents: {agents}")
         return cls(name,
@@ -155,8 +146,7 @@ class Bot(object):
                              channel: ChatChannel = None):
         tracker = self.tracker_store.get_or_create_tracker(user_id,
                                                            args=copy.deepcopy(self._args_config),
-                                                           functions=copy.deepcopy(self._func_args_config),
-                                                           global_args=self._global_args)
+                                                           functions=copy.deepcopy(self._func_args_config))
         user_event = UserInput(text=message, metadata=channel)
         tracker.update(user_event)
         tracker.latest_message = user_event
@@ -172,7 +162,8 @@ class Bot(object):
     def _find_all_args(self, agents: Dict[Text, Agent]):
         all_args = {
             "sender": "",
-            "bot_name": self.name
+            "bot_name": self.name,
+            "__mapping__": {}
         }
         if agents is None:
             return all_args
@@ -187,6 +178,18 @@ class Bot(object):
                     all_args[name][arg_name] = None
                 else:
                     all_args[name][arg] = None
+            if isinstance(agent, EnsembleAgent):
+                mapping = agent.mapping
+                for revoke_agent_name, arg_info in mapping.items():
+                    all_args['__mapping__'].setdefault(revoke_agent_name, {})
+                    for arg_name, ensemble_arg_name in arg_info.items():
+                        tmp = {
+                            'type': "ref" if ensemble_arg_name.startswith("ref ") else "value",
+                            'agent': name,
+                            'arg': ensemble_arg_name[4:] if ensemble_arg_name.startswith("ref ") else ensemble_arg_name
+                        }
+                        all_args['__mapping__'][revoke_agent_name][arg_name] = tmp
+
         return all_args
 
     # TODO: instead of returning the first one, find the parent.
