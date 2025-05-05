@@ -183,7 +183,7 @@ meta:
   type: ensemble agent
   contains:
   - book_restaurant
-  description: You can select an agent to response user's question.
+  description: You can select an agent to respond to user's question.
   steps:
   - bot: Hello, I am your intelligent assistant. What can I do for you?
 

@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Dict, Text, Any, List, Set, Tuple
+from typing import Optional, Dict, Text, Any, List, Set, Tuple, Union
 
 from mica.agents.agent import Agent
 from mica.agents.default import DefaultFallbackAgent, DefaultExitAgent
@@ -21,12 +21,13 @@ class EnsembleAgent(Agent):
                  name: Optional[Text] = None,
                  description: Optional[Text] = None,
                  config: Optional[Dict[Text, Any]] = None,
-                 contains: Optional[List[Text]] = None,
+                 contains: Optional[List[Any]] = None,
                  steps: Optional[Any] = None,
                  args: Optional[Any] = None,
                  llm_model: Optional[Any] = None,
                  fallback: Optional[Any] = None,
                  exit_agent: Optional[Any] = None,
+                 mapping: Optional[Dict] = None,
                  ):
         self.llm_model = llm_model or OpenAIModel.create(config)
         self.contains = contains
@@ -34,6 +35,7 @@ class EnsembleAgent(Agent):
         self.args = args
         self.fallback = fallback
         self.exit_agent = exit_agent
+        self.mapping = mapping
         super().__init__(name, description)
 
     @classmethod
@@ -41,7 +43,7 @@ class EnsembleAgent(Agent):
                name: Optional[Text] = None,
                description: Optional[Text] = None,
                config: Optional[Dict[Text, Any]] = None,
-               contains: Optional[List[Text]] = None,
+               contains: Optional[List[Any]] = None,
                steps: Optional[Any] = None,
                args: Optional[Any] = None,
                llm_model: Optional[Any] = None,
@@ -56,8 +58,17 @@ class EnsembleAgent(Agent):
         if steps is not None:
             steps = [StepLoader.create(step, root_agent_name=name) for step in steps]
         exit_agent = exit
-
-        return cls(name, description, config, contains, steps, args, llm_model, fallback, exit_agent)
+        mapping_relationship, processed_contains = cls.unwrap_contains_args(contains)
+        return cls(name,
+                   description,
+                   config,
+                   processed_contains,
+                   steps,
+                   args,
+                   llm_model,
+                   fallback,
+                   exit_agent,
+                   mapping_relationship)
 
     def __repr__(self):
         return f"Ensemble_agent(name={self.name}, description={self.description}, fallback={self.fallback}," \
@@ -295,3 +306,16 @@ class EnsembleAgent(Agent):
 
         prompt = [{"role": "system", "content": system}, {"role": "user", "content": user_content}]
         return prompt
+
+    @staticmethod
+    def unwrap_contains_args(contains: List[Any]) -> Union[Any, List[Text]]:
+        contains_agents = []
+        mapping = {}
+        for c in contains:
+            if isinstance(c, Text):
+                contains_agents.append(c)
+            else:
+                agent_name = list(c.keys())[0]
+                mapping[agent_name] = c[agent_name].get("args")
+                contains_agents.append(agent_name)
+        return mapping, contains_agents

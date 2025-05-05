@@ -270,6 +270,8 @@ class EnsembleAgentValidator(AgentValidator):
         # 验证agents列表
         if 'contains' in content:
             for i, agent_name in enumerate(content['contains']):
+                if isinstance(agent_name, Dict):
+                    agent_name = list(agent_name.keys())[0]
                 if not isinstance(agent_name, Text):
                     errors.append(ValidationError(
                         self.__class__.__name__,
