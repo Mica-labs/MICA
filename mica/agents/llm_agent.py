@@ -21,12 +21,14 @@ class LLMAgent(Agent):
                  args: Optional[List[Any]] = None,
                  uses: Optional[List[Any]] = None,
                  llm_model: Optional[Any] = None,
+                 steps: Optional[Any] = None,
                  **kwargs
                  ):
         self.llm_model = llm_model or OpenAIModel.create(config)
         self.prompt = prompt
         self.args = args
         self.uses = uses
+        self.steps = steps
         super().__init__(name, description)
 
     @classmethod

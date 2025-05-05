@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Set, Text, Type, Optional, Union
 import yaml
 from dataclasses import dataclass
 
+
 # TODO: if there's any subflow, do the same operation
 def parse_agents(raw_agents: Dict):
     processed_agents = {}
@@ -370,49 +371,49 @@ class LLMAgentValidator(AgentValidator):
         return errors
 
 
-class MainAgentValidator(AgentValidator):
-    def __init__(self):
-        super().__init__()
-        self.valid_keys = {'call', 'schedule'}
-        self.required_keys = {'steps'}
-        self.type_specs = {
-            "steps": TypeSpec(List)
-        }
-
-    def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
-        errors = []
-
-        # validate format problem: required_key/type
-        errors.extend(self.validate_required_keys(content, self.required_keys, path))
-        errors.extend(self.validate_type(content, path))
-        if len(errors) > 0:
-            return errors
-        # validate steps
-        errors.extend(self._validate_steps(content.get('steps'), path))
-
-        return errors
-
-    def _validate_steps(self, content: List[Any], path: Text) -> List[ValidationError]:
-        errors = []
-
-        for i, step in enumerate(content):
-            step_path = f"{path}[{i}]"
-            if 'call' not in step:
-                errors.append(ValidationError(
-                    "StepValidation",
-                    "Keyword 'call' not found; Step must invoke an agent.",
-                    step_path
-                ))
-            else:
-                errors.extend(self.validate_spelling(step, step_path))
-                if 'schedule' in step and step['schedule'] not in ['priority', 'mediator']:
-                    errors.append(ValidationError(
-                        "StepValidation",
-                        "Only two schedule methods are supported now: 'mediator' and 'priority'.",
-                        step_path
-                    ))
-
-        return errors
+# class MainAgentValidator(AgentValidator):
+#     def __init__(self):
+#         super().__init__()
+#         self.valid_keys = {'call', 'schedule'}
+#         self.required_keys = {'steps'}
+#         self.type_specs = {
+#             "steps": TypeSpec(List)
+#         }
+#
+#     def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
+#         errors = []
+#
+#         # validate format problem: required_key/type
+#         errors.extend(self.validate_required_keys(content, self.required_keys, path))
+#         errors.extend(self.validate_type(content, path))
+#         if len(errors) > 0:
+#             return errors
+#         # validate steps
+#         errors.extend(self._validate_steps(content.get('steps'), path))
+#
+#         return errors
+#
+#     def _validate_steps(self, content: List[Any], path: Text) -> List[ValidationError]:
+#         errors = []
+#
+#         for i, step in enumerate(content):
+#             step_path = f"{path}[{i}]"
+#             if 'call' not in step:
+#                 errors.append(ValidationError(
+#                     "StepValidation",
+#                     "Keyword 'call' not found; Step must invoke an agent.",
+#                     step_path
+#                 ))
+#             else:
+#                 errors.extend(self.validate_spelling(step, step_path))
+#                 if 'schedule' in step and step['schedule'] not in ['priority', 'mediator']:
+#                     errors.append(ValidationError(
+#                         "StepValidation",
+#                         "Only two schedule methods are supported now: 'mediator' and 'priority'.",
+#                         step_path
+#                     ))
+#
+#         return errors
 
 
 class Validator:
@@ -422,8 +423,7 @@ class Validator:
             'flow agent': FlowAgentValidator,
             'llm agent': LLMAgentValidator,
             'ensemble agent': EnsembleAgentValidator,
-            'kb agent': KBAgentValidator,
-            'main': MainAgentValidator
+            'kb agent': KBAgentValidator
         }
 
     def validate(self, agents_dict: Dict, code_str: Text = None) -> List[ValidationError]:
@@ -443,15 +443,15 @@ class Validator:
         for agent_name, agent_content in agents_dict.items():
             if agent_name == 'tools':
                 continue
-            if agent_name == 'main':
-                validator = self.validators[agent_name]()
-                errors.extend(validator.validate(
-                    agent_content,
-                    f"agent[{agent_name}]",
-                    context,
-                    code_str
-                ))
-                continue
+            # if agent_name == 'main':
+            #     validator = self.validators[agent_name]()
+            #     errors.extend(validator.validate(
+            #         agent_content,
+            #         f"agent[{agent_name}]",
+            #         context,
+            #         code_str
+            #     ))
+            #     continue
             if not isinstance(agent_content, Dict):
                 errors.append(ValidationError(
                     "BasicValidation",

@@ -57,8 +57,8 @@ async def init_conversation(bot: Bot, chatbot, user_id):
     from mica.agents.steps.bot import Bot as BotStep
     tracker = ""
     main = bot.entrypoint
-    if main.steps:
-        for step in main.steps:
+    if isinstance(main, FlowAgent):
+        for step in main.subflows[main.main_flow_name].steps:
             if isinstance(step, BotStep):
                 _, chatbot, user_id, tracker = await get_response("/init", chatbot, bot, user_id)
             if isinstance(step, Call):
