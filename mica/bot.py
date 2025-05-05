@@ -63,15 +63,17 @@ class Bot(object):
         name = name or short_uuid(10)
         config = config or {}
 
-        # get schedule method
+        # # get schedule method
+        # from mica.processor import DispatcherProcessor, PriorityProcessor
+        # scheduler_create = {
+        #     "priority": PriorityProcessor.create,
+        #     "dispatcher": DispatcherProcessor.create
+        # }
+        # scheduler = scheduler_create.get(data.get("main").get("steps")[0].get("schedule") or "priority")()
+        # entrypoint = Main.create("main", **data["main"])
+        # data.pop("main")
         from mica.processor import DispatcherProcessor, PriorityProcessor
-        scheduler_create = {
-            "priority": PriorityProcessor.create,
-            "dispatcher": DispatcherProcessor.create
-        }
-        scheduler = scheduler_create.get(data.get("main").get("steps")[0].get("schedule") or "priority")()
-        entrypoint = Main.create("main", **data["main"])
-        data.pop("main")
+        scheduler = PriorityProcessor.create()
 
         if config.get('server') is not None:
             config['server'] = config['server'] + "/rpc/rasa/message" \
@@ -86,11 +88,11 @@ class Bot(object):
             "function": Function.create,
             "kb agent": KBAgent.create
         }
-        agents = {name: create_agents[value.get('type')](name=name, **value, **config, llm_model=llm_model)
-                  for name, value in data.items()
+        agents = {n: create_agents[value.get('type')](name=n, **value, **config, llm_model=llm_model)
+                  for n, value in data.items()
                   if value.get('type') is not None}
 
-        for name, agent in list(agents.items()):
+        for _, agent in list(agents.items()):
             if isinstance(agent, EnsembleAgent):
                 if agent.exit_agent is not None:
                     if agent.exit_agent == "default":
@@ -131,6 +133,13 @@ class Bot(object):
 
         tracker_store = InMemoryTrackerStore.create()
         logger.debug(f"here are all the registered agents: {agents}")
+
+        if 'main' not in agents:
+            logger.error("The 'main' agent is missing")
+            raise InvalidBot("A 'main' agent is required.")
+
+        entrypoint = agents['main']
+
         return cls(name,
                    tracker_store=tracker_store,
                    agents=agents,

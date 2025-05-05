@@ -42,7 +42,7 @@ class FlowAgent(Agent):
         self.args = args
         self.labels = self._find_all_labels(subflows)
         self.main_flow_name = main_flow_name
-        self.fallback = fallback or DefaultFallbackAgent.create(config=config, llm_model=llm_model)
+        self.fallback = fallback
         super().__init__(name, description)
 
     @classmethod

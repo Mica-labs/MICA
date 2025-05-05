@@ -233,6 +233,8 @@ def replace_args_in_string(input_str, flow_name, tracker):
     Returns:
     str: The string with variables replaced by their corresponding values.
     """
+    if not isinstance(input_str, Text):
+        return ""
     # Pattern to match {variable_name}
     pattern = re.compile(r'\$\{([^}]+)\}')
 
