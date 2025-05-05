@@ -5,6 +5,7 @@ from typing import Optional, Dict, Text, Any, List, Union
 import requests
 
 from mica.agents.agent import Agent
+from mica.agents.steps.step_loader import StepLoader
 from mica.event import BotUtter, SetSlot, AgentFail, AgentComplete, FunctionCall
 from mica.exec_tool import SafePythonExecutor
 from mica.llm.openai_model import OpenAIModel
@@ -28,7 +29,7 @@ class LLMAgent(Agent):
         self.prompt = prompt
         self.args = args
         self.uses = uses
-        self.steps = steps
+        self.steps = steps or []
         super().__init__(name, description)
 
     @classmethod
@@ -40,6 +41,7 @@ class LLMAgent(Agent):
                args: Optional[List[Any]] = None,
                uses: Optional[List[Text]] = None,
                llm_model: Optional[Any] = None,
+               steps: Optional[Any] = None,
                **kwargs
                ):
         if kwargs.get("server") and kwargs.get("headers"):
@@ -47,21 +49,39 @@ class LLMAgent(Agent):
                 config = {}
             config["server"] = kwargs.get("server") + "/rpc/rasa/message"
             config["headers"] = kwargs.get("headers")
-        return cls(name, description, config, prompt, args, uses, llm_model)
+        if steps is not None:
+            steps = [StepLoader.create(step, root_agent_name=name) for step in steps]
+        return cls(name, description, config, prompt, args, uses, llm_model, steps)
 
     def __repr__(self):
         description = self.description.replace('\n', ' ')
         return f"LLM_agent(name={self.name}, description={description})"
 
     async def run(self, tracker: Tracker, is_tool=False, **kwargs):
+        llm_result = []
+        # initiate agent
+        current_evt = tracker.peek_agent()
+        init_idx = current_evt.metadata
+        if current_evt.status == "initiate" and init_idx < len(self.steps):
+            for i, step in enumerate(self.steps[init_idx:]):
+                step_flag, step_result = await step.run(tracker, **kwargs)
+                current_evt.metadata = init_idx + i
+                llm_result.extend(step_result)
+                if step_flag in ["Await"]:
+                    current_evt.metadata += 1
+                    is_end = False
+                    return is_end, llm_result
+
+            current_evt.status = "running"
+
         prompt = self._generate_agent_prompt(tracker, is_tool=is_tool)
         logger.debug("LLM agent prompt: \n%s", json.dumps(prompt, indent=2, ensure_ascii=False))
         functions = self._generate_function_prompt(**kwargs)
         logger.debug("LLM agent functions prompt: \n%s", json.dumps(functions, indent=2, ensure_ascii=False))
-        llm_result = await self.llm_model.generate_message(prompt,
-                                                           functions=functions,
-                                                           tracker=tracker,
-                                                           provider=self.name)
+        llm_result.extend(await self.llm_model.generate_message(prompt,
+                                                                functions=functions,
+                                                                tracker=tracker,
+                                                                provider=self.name))
         is_end = True
         final_result = []
 
@@ -174,7 +194,7 @@ class LLMAgent(Agent):
         all_agents = list(tracker.args.keys())
         all_agents.remove(self.name)
         current_event = tracker.peek_agent()
-        if current_event.metadata is not None:
+        if current_event.metadata is not None and isinstance(current_event.metadata, Dict):
             flow_name = current_event.metadata["flow"]
             if flow_name in all_agents:
                 all_agents.remove(flow_name)
@@ -182,7 +202,7 @@ class LLMAgent(Agent):
 
         valid_states_info = ""
         for agent_name, args in tracker.args.items():
-            if agent_name in ["sender", "bot_name"]:
+            if agent_name in ["sender", "bot_name", "__mapping__"]:
                 continue
             if args is not None and len(args) > 0:
                 valid_states_info += f"{agent_name}: ("

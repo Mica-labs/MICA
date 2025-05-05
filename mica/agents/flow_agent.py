@@ -169,7 +169,8 @@ class FlowAgent(Agent):
             tracker.remove_flow_agent(self.name)
         return is_end, result
 
-    def get_step_from_path(self, steps, previous_path, depth=0):
+    @staticmethod
+    def get_step_from_path(steps, previous_path, depth=0):
         all_steps = copy.copy(steps)
         while depth < len(previous_path):
             for step in all_steps:
