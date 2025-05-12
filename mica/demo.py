@@ -188,9 +188,9 @@ meta:
   - bot: Hello, I am your intelligent assistant. What can I do for you?
 
 main:
+  type: flow agent
   steps:
   - call: meta
-    schedule: priority
 """, label="Enter agents.yml", language="yaml", lines=15)
                 code_input = gr.Code(label="Enter tools.py", language="python", lines=10, value=None)
                 bot = gr.State(None)

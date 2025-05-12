@@ -172,7 +172,18 @@ class Tracker(object):
         return True
 
     def get_args(self, agent_name):
-        return self.args.get(agent_name)
+        all_args = self.args.get(agent_name)
+        replaced_args = {}
+        for arg_name, arg_value in all_args.items():
+            if self.args['__mapping__'].get(agent_name) \
+                    and self.args['__mapping__'][agent_name].get(arg_name) \
+                    and self.args['__mapping__'][agent_name][arg_name].get('type') == 'ref':
+                    ensemble_agent = self.args['__mapping__'][agent_name][arg_name]['agent']
+                    ensemble_arg = self.args['__mapping__'][agent_name][arg_name]['arg']
+                    replaced_args[arg_name] = self.args[ensemble_agent][ensemble_arg]
+            else:
+                replaced_args[arg_name] = arg_value
+        return replaced_args
 
     def get_arg(self, agent_name, arg_name) -> Tuple[Any, bool]:
         if arg_name == "_user_input":
@@ -186,6 +197,12 @@ class Tracker(object):
 
         if agent_name in self.func_args:
             return self.func_args[agent_name].get(arg_name), True
+
+        if self.args['__mapping__'].get(agent_name) and self.args['__mapping__'][agent_name].get(arg_name):
+            if self.args['__mapping__'][agent_name][arg_name].get('type') == 'ref':
+                ensemble_agent = self.args['__mapping__'][agent_name][arg_name]['agent']
+                ensemble_arg = self.args['__mapping__'][agent_name][arg_name]['arg']
+                return self.args[ensemble_agent][ensemble_arg], True
 
         if self.args[agent_name][arg_name] is None:
             if self.args['__mapping__'].get(agent_name) and self.args['__mapping__'][agent_name].get(arg_name):
