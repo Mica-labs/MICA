@@ -130,7 +130,7 @@ class PriorityProcessor(Processor):
                     tracker.update(response_event)
                     tracker.pop_agent()
                     # call by other agent
-                    if current_event.metadata is not None:
+                    if current_event.metadata is not None and isinstance(current_event.metadata, Dict):
                         flow_name = current_event.metadata["flow"]
                         step_id = current_event.metadata["step"]
                         info = tracker.get_or_create_flow_agent(flow_name)
