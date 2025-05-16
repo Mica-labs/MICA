@@ -35,6 +35,7 @@ class KBAgent(Agent):
         self.top_k = top_k
         self.vector_store = None
         self.embeddings = OpenAIEmbeddings(
+            openai_api_key=config.get('api_key') or "",
             base_url=config.get('server'),
             headers=config.get('headers')
         ) if config else OpenAIEmbeddings()
