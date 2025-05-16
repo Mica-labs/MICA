@@ -75,9 +75,9 @@ class Bot(object):
         from mica.processor import DispatcherProcessor, PriorityProcessor
         scheduler = PriorityProcessor.create()
 
-        if config.get('server') is not None:
-            config['server'] = config['server'] + "/rpc/rasa/message" \
-                if "openai" not in config["server"] else config["server"]
+        # if config.get('server') is not None:
+        #     config['server'] = config['server'] + "/rpc/rasa/message" \
+        #         if "openai" not in config["server"] else config["server"]
         llm_model = OpenAIModel.create(config)
 
         # create agent objs

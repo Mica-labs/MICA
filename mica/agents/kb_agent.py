@@ -34,7 +34,10 @@ class KBAgent(Agent):
         self.similarity_threshold = similarity_threshold
         self.top_k = top_k
         self.vector_store = None
-        self.embeddings = OpenAIEmbeddings()
+        self.embeddings = OpenAIEmbeddings(
+            base_url=config.get('server'),
+            headers=config.get('headers')
+        ) if config else OpenAIEmbeddings()
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
