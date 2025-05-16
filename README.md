@@ -2,8 +2,8 @@
 
 <p align="center">
   <a href="https://arxiv.org/abs/2504.14787">ADL Language</a> ·
-  <a href="https://www.promptai.us">Mica studio</a> ·
-  <a href="https://mica-labs.github.io/">Documentation</a> 
+  <a href="https://mica-labs.github.io/">Documentation</a>  ·
+  <a href="https://www.promptai.us">Mica studio</a>
 </p>
 
 
