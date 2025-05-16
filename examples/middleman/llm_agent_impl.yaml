@@ -21,12 +21,13 @@ middleman:
   
 meta:
   type: ensemble agent
-  description: You can select an agent to respond user's question.
+  description: You can select an agent to answer user's question.
   contains:
     - middleman
   steps:
     - call: middleman
   
 main:
+  type: flow agent
   steps:
     - call: meta

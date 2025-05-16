@@ -59,4 +59,6 @@
 #    - call: middleman
 #
 #main:
-#  call: meta
+#  type: flow agent
+#  steps:
+#    call: meta

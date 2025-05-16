@@ -145,13 +145,26 @@ add_payee:
 meta:
   type: ensemble agent
   contains:
-    - check_balance
-    - remove_payee
-    - transfer_money
+    - check_balance:
+        args:
+          username: ref username
+    - remove_payee:
+        args:
+          username: ref username
+    - transfer_money:
+        args:
+          username: ref username
     - what_can_you_do
-    - list_payees
-    - block_card
-    - add_payee
+    - list_payees:
+        args:
+          username: ref username
+    - block_card:
+        args:
+          username: ref username
+          physical_address: ref physical_address
+    - add_payee:
+        args:
+          username: ref username
   args:
     - username
     - segment
@@ -169,5 +182,6 @@ meta:
         physical_address: action_session_start.physical_address
 
 main:
+  type: flow agent
   steps:
     - call: meta
