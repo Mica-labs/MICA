@@ -36,7 +36,7 @@ class OpenAIModel(BaseModel):
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.max_tokens = max_tokens
-        self.server = server or OPENAI_CHAT_URL
+        self.url = server + "/v1/chat/completions" if server else OPENAI_CHAT_URL
         self.headers = headers or {}
         self.client = httpx.AsyncClient(timeout=10)
 
@@ -64,8 +64,8 @@ class OpenAIModel(BaseModel):
         formatted_prompts = self._generate_prompts(prompts, functions)
         llm_result = []
 
-        logger.debug(f"url: {self.server}, headers: {self.headers}")
-        response = await self.client.post(self.server, headers=self.headers, json=formatted_prompts)
+        logger.debug(f"url: {self.url}, headers: {self.headers}")
+        response = await self.client.post(self.url, headers=self.headers, json=formatted_prompts)
         logger.debug("GPT response status: %s", response.status_code)
         if response.status_code == 200:
             response_json = response.json()
