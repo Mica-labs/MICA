@@ -11,11 +11,12 @@ kb:
 
 meta:
   type: ensemble agent
-  description: You can select an agent to response user's question.
+  description: You can select an agent to answer user's question.
   contains: []
   steps:
     - bot: Hello, I can help you answer some common tax questions. Feel free to ask me!
 
 main:
+  type: flow agent
   steps:
     - call: meta
