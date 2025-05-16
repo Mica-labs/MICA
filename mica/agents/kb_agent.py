@@ -35,9 +35,9 @@ class KBAgent(Agent):
         self.top_k = top_k
         self.vector_store = None
         self.embeddings = OpenAIEmbeddings(
-            openai_api_key=config.get('api_key') or "",
-            base_url=config.get('server'),
-            headers=config.get('headers')
+            openai_api_key=config.get('api_key') or "open-api-key",
+            base_url=config.get('server') + "/v1",
+            default_headers=config.get('headers')
         ) if config else OpenAIEmbeddings()
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
