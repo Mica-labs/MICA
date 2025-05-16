@@ -14,7 +14,7 @@ MICA (Multiple Intelligent Conversational Agents) is designed to simplify the de
 There are numerous agent frameworks available—such as [AutoGen](https://github.com/microsoft/autogen), [CrewAI](https://github.com/crewAIInc/crewAI), [LangChain](https://github.com/langchain-ai/langchain), [Amazon MAO](https://github.com/awslabs/multi-agent-orchestrator), and [Swarm](https://github.com/openai/swarm) —these frameworks offer high flexibility for constructing agents in general settings. However, they are often too complex for professionals in customer service, who typically have limited programming experience. To address this, we introduce Agent Declarative Language (ADL)—a lightweight specification for developing chatbots through natural language programming.
 
 Below is a bookstore chatbot implemented using ADL syntax. This chatbot includes three distinct functionalities: a book recommendation agent, an ordering agent, and an agent responsible for FAQs and bookstore policies.
-![bookstore chatbot](../../Workshop/Socal DB/bookstore.jpg)
+![bookstore chatbot](./bookstore.jpg)
 
 
 
