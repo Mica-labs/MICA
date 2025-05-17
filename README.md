@@ -6,17 +6,13 @@
   <a href="https://www.promptai.us">Mica studio</a>
 </p>
 
-
-# MICA
-MICA (Multiple Intelligent Conversational Agents) is designed to simplify the development of customer service bots. You can quickly implement your multi-agent chatbot system by following some simple natural language descriptions.
-
 ## Agent Declarative Language
 There are numerous agent frameworks available—such as [AutoGen](https://github.com/microsoft/autogen), [CrewAI](https://github.com/crewAIInc/crewAI), [LangChain](https://github.com/langchain-ai/langchain), [Amazon MAO](https://github.com/awslabs/multi-agent-orchestrator), and [Swarm](https://github.com/openai/swarm) —these frameworks offer high flexibility for constructing agents in general settings. However, they are often too complex for professionals in customer service, who typically have limited programming experience. To address this, we introduce Agent Declarative Language (ADL)—a lightweight specification for developing chatbots through natural language programming.
 
-Below is a bookstore chatbot implemented using ADL syntax. This chatbot includes three distinct functionalities: a book recommendation agent, an ordering agent, and an agent responsible for FAQs and bookstore policies.
+Below is a bookstore chatbot implemented in ADL. This chatbot includes three agents: a book recommendation agent, an order placing agent, and an agent responsible for FAQs and bookstore policy.
 ![bookstore chatbot](./bookstore.jpg)
 
-
+MICA (Multiple Intelligent Conversational Agents) can interpret and run programs written in ADL.  It is designed to simplify the development of customer service bots. 
 
 ## Quick Start
 > Before installing MICA, make sure your machine meets the following minimum system requirements:
