@@ -7,7 +7,7 @@ from mica.agents.steps.base import Base
 from mica.constants import MAIN_FLOW
 from mica.llm.openai_model import OpenAIModel
 from mica.tracker import Tracker, FlowInfo
-from mica.utils import extract_expression_parts, arg_format, parse_and_evaluate_expression
+from mica.utils import parse_and_evaluate
 
 
 class If(Base):
@@ -73,7 +73,7 @@ class If(Base):
                 return "Do", []
             return "Skip", []
         else:
-            flag = parse_and_evaluate_expression(self.statement, tracker, self._flow_name)
+            flag = parse_and_evaluate(self.statement, tracker, self._flow_name)
             if flag:
                 return "Do", []
             return "Skip", []
@@ -117,9 +117,7 @@ class If(Base):
         return prompt
 
     def _extract_input_examples(self):
-        # 正则表达式匹配双引号中的内容
         pattern = r'"(.*?)"'
-        # 使用 findall 查找所有匹配的字符串
         return re.findall(pattern, self.statement)
 
 
@@ -186,7 +184,7 @@ class ElseIf(Base):
             else:
                 return "Skip", []
         else:
-            flag = parse_and_evaluate_expression(self.statement, tracker, self._flow_name)
+            flag = parse_and_evaluate(self.statement, tracker, self._flow_name)
             if flag:
                 return "Do", []
             return "Skip", []

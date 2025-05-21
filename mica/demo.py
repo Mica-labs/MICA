@@ -137,7 +137,10 @@ async def get_response(message, history, bot, user_id):
         user_id = generate_random_string(7)
     gradio_channel = GradioChannel(history)
     bot_response = await bot.handle_message(user_id, message, channel=gradio_channel)
-    bot_message = "\n".join(bot_response)
+    if bot_response is not None and len(bot_response) > 0:
+        bot_message = "\n".join(bot_response)
+    else:
+        bot_message = ""
     if message == "/init":
         message = ""
     await gradio_channel.send_message(bot_message, user=message)

@@ -8,7 +8,7 @@ import uuid
 
 from logging.config import dictConfig
 
-# 定义日志配置
+# log setting
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -271,3 +271,244 @@ def safe_json_loads(json_str):
 
 def short_uuid(length=8):
     return str(uuid.uuid4()).replace("-", "")[:length]
+
+class ExpressionParser:
+    def __init__(self, expr_str):
+        self.expr_str = expr_str
+        self.pos = 0
+        self.tokens = self._tokenize(expr_str)
+        self.current_token = 0
+
+    def _tokenize(self, expr_str):
+        # Split the expression into tokens
+        # Handle parentheses, logical operators, and comparison expressions
+        tokens = []
+        i = 0
+        while i < len(expr_str):
+            if expr_str[i].isspace():
+                i += 1
+                continue
+            elif expr_str[i] == '(':
+                tokens.append('(')
+                i += 1
+            elif expr_str[i] == ')':
+                tokens.append(')')
+                i += 1
+            elif expr_str[i:i + 3] in ['and', 'AND']:
+                tokens.append('and')
+                i += 3
+            elif expr_str[i:i + 2] in ['or', 'OR']:
+                tokens.append('or')
+                i += 2
+            elif expr_str[i:i + 8] == 're.match':
+                # Handle regular expression
+                j = i
+                paren_count = 0
+                while j < len(expr_str):
+                    if expr_str[j] == '(':
+                        paren_count += 1
+                    elif expr_str[j] == ')':
+                        paren_count -= 1
+                        if paren_count == 0:
+                            break
+                    j += 1
+                if j < len(expr_str):
+                    tokens.append(expr_str[i:j + 1])
+                    i = j + 1
+                else:
+                    raise ValueError("Unmatched parentheses in regex expression")
+            else:
+                # Handle general comparison expressions (a == b, a != b, a > b, etc.)
+                j = i
+                while j < len(expr_str) and expr_str[j] not in '()' and expr_str[j:j + 3] != 'and' and expr_str[j:j + 2] != 'or':
+                    j += 1
+                if i != j:
+                    expr = expr_str[i:j].strip()
+                    if expr:
+                        tokens.append(expr)
+                i = j
+
+        return tokens
+
+    def parse(self):
+        return self._parse_expression()
+
+    def _parse_expression(self):
+        return self._parse_or()
+
+    def _parse_or(self):
+        left = self._parse_and()
+        while self.current_token < len(self.tokens) and self.tokens[self.current_token] == 'or':
+            self.current_token += 1
+            right = self._parse_and()
+            left = {'type': 'or', 'left': left, 'right': right}
+        return left
+
+    def _parse_and(self):
+        left = self._parse_primary()
+        while self.current_token < len(self.tokens) and self.tokens[self.current_token] == 'and':
+            self.current_token += 1
+            right = self._parse_primary()
+            left = {'type': 'and', 'left': left, 'right': right}
+        return left
+
+    def _parse_primary(self):
+        if self.current_token >= len(self.tokens):
+            raise ValueError("Incomplete expression")
+
+        token = self.tokens[self.current_token]
+        self.current_token += 1
+
+        if token == '(':
+            expr = self._parse_expression()
+            if self.current_token >= len(self.tokens) or self.tokens[self.current_token] != ')':
+                raise ValueError("Unmatched parentheses")
+            self.current_token += 1
+            return expr
+        elif token.startswith('re.match'):
+            # Handle regex expression
+            match = re.match(r're\.match\((.*?), (.*?)\)', token)
+            if match:
+                pattern = match.group(1)
+                arg_name = match.group(2)
+                return {'type': 'regex', 'pattern': pattern, 'arg_name': arg_name}
+            else:
+                raise ValueError(f"Invalid regex expression: {token}")
+        else:
+            # Handle comparison expressions
+            if "==" in token:
+                parts = token.split("==")
+                if len(parts) == 2:
+                    return {'type': 'eq', 'left': parts[0].strip(), 'right': parts[1].strip()}
+            elif "!=" in token:
+                parts = token.split("!=")
+                if len(parts) == 2:
+                    return {'type': 'neq', 'left': parts[0].strip(), 'right': parts[1].strip()}
+            elif ">=" in token:
+                parts = token.split(">=")
+                if len(parts) == 2:
+                    return {'type': 'ge', 'left': parts[0].strip(), 'right': parts[1].strip()}
+            elif "<=" in token:
+                parts = token.split("<=")
+                if len(parts) == 2:
+                    return {'type': 'le', 'left': parts[0].strip(), 'right': parts[1].strip()}
+            elif ">" in token:
+                parts = token.split(">")
+                if len(parts) == 2:
+                    return {'type': 'gt', 'left': parts[0].strip(), 'right': parts[1].strip()}
+            elif "<" in token:
+                parts = token.split("<")
+                if len(parts) == 2:
+                    return {'type': 'lt', 'left': parts[0].strip(), 'right': parts[1].strip()}
+
+            raise ValueError(f"Unable to parse expression: {token}")
+
+
+def evaluate_expression(expr_tree, tracker, revoke_agent_name):
+    """
+    Evaluate the expression based on the parse tree and argument values
+
+    Args:
+        expr_tree: parsed expression tree
+        tracker: Tracker, provide arg value
+        revoke_agent_name: string, the default agent name in an arg_path
+
+    Returns:
+        Boolean result of the expression
+    """
+    if expr_tree['type'] == 'and':
+        return evaluate_expression(expr_tree['left'], tracker, revoke_agent_name) \
+               and evaluate_expression(expr_tree['right'], tracker, revoke_agent_name)
+    elif expr_tree['type'] == 'or':
+        return evaluate_expression(expr_tree['left'], tracker, revoke_agent_name) \
+               or evaluate_expression(expr_tree['right'], tracker, revoke_agent_name)
+    elif expr_tree['type'] == 'eq':
+        return _get_value(expr_tree['left'], tracker, revoke_agent_name) \
+               == _get_value(expr_tree['right'], tracker, revoke_agent_name)
+    elif expr_tree['type'] == 'neq':
+        return _get_value(expr_tree['left'], tracker, revoke_agent_name) \
+               != _get_value(expr_tree['right'], tracker, revoke_agent_name)
+    elif expr_tree['type'] == 'gt':
+        return _get_value(expr_tree['left'], tracker, revoke_agent_name) \
+               > _get_value(expr_tree['right'], tracker, revoke_agent_name)
+    elif expr_tree['type'] == 'lt':
+        return _get_value(expr_tree['left'], tracker, revoke_agent_name) \
+               < _get_value(expr_tree['right'], tracker, revoke_agent_name)
+    elif expr_tree['type'] == 'ge':
+        return _get_value(expr_tree['left'], tracker, revoke_agent_name) \
+               >= _get_value(expr_tree['right'], tracker, revoke_agent_name)
+    elif expr_tree['type'] == 'le':
+        return _get_value(expr_tree['left'], tracker, revoke_agent_name) \
+               <= _get_value(expr_tree['right'], tracker, revoke_agent_name)
+    elif expr_tree['type'] == 'regex':
+        pattern = expr_tree['pattern'].strip("'\"")
+        arg_name = expr_tree['arg_name'].strip()
+        arg_val = _get_value(arg_name, tracker, revoke_agent_name)
+        if arg_val is None:
+            return False
+        return bool(re.match(pattern, str(arg_val)))
+    else:
+        raise ValueError(f"Unknown expression type: {expr_tree['type']}")
+
+
+def _get_value(val_str, tracker, revoke_agent_name):
+    """
+    Retrieve the value from the string; if it's a parameter name, get it from the tracker,
+    otherwise try converting to appropriate type.
+    """
+    val_str = val_str.strip()
+
+    if val_str == "None":
+        return None
+    if val_str == "True":
+        return True
+    elif val_str == "False":
+        return False
+
+    if '.' in val_str and not (val_str.startswith('"') or val_str.startswith("'")):
+        parts = val_str.split('.')
+        if len(parts) == 2:
+            agent_name, arg_name = parts
+            value, is_exist = tracker.get_arg(agent_name, arg_name)
+            if is_exist:
+                return value
+
+    value, is_exist = tracker.get_arg(revoke_agent_name, val_str)
+    if is_exist:
+        return value
+
+    if not (val_str.startswith('"') or val_str.startswith("'")):
+        if '.' in val_str:
+            try:
+                return float(val_str)
+            except ValueError:
+                pass
+        else:
+            try:
+                return int(val_str)
+            except ValueError:
+                pass
+
+    if (val_str.startswith('"') and val_str.endswith('"')) or \
+       (val_str.startswith("'") and val_str.endswith("'")):
+        return val_str[1:-1]
+
+    return val_str
+
+
+def parse_and_evaluate(expr_str, tracker, revoke_agent_name):
+    """
+    Parse and evaluate an expression
+
+    Args:
+        expr_str: expression string
+        tracker: Tracker, provide arg value
+        revoke_agent_name: string, the default agent name in an arg_path
+
+    Returns:
+        Boolean result
+    """
+    parser = ExpressionParser(expr_str)
+    expr_tree = parser.parse()
+    return evaluate_expression(expr_tree, tracker, revoke_agent_name)
+

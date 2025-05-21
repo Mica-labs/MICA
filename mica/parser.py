@@ -11,37 +11,40 @@ def parse_agents(raw_agents: Dict):
     for agent_name, agent_content in raw_agents.items():
         processed_agent_content = agent_content
         if agent_content.get("type") and agent_content["type"] == "flow agent":
-            temp_steps = []
-            for step in agent_content["steps"]:
-                if isinstance(step, dict) and "if" in step:
-                    if_dict = {
-                        'if': step['if'],
-                        'then': step.get('then', []),
-                        'tries': step.get('tries')
-                    }
-                    temp_steps.append(if_dict)
-
-                    if 'else' in step:
-                        else_dict = {
-                            'else': step['else']
+            for key, value in agent_content.items():
+                if key in ['type', 'description', 'fallback', 'exit', 'args']:
+                    continue
+                temp_steps = []
+                for step in value:
+                    if isinstance(step, dict) and "if" in step:
+                        if_dict = {
+                            'if': step['if'],
+                            'then': step.get('then', []),
+                            'tries': step.get('tries')
                         }
-                        temp_steps.append(else_dict)
-                elif isinstance(step, dict) and "else if" in step:
-                    elif_dict = {
-                        'else if': step['else if'],
-                        'then': step.get('then', []),
-                        'tries': step.get('tries')
-                    }
-                    temp_steps.append(elif_dict)
+                        temp_steps.append(if_dict)
 
-                    if 'else' in step:
-                        else_dict = {
-                            'else': step['else']
+                        if 'else' in step:
+                            else_dict = {
+                                'else': step['else']
+                            }
+                            temp_steps.append(else_dict)
+                    elif isinstance(step, dict) and "else if" in step:
+                        elif_dict = {
+                            'else if': step['else if'],
+                            'then': step.get('then', []),
+                            'tries': step.get('tries')
                         }
-                        temp_steps.append(else_dict)
-                else:
-                    temp_steps.append(step)
-            processed_agent_content['steps'] = temp_steps
+                        temp_steps.append(elif_dict)
+
+                        if 'else' in step:
+                            else_dict = {
+                                'else': step['else']
+                            }
+                            temp_steps.append(else_dict)
+                    else:
+                        temp_steps.append(step)
+                processed_agent_content[key] = temp_steps
         processed_agents[agent_name] = processed_agent_content
     return processed_agents
 
@@ -300,7 +303,7 @@ class KBAgentValidator(AgentValidator):
     def __init__(self):
         super().__init__()
         self.required_keys = {'type'}
-        self.valid_keys = {'faq', 'web', 'file', 'sources', 'type'}
+        self.valid_keys = {'faq', 'web', 'file', 'sources', 'type', 'description'}
         self.type_specs = {
             "type": TypeSpec(Text),
             "web": TypeSpec(List),
