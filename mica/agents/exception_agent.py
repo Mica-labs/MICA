@@ -28,11 +28,6 @@ class ExceptionAgent(Agent):
                llm_model: Optional[Any] = None,
                **kwargs):
 
-        if kwargs.get("server") and kwargs.get("headers"):
-            if config is None:
-                config = {}
-            config["server"] = kwargs.get("server") + "/rpc/rasa/message"
-            config["headers"] = kwargs.get("headers")
         return cls(name, description, config, llm_model)
 
     async def run(self,

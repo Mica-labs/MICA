@@ -44,11 +44,6 @@ class LLMAgent(Agent):
                steps: Optional[Any] = None,
                **kwargs
                ):
-        if kwargs.get("server") and kwargs.get("headers"):
-            if config is None:
-                config = {}
-            config["server"] = kwargs.get("server") + "/rpc/rasa/message"
-            config["headers"] = kwargs.get("headers")
         if steps is not None:
             steps = [StepLoader.create(step, root_agent_name=name) for step in steps]
         return cls(name, description, config, prompt, args, uses, llm_model, steps)

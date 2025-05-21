@@ -71,6 +71,7 @@ class FlowAgent(Agent):
                llm_model: Optional[Any] = None,
                server: Optional[Any] = None,
                headers: Optional[Any] = None,
+               fallback: Optional[Any] = None,
                **kwargs):
 
         if server and headers:
@@ -87,7 +88,8 @@ class FlowAgent(Agent):
                    subflows=steps,
                    main_flow_name=main_flow_name,
                    args=args,
-                   llm_model=llm_model)
+                   llm_model=llm_model,
+                   fallback=fallback)
 
     @staticmethod
     def _find_all_labels(subflows: Dict) -> Dict:
@@ -133,7 +135,8 @@ class FlowAgent(Agent):
         info = tracker.get_or_create_flow_agent(self.name)
 
         # extract any args from the latest message
-        if not info.has_extract_args_after_latest_user_message(tracker.latest_message):
+        if not info.has_extract_args_after_latest_user_message(tracker.latest_message)\
+                and self.name != 'main':
             agent_exception = await self.get_message_args(tracker, agents)
             if agent_exception is not None:
                 if self.fallback is None:
