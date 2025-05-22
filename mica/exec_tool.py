@@ -224,6 +224,7 @@ class SafePythonExecutor:
                 ):
 
                     description = node.body[0].value.value
+                    description = description.strip()
 
                 func_name = node.name
                 args = {}
@@ -241,6 +242,7 @@ class SafePythonExecutor:
 
                     # if it is not a default parameter, then it will not in the required list
                     default_index = i - (total_args - num_defaults)
+
                     if default_index < 0:
                         required.append(arg_name)
                     args[arg_name] = {
