@@ -14,7 +14,7 @@ class Function(Agent):
                  **kwargs):
         self.body = body
         self.args = args
-        self.required = required or args
+        self.required = required
         super().__init__(name, description)
 
     @classmethod
@@ -45,17 +45,7 @@ class Function(Agent):
         }
         if self.description is not None and len(self.description) > 0:
             prompt["description"] = self.description
-        args = {}
-        # if self.args is not None:
-        #     for arg in self.args:
-        #         if type(arg) == str:
-        #             attr = {"type": "string"}
-        #             args[arg] = attr
-        #         else:
-        #             name = list(arg.keys())[0]
-        #             attr = arg[name]
-        #             attr["type"] = "string"
-        #             args[name] = attr
+
         if self.args is not None and len(self.args) > 0:
             prompt["parameters"] = {
                 "type": "object",
