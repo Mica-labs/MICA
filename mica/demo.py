@@ -213,6 +213,4 @@ main:
             save_btn.click(save_bot, [bot_name, yaml_input, code_input])
             file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, chatbot, user_id, tracker], trigger_mode="once", show_progress="hidden")
 
-    import uvloop
-    uvloop.install()
     demo.launch(share=False)
