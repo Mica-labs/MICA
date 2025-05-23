@@ -15,6 +15,8 @@ import uvicorn
 from mica.channel import WebSocketChannel
 from mica.manager import Manager
 from mica.utils import read_yaml_string, logger, read_yaml_file
+from mica.connector.facebook import verify_facebook_webhook, handle_facebook_webhook
+from mica.connector.slack import handle_slack_webhook
 
 api_description = """LLM Chatbot Server API."""
 
@@ -119,6 +121,19 @@ async def deploy_zip(file: UploadFile = File(...)):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/v1/slack/webhook/{bot}")
+async def slack_webhook(bot: Text, request: Request):
+    return await handle_slack_webhook(request, bot, manager)
+
+@app.get("/v1/facebook/webhook/{bot}")
+async def facebook_verify_webhook(bot: str, request: Request):
+    return await verify_facebook_webhook(bot,request)
+
+@app.post("/v1/facebook/webhook/{bot}")
+async def facebook_webhook(bot: str, request: Request):
+    # 获取请求体数据
+    body = await request.json()
+    return await handle_facebook_webhook(body, bot, manager)
 
 @app.post("/v1/chat")
 async def chat(request: Request, body: ChatRequest):
