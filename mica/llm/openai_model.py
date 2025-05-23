@@ -84,22 +84,7 @@ class OpenAIModel(BaseModel):
                         name = func_details.get("name")
                         args = json.loads(func_details.get("arguments"))
                         call_id = func.get("id")
-                        # if func.get("name") == "extract_data":
-                        #     args = json.loads(func.get("arguments"))
-                        #     next_response_text = args.get("next_response")
-                        #     llm_result.append(BotUtter(text=next_response_text, metadata=provider, additional=message))
-                        #
-                        #     for arg_name, arg_value in args.items():
-                        #         if arg_name in ["next_response", "is_complete"]:
-                        #             continue
-                        #         llm_result.append(SetSlot(slot_name=arg_name, value=arg_value))
-                        #     is_complete = args.get("is_complete")
-                        #     if is_complete:
-                        #         llm_result.append(AgentComplete(provider=provider))
-                        # if func.get("name") == "conversation_complete":
-                        #     llm_result.append(AgentComplete(provider=provider))
-                        # if func.get("name") == "conversation_exception":
-                        #     llm_result.append(AgentFail(provider=provider))
+
                         llm_result.append(FunctionCall(function_name=name,
                                                        args=args,
                                                        call_id=call_id,
