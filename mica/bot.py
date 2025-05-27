@@ -35,12 +35,13 @@ class Bot(object):
     """
     def __init__(self,
                  name: Optional[Text] = None,
-                 config: Optional[ModelConfig] = None,
+                 config: Optional[Dict] = None,
                  tracker_store: Optional[TrackerStore] = None,
                  agents: Optional[Dict[Text, Agent]] = None,
                  scheduler: Optional[Any] = None,
                  entrypoint: Optional[Agent] = None,
-                 tools: Optional[Any] = None
+                 tools: Optional[Any] = None,
+                 connector: Optional[Any] = None
                  ):
         self.name = name
         self.config = config
@@ -52,16 +53,18 @@ class Bot(object):
         self.count = 0
         self.sum_rsp_time = 0
         self.tools = tools
+        self.connector = connector or {}
         self._func_args_config = {name: {} for name in self.tools.functions.keys()} or {}
 
     @classmethod
     def from_json(cls,
                   name: Optional[Text] = None,
                   data: Optional[Any] = None,
-                  config: Optional[Any] = None,
-                  tool_code: Optional[Text] = None):
+                  llm_config: Optional[Any] = None,
+                  tool_code: Optional[Text] = None,
+                  connector: Optional[Any] = None):
         name = name or short_uuid(10)
-        config = config or {}
+        config = llm_config or {}
 
         # # get schedule method
         # from mica.processor import DispatcherProcessor, PriorityProcessor
@@ -82,7 +85,6 @@ class Bot(object):
             "llm agent": LLMAgent.create,
             "ensemble agent": EnsembleAgent.create,
             "flow agent": FlowAgent.create,
-            "function": Function.create,
             "kb agent": KBAgent.create
         }
         agents = {n: create_agents[value.get('type')](name=n, **value, **config, llm_model=llm_model)
@@ -143,7 +145,8 @@ class Bot(object):
                    config=config,
                    scheduler=scheduler,
                    entrypoint=entrypoint,
-                   tools=tools)
+                   tools=tools,
+                   connector=connector)
 
     # TODO: logic about the stop sign of this turn
     async def handle_message(self,
