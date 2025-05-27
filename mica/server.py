@@ -133,7 +133,7 @@ async def slack_webhook(bot: Text, request: Request):
 
 @app.get("/v1/facebook/webhook/{bot}")
 async def facebook_verify_webhook(bot: str, request: Request):
-    return await verify_facebook_webhook(bot, request)
+    return await verify_facebook_webhook(request, bot, manager)
 
 @app.post("/v1/facebook/webhook/{bot}")
 async def facebook_webhook(bot: str, request: Request):
