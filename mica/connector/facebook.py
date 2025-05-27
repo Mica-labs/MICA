@@ -1,6 +1,8 @@
 import os
 import aiohttp
-from fastapi import HTTPException
+import hmac
+import hashlib
+from fastapi import HTTPException, Request
 from mica.utils import logger
 
 
@@ -56,8 +58,34 @@ async def verify_facebook_webhook(request, bot, manager):
     # return challenge
     return int(challenge)
 
-async def handle_facebook_webhook(body, bot, manager):
+def verify_webhook_signature(request: Request, bot: str, manager, body: bytes) -> None:
+    secret = manager.get_credential_info(bot, "facebook.secret")
+    if not secret:
+        logger.error(f"[{bot}][Facebook app_secret not configured]")
+        raise HTTPException(status_code=400, detail="Facebook app_secret not configured")
+        
+    signature = request.headers.get("X-Hub-Signature-256")
+    if not signature:
+        logger.error(f"[{bot}][Missing X-Hub-Signature-256 header]")
+        raise HTTPException(status_code=400, detail="Missing X-Hub-Signature-256 header")
+    
+    # 计算预期的签名
+    expected_signature = 'sha256=' + hmac.new(
+        secret.encode('utf-8'),
+        body,
+        hashlib.sha256
+    ).hexdigest()
+    
+    # 验证签名
+    if not hmac.compare_digest(signature, expected_signature):
+        logger.error(f"[{bot}][Invalid X-Hub-Signature-256]")
+        raise HTTPException(status_code=400, detail="Invalid X-Hub-Signature-256")
+
+async def handle_facebook_webhook(body, bot, manager, request: Request):
     """start handle facebook message"""
+
+    # verify signature
+    verify_webhook_signature(request, bot, manager, request.body)
 
     if body.get("object") != "page":
         raise HTTPException(status_code=400, detail="Invalid request")
@@ -66,7 +94,7 @@ async def handle_facebook_webhook(body, bot, manager):
 
     page_access_token  = manager.get_credential_info(bot,"facebook.page_access_token")
     if not page_access_token:
-        logger.error("[{bot}:{receiver}][Facebook page_access_token not configured]")
+        logger.error(f"[{bot}:{receiver}][Facebook page_access_token not configured]")
         return None
 
     try:
