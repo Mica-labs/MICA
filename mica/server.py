@@ -94,7 +94,6 @@ async def deploy_zip(file: UploadFile = File(...)):
 
             llm_config = config.get('llm_config')
             connector = {key: value for key, value in config.items() if key in ['facebook', 'slack']}
-            logger.info(f"[{bot_name}][read connector:{connector}]")
 
             # Create a directory for this bot
             bot_dir = os.path.join(BOTS_DIR, bot_name)
