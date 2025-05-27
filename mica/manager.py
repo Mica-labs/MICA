@@ -51,3 +51,27 @@ class Manager:
         if self.bots.get(bot_name) is None:
             return
         return self.bots.get(bot_name).connector.get(key)
+
+    def slack_incoming_webhook(self, bot_name):
+        slack = self.get_credential_info(bot_name, "slack")
+        if slack is None:
+             return None
+        return slack.get('incoming_webhook')
+
+    def facebook_secret(self, bot_name):
+        facebook = self.get_credential_info(bot_name, "facebook")
+        if facebook is None:
+            return None
+        return facebook.get('secret')
+
+    def facebook_verify_token(self, bot_name):
+        facebook = self.get_credential_info(bot_name, "facebook")
+        if facebook is None:
+            return None
+        return facebook.get('verify_token')
+
+    def facebook_page_access_token(self, bot_name):
+        facebook = self.get_credential_info(bot_name, "facebook")
+        if facebook is None:
+            return None
+        return facebook.get('page_access_token')
