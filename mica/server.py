@@ -88,10 +88,12 @@ async def deploy_zip(file: UploadFile = File(...)):
             # Determine bot name
             if config is not None and config.get('bot_name'):
                 bot_name = config.get('bot_name')
+                del config['bot_name']
             else:
                 bot_name = Path(file.filename).stem
-            
-            gpt_config = config.get("gptConfig") if config else {}
+
+            llm_config = config.get('llm_config')
+            connector = {key: value for key, value in config.items() if key in ['facebook', 'slack']}
             
             # Create a directory for this bot
             bot_dir = os.path.join(BOTS_DIR, bot_name)
@@ -111,7 +113,11 @@ async def deploy_zip(file: UploadFile = File(...)):
                     f.write(python_script)
             
             # Load the bot
-            manager.load(bot_name, data, gpt_config, python_script)
+            manager.load(bot_name=bot_name,
+                         data=data,
+                         llm_config=llm_config,
+                         python_script=python_script,
+                         connector=connector)
 
         return ResponseBody(status=200, message=f"Successfully deployed bot: {bot_name}")
 
@@ -127,7 +133,7 @@ async def slack_webhook(bot: Text, request: Request):
 
 @app.get("/v1/facebook/webhook/{bot}")
 async def facebook_verify_webhook(bot: str, request: Request):
-    return await verify_facebook_webhook(bot,request)
+    return await verify_facebook_webhook(bot, request)
 
 @app.post("/v1/facebook/webhook/{bot}")
 async def facebook_webhook(bot: str, request: Request):
