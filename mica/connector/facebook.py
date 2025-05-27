@@ -3,6 +3,7 @@ import aiohttp
 import hmac
 import hashlib
 from fastapi import HTTPException, Request
+from fastapi.responses import PlainTextResponse
 from mica.utils import logger
 
 
@@ -45,7 +46,7 @@ async def verify_facebook_webhook(request, bot, manager):
 
     logger.info(f"[{bot}][verify facebook webhook with token: {verify_token} and challenge: {challenge}]")
 
-    facebook_verify_token = manager.get_credential_info(bot,"facebook.verify_token")
+    facebook_verify_token = manager.facebook_verify_token(bot)
     if not facebook_verify_token:
       logger.error("[{bot}][Facebook verify token not configured]")
       raise HTTPException(status_code=400, detail="Facebook verify token not configured")
@@ -58,9 +59,17 @@ async def verify_facebook_webhook(request, bot, manager):
     # return challenge
     return int(challenge)
 
-def verify_webhook_signature(request: Request, bot: str, manager, body: bytes) -> None:
-    secret = manager.get_credential_info(bot, "facebook.secret")
-    if not secret:
+async def verify_webhook_signature(request: Request, bot: str, manager) -> None:
+    """验证 Facebook Webhook 的签名
+    Args:
+        request: FastAPI 请求对象
+        bot: 机器人标识
+        manager: 管理器实例
+    Raises:
+        HTTPException: 当验证失败时抛出 400 错误
+    """
+    app_secret = manager.facebook_secret(bot)
+    if not app_secret:
         logger.error(f"[{bot}][Facebook app_secret not configured]")
         raise HTTPException(status_code=400, detail="Facebook app_secret not configured")
         
@@ -68,11 +77,13 @@ def verify_webhook_signature(request: Request, bot: str, manager, body: bytes) -
     if not signature:
         logger.error(f"[{bot}][Missing X-Hub-Signature-256 header]")
         raise HTTPException(status_code=400, detail="Missing X-Hub-Signature-256 header")
-    
+
+    body_bytes = await request.body()
+
     # 计算预期的签名
     expected_signature = 'sha256=' + hmac.new(
-        secret.encode('utf-8'),
-        body,
+        app_secret.encode('utf-8'),
+        body_bytes,
         hashlib.sha256
     ).hexdigest()
     
@@ -81,18 +92,20 @@ def verify_webhook_signature(request: Request, bot: str, manager, body: bytes) -
         logger.error(f"[{bot}][Invalid X-Hub-Signature-256]")
         raise HTTPException(status_code=400, detail="Invalid X-Hub-Signature-256")
 
-async def handle_facebook_webhook(body, bot, manager, request: Request):
+async def handle_facebook_webhook(request: Request, bot, manager):
     """start handle facebook message"""
 
-    # verify signature
-    verify_webhook_signature(request, bot, manager, request.body)
+    body = await request.json()
+
+    # 验证签名
+    await verify_webhook_signature(request, bot, manager)
 
     if body.get("object") != "page":
         raise HTTPException(status_code=400, detail="Invalid request")
 
     logger.info(f"[{bot}][handle facebook webhook:{body}]")
 
-    page_access_token  = manager.get_credential_info(bot,"facebook.page_access_token")
+    page_access_token  = manager.facebook_page_access_token(bot)
     if not page_access_token:
         logger.error(f"[{bot}:{receiver}][Facebook page_access_token not configured]")
         return None
@@ -113,7 +126,7 @@ async def handle_facebook_webhook(body, bot, manager, request: Request):
                         logger.info(f"[{bot}:{sender_id}][handle facebook webhook with mica res:{response}]")
 
                         await send_to_facebook(sender_id, response, bot, page_access_token)
-        return "OK"
+        return PlainTextResponse("OK", status_code=200)
     except Exception as e:
         logger.error(f"Error handling Facebook webhook: {str(e)}")
         return None

@@ -94,7 +94,8 @@ async def deploy_zip(file: UploadFile = File(...)):
 
             llm_config = config.get('llm_config')
             connector = {key: value for key, value in config.items() if key in ['facebook', 'slack']}
-            
+            logger.info(f"[{bot_name}][read connector:{connector}]")
+
             # Create a directory for this bot
             bot_dir = os.path.join(BOTS_DIR, bot_name)
             os.makedirs(bot_dir, exist_ok=True)
@@ -138,8 +139,7 @@ async def facebook_verify_webhook(bot: str, request: Request):
 @app.post("/v1/facebook/webhook/{bot}")
 async def facebook_webhook(bot: str, request: Request):
     # 获取请求体数据
-    body = await request.json()
-    return await handle_facebook_webhook(body, bot, manager)
+    return await handle_facebook_webhook(request, bot, manager)
 
 @app.post("/v1/chat")
 async def chat(request: Request, body: ChatRequest):

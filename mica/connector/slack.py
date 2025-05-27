@@ -3,7 +3,7 @@ import aiohttp
 from fastapi import HTTPException
 from mica.utils import logger
 
-async def send_to_slack(messages: list, bot: str, slack_incoming_url: str):
+async def send_to_slack(messages: list, bot: str, slack_incoming_webhook: str):
    combined_text = " ".join(msg.get("text", "") for msg in messages if msg.get("text"))
 
    if not combined_text:
@@ -11,7 +11,7 @@ async def send_to_slack(messages: list, bot: str, slack_incoming_url: str):
 
    data = {"text": combined_text}
 
-   if not url:
+   if not slack_incoming_webhook:
        logger.error(f"[{bot}][Slack webhook URL not configured]")
        return None
 
@@ -19,7 +19,7 @@ async def send_to_slack(messages: list, bot: str, slack_incoming_url: str):
 
    try:
       async with aiohttp.ClientSession() as session:
-        async with session.post(slack_incoming_url, headers=headers, json=data) as response:
+        async with session.post(slack_incoming_webhook, headers=headers, json=data) as response:
             result = await response.text()
             logger.info(f"[{bot}][send to slack user with result:{result}]")
             return result
@@ -58,8 +58,8 @@ async def handle_slack_webhook(request, bot, manager):
     sender_id = event.get("user")
     text = event.get("text")
 
-    slack_incoming_url = manager.get_credential_info(bot, "slack.incoming_webhook")
-    if not slack_incoming_url:
+    slack_incoming_webhook = manager.slack_incoming_webhook(bot)
+    if not slack_incoming_webhook:
         logger.error(f"[{bot}][Slack incoming URL not configured]")
         return "ok"
 
@@ -70,7 +70,7 @@ async def handle_slack_webhook(request, bot, manager):
             response = await manager.chat(bot, sender_id, text)
             logger.info(f"[{bot}][handle slack webhook with mica response:{response}]")
 
-            await send_to_slack(response, bot, slack_incoming_url)
+            await send_to_slack(response, bot, slack_incoming_webhook)
             return "ok"
         return "ok"
     except Exception as e:
