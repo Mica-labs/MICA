@@ -148,7 +148,8 @@ class EnsembleAgent(Agent):
                                rag_result: Optional[Any] = None):
         valid_states_info = ""
         for agent_name, args in tracker.args.items():
-            if agent_name not in candidates or agent_name in ["sender", "bot_name", "__mapping__", "main"]:
+            if agent_name not in candidates \
+                    or agent_name in ["sender", "bot_name", "__mapping__", "main"]:
                 continue
             if args is not None and len(args) > 0:
                 valid_states_info += f"{agent_name}: ("
@@ -158,6 +159,8 @@ class EnsembleAgent(Agent):
 
         agent_info = ""
         for idx, name in enumerate(candidates):
+            if isinstance(agents[name], KBAgent):
+                continue
             agent = agents.get(name)
             if agent is None:
                 logger.error(f"There exists an agent {name} claimed in ensemble agent,"
@@ -186,14 +189,14 @@ class EnsembleAgent(Agent):
                   f"{agent_info}"
 
         rag_info = "\nHere is some potentially relevant knowledge base content. " \
-                   "If you think the user’s input is related to this knowledge, " \
-                   "you can generate an answer based on the following content. " \
-                   "Output format: \"[FAQ] Your answer.\"\n" \
+                   "If you think the user’s input is related to these items, " \
+                   "output: \"[FAQ].\"\n" \
                    "## KNOWLEDGE BASE:\n"
 
         if rag_result is not None:
             for idx, item in enumerate(rag_result.get('matches')):
                 rag_info += f"{idx+1}. {item.get('content')}\n"
+            rag_info += f"### SUGGEST ANSWER: {rag_result.get('answer')}\n"
             system += rag_info
 
         # conversation history
@@ -250,7 +253,7 @@ class EnsembleAgent(Agent):
         for event in llm_result:
             if isinstance(event, BotUtter):
                 if "[FAQ]" in event.text:
-                    return event.text[5:]
+                    return rag_result.get('answer')
                 if "[Fallback]" in event.text:
                     return self.fallback
                 if "[Exit]" in event.text:
