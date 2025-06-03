@@ -82,7 +82,6 @@ class Bot(object):
             "llm agent": LLMAgent.create,
             "ensemble agent": EnsembleAgent.create,
             "flow agent": FlowAgent.create,
-            "function": Function.create,
             "kb agent": KBAgent.create
         }
         agents = {n: create_agents[value.get('type')](name=n, **value, **config, llm_model=llm_model)

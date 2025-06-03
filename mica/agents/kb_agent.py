@@ -23,13 +23,14 @@ class KBAgent(Agent):
                  description: Optional[Text] = None,
                  config: Optional[Dict[Text, Any]] = None,
                  knowledge_base: Optional[Any] = None,
+                 llm_model: Optional[Any] = None,
                  similarity_threshold: float = 0.0,
                  top_k: int = 3,
                  chunk_size: int = 1000,
                  chunk_overlap: int = 200,
                  **kwargs
                  ):
-        self.llm_model = OpenAIModel.create(config)
+        self.llm_model = llm_model or OpenAIModel.create(config)
         self.knowledge_base = knowledge_base
         self.similarity_threshold = similarity_threshold
         self.top_k = top_k
@@ -55,6 +56,7 @@ class KBAgent(Agent):
                file: Optional[Any] = None,
                web: Optional[List] = None,
                sources: Optional[List] = None,
+               llm_model: Optional[Any] = None,
                **kwargs
                ):
         if kwargs.get("server") and kwargs.get("headers"):
@@ -68,7 +70,11 @@ class KBAgent(Agent):
             'file': file,
             'web': web,
         }
-        return cls(name, description, config, knowledge_base)
+        return cls(name=name,
+                   description=description,
+                   config=config,
+                   knowledge_base=knowledge_base,
+                   llm_model=llm_model)
 
     def prepare(
             self,
@@ -164,8 +170,33 @@ class KBAgent(Agent):
                 "query": user_input,
                 "total_matches": len(matches)
             }
+            answer = await self.generate(tracker, metadata, user_input)
+            if answer:
+                metadata['answer'] = answer.text
+
             return True, [AgentComplete(provider=self.name, metadata=metadata)]
         return True, [AgentComplete(provider=self.name, metadata=None)]
+
+    async def generate(self, tracker, context, query):
+        prompt = self._generate_prompt(context, query)
+        answer = await self.llm_model.generate_message(prompt,
+                                                       tracker=tracker,
+                                                       provider=self.name)
+        if len(answer) == 1 and answer[0].text != 'No answer':
+            return answer[0]
+        return None
+
+    @staticmethod
+    def _generate_prompt(context, query):
+        retrieval = ""
+        for idx, item in enumerate(context.get('matches')):
+            retrieval += f"{idx + 1}. {item.get('content')}\n"
+
+        instruction = f"""You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say: No answer. Use three sentences maximum and keep the answer concise.
+Question: {query}
+Context: {retrieval} 
+Answer:"""
+        return [{"role": "user", "content": instruction}]
 
     @staticmethod
     def _classify(scources, file=None, web=None):
