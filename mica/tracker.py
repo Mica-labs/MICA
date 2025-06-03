@@ -73,13 +73,11 @@ class Tracker(object):
                  events: Optional[List[Event]] = None,
                  args: Optional[Dict[Text, Any]] = None,
                  functions: Optional[Dict[Text, Any]] = None,
-                 global_args: Optional[List[Text]] = None
                  ):
         self.user_id = user_id
         self.events = events or []
         self.args = args or {}
         self.func_args = functions or {}
-        self.global_args = global_args or []
         self.agent_stack = OrderedDict()
         self.latest_message = None
         self.flow_info = {}
@@ -91,10 +89,9 @@ class Tracker(object):
                user_id: Text,
                events: Optional[List[Event]] = None,
                args: Optional[Dict[Text, Any]] = None,
-               functions: Optional[Dict[Text, Any]] = None,
-               global_args: Optional[List[Text]] = None
+               functions: Optional[Dict[Text, Any]] = None
                ):
-        return cls(user_id, events, args, functions, global_args)
+        return cls(user_id, events, args, functions)
 
     def update(self, event: Event):
         self.events.append(event)
@@ -161,20 +158,36 @@ class Tracker(object):
             return True
 
         self.args[agent_name][arg_name] = arg_value
-        if arg_name not in self.global_args:
-            logger.debug(f"Set argument Success. Current agents' arguments: {self.args}")
-            return True
-        # set the same name
-        for _, args in self.args.items():
-            if args and arg_name in args:
-                args[arg_name] = arg_value
-        logger.debug(f"同步所有同名argument, {self.args}")
+
+        if self.args['__mapping__'].get(agent_name) \
+                and self.args['__mapping__'][agent_name].get(arg_name) \
+                and self.args['__mapping__'][agent_name][arg_name]['type'] == "ref":
+            ensemble_agent = self.args['__mapping__'][agent_name][arg_name]['agent']
+            ensemble_arg = self.args['__mapping__'][agent_name][arg_name]['arg']
+            self.args[ensemble_agent][ensemble_arg] = arg_value
+            logger.debug("Successfully synchronized '%s' in '%s'", ensemble_arg, ensemble_agent)
+        else:
+            filtered = {k: v for k, v in self.args.items() if k != "__mapping__"}
+            logger.debug(f"Set argument Success. Current agents' arguments: {filtered}")
         return True
 
     def get_args(self, agent_name):
-        return self.args.get(agent_name)
+        all_args = self.args.get(agent_name)
+        replaced_args = {}
+        for arg_name, arg_value in all_args.items():
+            if self.args['__mapping__'].get(agent_name) \
+                    and self.args['__mapping__'][agent_name].get(arg_name) \
+                    and self.args['__mapping__'][agent_name][arg_name].get('type') == 'ref':
+                    ensemble_agent = self.args['__mapping__'][agent_name][arg_name]['agent']
+                    ensemble_arg = self.args['__mapping__'][agent_name][arg_name]['arg']
+                    replaced_args[arg_name] = self.args[ensemble_agent][ensemble_arg]
+            else:
+                replaced_args[arg_name] = arg_value
+        return replaced_args
 
     def get_arg(self, agent_name, arg_name) -> Tuple[Any, bool]:
+        if arg_name == "_user_input":
+            return self.latest_message.text, True
         if agent_name not in self.args and agent_name not in self.func_args:
             logger.error(f"Cannot find agent: {agent_name}.")
             return None, False
@@ -184,6 +197,19 @@ class Tracker(object):
 
         if agent_name in self.func_args:
             return self.func_args[agent_name].get(arg_name), True
+
+        if self.args['__mapping__'].get(agent_name) and self.args['__mapping__'][agent_name].get(arg_name):
+            if self.args['__mapping__'][agent_name][arg_name].get('type') == 'ref':
+                ensemble_agent = self.args['__mapping__'][agent_name][arg_name]['agent']
+                ensemble_arg = self.args['__mapping__'][agent_name][arg_name]['arg']
+                return self.args[ensemble_agent][ensemble_arg], True
+
+        if self.args[agent_name][arg_name] is None:
+            if self.args['__mapping__'].get(agent_name) and self.args['__mapping__'][agent_name].get(arg_name):
+                ensemble_agent = self.args['__mapping__'][agent_name][arg_name]['agent']
+                ensemble_arg = self.args['__mapping__'][agent_name][arg_name]['arg']
+                return self.args[ensemble_agent][ensemble_arg], True
+
         return self.args[agent_name][arg_name], True
 
     def has_bot_response_after_user_input(self):

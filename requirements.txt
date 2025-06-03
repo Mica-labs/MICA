@@ -7,7 +7,7 @@ pypdf
 beautifulsoup4
 tiktoken
 faiss-cpu
-uvloop
 ruamel.yaml
 jsonpath
 mysql-connector-python
+openai

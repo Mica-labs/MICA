@@ -166,14 +166,16 @@ class CurrentAgent(Event):
     def __init__(self,
                  timestamp: Optional[float] = None,
                  agent: Optional[Any] = None,
-                 metadata: Optional[Any] = None):
+                 metadata: Optional[Any] = None,
+                 status: Optional[Any] = None):
         self.timestamp = timestamp or time.time()
         self.agent = agent
+        self.status = status or "running"
 
         super().__init__(timestamp, metadata)
 
     def __repr__(self):
-        return f"CurrentAgent(agent={self.agent}, metadata={self.metadata})"
+        return f"CurrentAgent(agent={self.agent}, metadata={self.metadata}, status={self.status})"
 
 
 class FunctionCall(Event):

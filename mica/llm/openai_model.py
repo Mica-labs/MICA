@@ -36,7 +36,7 @@ class OpenAIModel(BaseModel):
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.max_tokens = max_tokens
-        self.server = server or OPENAI_CHAT_URL
+        self.url = server + "/v1/chat/completions" if server else OPENAI_CHAT_URL
         self.headers = headers or {}
         self.client = httpx.AsyncClient(timeout=10)
 
@@ -64,8 +64,8 @@ class OpenAIModel(BaseModel):
         formatted_prompts = self._generate_prompts(prompts, functions)
         llm_result = []
 
-        logger.debug(f"url: {self.server}, headers: {self.headers}")
-        response = await self.client.post(self.server, headers=self.headers, json=formatted_prompts)
+        logger.debug(f"url: {self.url}, headers: {self.headers}")
+        response = await self.client.post(self.url, headers=self.headers, json=formatted_prompts)
         logger.debug("GPT response status: %s", response.status_code)
         if response.status_code == 200:
             response_json = response.json()
@@ -84,22 +84,7 @@ class OpenAIModel(BaseModel):
                         name = func_details.get("name")
                         args = json.loads(func_details.get("arguments"))
                         call_id = func.get("id")
-                        # if func.get("name") == "extract_data":
-                        #     args = json.loads(func.get("arguments"))
-                        #     next_response_text = args.get("next_response")
-                        #     llm_result.append(BotUtter(text=next_response_text, metadata=provider, additional=message))
-                        #
-                        #     for arg_name, arg_value in args.items():
-                        #         if arg_name in ["next_response", "is_complete"]:
-                        #             continue
-                        #         llm_result.append(SetSlot(slot_name=arg_name, value=arg_value))
-                        #     is_complete = args.get("is_complete")
-                        #     if is_complete:
-                        #         llm_result.append(AgentComplete(provider=provider))
-                        # if func.get("name") == "conversation_complete":
-                        #     llm_result.append(AgentComplete(provider=provider))
-                        # if func.get("name") == "conversation_exception":
-                        #     llm_result.append(AgentFail(provider=provider))
+
                         llm_result.append(FunctionCall(function_name=name,
                                                        args=args,
                                                        call_id=call_id,

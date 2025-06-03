@@ -57,8 +57,8 @@ async def init_conversation(bot: Bot, chatbot, user_id):
     from mica.agents.steps.bot import Bot as BotStep
     tracker = ""
     main = bot.entrypoint
-    if main.steps:
-        for step in main.steps:
+    if isinstance(main, FlowAgent):
+        for step in main.subflows[main.main_flow_name].steps:
             if isinstance(step, BotStep):
                 _, chatbot, user_id, tracker = await get_response("/init", chatbot, bot, user_id)
             if isinstance(step, Call):
@@ -137,7 +137,10 @@ async def get_response(message, history, bot, user_id):
         user_id = generate_random_string(7)
     gradio_channel = GradioChannel(history)
     bot_response = await bot.handle_message(user_id, message, channel=gradio_channel)
-    bot_message = "\n".join(bot_response)
+    if bot_response is not None and len(bot_response) > 0:
+        bot_message = "\n".join(bot_response)
+    else:
+        bot_message = ""
     if message == "/init":
         message = ""
     await gradio_channel.send_message(bot_message, user=message)
@@ -183,14 +186,14 @@ meta:
   type: ensemble agent
   contains:
   - book_restaurant
-  description: You can select an agent to response user's question.
+  description: You can select an agent to respond to user's question.
   steps:
   - bot: Hello, I am your intelligent assistant. What can I do for you?
 
 main:
+  type: flow agent
   steps:
   - call: meta
-    schedule: priority
 """, label="Enter agents.yml", language="yaml", lines=15)
                 code_input = gr.Code(label="Enter tools.py", language="python", lines=10, value=None)
                 bot = gr.State(None)
@@ -210,6 +213,4 @@ main:
             save_btn.click(save_bot, [bot_name, yaml_input, code_input])
             file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, chatbot, user_id, tracker], trigger_mode="once", show_progress="hidden")
 
-    import uvloop
-    uvloop.install()
     demo.launch(share=False)

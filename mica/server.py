@@ -1,6 +1,7 @@
 import io
 import logging
 import os
+import traceback
 import uuid
 import zipfile
 from pathlib import Path
@@ -115,6 +116,7 @@ async def deploy_zip(file: UploadFile = File(...)):
     except zipfile.BadZipFile:
         raise HTTPException(status_code=400, detail="Invalid ZIP file")
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
