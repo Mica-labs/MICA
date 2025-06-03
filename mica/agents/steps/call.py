@@ -62,23 +62,20 @@ class Call(Base):
             if tool_rst['status'] == 'error':
                 return "Finished", []
             if tool_rst['result'] is not None:
-                tool_rst_states = tool_rst['result']
-                if isinstance(tool_rst_states, Text):
-                    result.append(BotUtter(tool_rst_states, provider=self.name))
-                elif isinstance(tool_rst_states, List):
-                    for evt in tool_rst_states:
-                        if isinstance(evt, Text):
-                            result.append(BotUtter(evt, provider=self.name))
-                            continue
-                        if evt.get('slot_name') is not None:
-                            setslot = SetSlot.from_dict(evt)
-                            slot_info = arg_format(setslot.slot_name, self.name)
-                            tracker.set_arg(slot_info.get("flow_name"), slot_info.get("arg_name"), setslot.value)
-                        if evt.get('text') is not None:
-                            text = evt.get('text')
-                            text = replace_args_in_string(text, self.name, tracker)
-                            evt['text'] = text
-                            result.append(BotUtter.from_dict(evt))
+                tool_evts = tool_rst['result']
+                for evt in tool_evts:
+                    if isinstance(evt, SetSlot):
+                        slot_info = arg_format(evt.slot_name, self.name)
+                        tracker.set_arg(slot_info.get("flow_name"), slot_info.get("arg_name"), evt.value)
+                    elif isinstance(evt, BotUtter):
+                        text = evt.text
+                        text = replace_args_in_string(text, self.name, tracker)
+                        evt.text = text
+                        evt.provider = self.name
+                        result.append(evt)
+                    else:
+                        evt.provider = self.name
+                        result.append(evt)
 
         else:
             call_result = info.get_call_result(call_agent_name=id(self)) if info is not None else None

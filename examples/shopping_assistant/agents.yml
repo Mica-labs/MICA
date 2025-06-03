@@ -4,7 +4,6 @@ shopping_flow:
   args:
     - discount
   steps:
-    - begin
     - bot: Hi. I'm your shopping assistant. What can I do for you today?
     - label: start
     - user
@@ -31,9 +30,8 @@ shopping_flow:
         - bot: "You can ask me something like \"Any discount?\" or \"Start shopping.\"."
         - call: start
           tries: 3
-    - end
 
-    - begin: discount
+  discount:
     - if: meta.is_new_customer == True
       then:
         - set: 
@@ -41,9 +39,8 @@ shopping_flow:
         - return: success, Load discount successful.
       else:
         - return: error, No discount applied.
-    - end
-  fallback:
-    - policy: "Give a fallback message: I'm sorry, I didn't understand that. Can you please rephrase? If fallback three times consecutively, then terminate the conversation."
+
+  fallback: "Give a fallback message: I'm sorry, I didn't understand that. Can you please rephrase? If fallback three times consecutively, then terminate the conversation."
 
 order:
   type: llm agent
@@ -72,6 +69,7 @@ meta:
     - user
 
 main:
+  type: flow agent
   steps:
     - call: meta
 

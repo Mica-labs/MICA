@@ -125,12 +125,12 @@ class PriorityProcessor(Processor):
                 if isinstance(response_event, FollowUpAgent):
                     next_agent_name = response_event.next_agent
                     next_agent = bot.agents.get(next_agent_name)
-                    tracker.push_agent(CurrentAgent(agent=next_agent))
+                    tracker.push_agent(CurrentAgent(agent=next_agent, status="initiate", metadata=0))
                 if isinstance(response_event, (AgentFail, AgentComplete)):
                     tracker.update(response_event)
                     tracker.pop_agent()
                     # call by other agent
-                    if current_event.metadata is not None:
+                    if current_event.metadata is not None and isinstance(current_event.metadata, Dict):
                         flow_name = current_event.metadata["flow"]
                         step_id = current_event.metadata["step"]
                         info = tracker.get_or_create_flow_agent(flow_name)

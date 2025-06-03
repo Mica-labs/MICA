@@ -8,17 +8,19 @@ import ast
 from typing import List, Dict, Any, Optional, Text
 
 from mica.agents.functions import Function
+from mica.event import BotUtter, SetSlot, AgentComplete, AgentFail
+from mica.utils import logger
 
 
 class ImportTransformer(ast.NodeTransformer):
-    """AST转换器，用于处理import语句"""
+    """AST transformer for handling import statements"""
 
     def __init__(self, allowed_modules):
         self.allowed_modules = allowed_modules
         self.required_imports = set()
 
     def visit_Import(self, node):
-        """处理 import xxx 语句"""
+        """Handle 'import xxx' statements"""
         for alias in node.names:
             if alias.name in self.allowed_modules:
                 self.required_imports.add(alias.name)
@@ -27,7 +29,7 @@ class ImportTransformer(ast.NodeTransformer):
         return node
 
     def visit_ImportFrom(self, node):
-        """处理 from xxx import yyy 语句"""
+        """Handle 'from xxx import yyy' statements"""
         if node.module in self.allowed_modules:
             self.required_imports.add(node.module)
             return node
@@ -43,12 +45,12 @@ class SafePythonExecutor:
             max_memory_mb: int = 200
     ):
         """
-        安全代码执行器
+        Safe code executor
 
         Args:
-            allowed_modules: 允许导入的模块白名单
-            max_execution_time: 最大执行时间(秒)
-            max_memory_mb: 最大内存限制(MB)
+            allowed_modules: Whitelist of allowed modules to import
+            max_execution_time: Maximum execution time (seconds)
+            max_memory_mb: Maximum memory limit (MB)
         """
         self.allowed_modules = allowed_modules or [
             'math', 'random', 'statistics',
@@ -62,7 +64,7 @@ class SafePythonExecutor:
         self.functions: Dict[Text, Function] = {}
 
     def _safe_import(self, name, *args, **kwargs):
-        """安全导入函数"""
+        """Safe import function"""
         if name in self.allowed_modules:
             if name not in self.imported_modules:
                 try:
@@ -74,23 +76,23 @@ class SafePythonExecutor:
         raise ImportError(f"Module {name} is not in the whitelist")
 
     def _prepare_safe_namespace(self) -> Dict[str, Any]:
-        """准备安全的执行环境"""
+        """Prepare a safe execution environment"""
 
-        # 创建一个受限的 __import__ 函数
+        # Create a restricted __import__ function
         def safe_import(name, globals=None, locals=None, fromlist=(), level=0):
             return self._safe_import(name)
 
-        # 创建基础内置函数的副本
+        # Create a copy of basic built-in functions
         safe_builtins = dict(builtins.__dict__)
 
-        # 移除危险的内置函数
+        # Remove dangerous built-in functions
         for name in [
             'exec', 'eval', 'compile', 'open', 'input',
             '__import__', 'globals', 'locals', 'vars'
         ]:
             safe_builtins.pop(name, None)
 
-        # 添加安全的import函数
+        # Add safe import function
         safe_builtins['__import__'] = safe_import
 
         namespace = {
@@ -105,15 +107,15 @@ class SafePythonExecutor:
 
     def load_script(self, script_str: str) -> Dict[str, Any]:
         """
-        加载脚本到内存
+        Load a script into memory
 
         Args:
-            script_str: 脚本字符串
+            script_str: Script as a string
 
         Returns:
-            Dict 包含执行状态和结果
+            Dict containing execution status and result
         """
-        # 安全性检查模式
+        # Security check patterns
         dangerous_patterns = [
             r'(exec|eval)\s*\(',
             r'__import__\s*\(',
@@ -128,10 +130,10 @@ class SafePythonExecutor:
                 raise ValueError(f"Dangerous code pattern detected: {pattern}")
 
         try:
-            # 解析AST
+            # Parse AST
             tree = ast.parse(script_str)
 
-            # 分析和转换导入语句
+            # Analyze and transform import statements
             transformer = ImportTransformer(self.allowed_modules)
             transformed_tree = transformer.visit(tree)
 
@@ -139,16 +141,16 @@ class SafePythonExecutor:
             formatted_functions = self._extract_functions_from_script(tree)
             self.functions = {func["name"]: Function.create(**func) for func in formatted_functions}
 
-            # 编译转换后的代码
+            # Compile the transformed code
             compiled_code = compile(transformed_tree, '<string>', 'exec')
 
-            # 准备命名空间
+            # Prepare the namespace
             safe_namespace = self._prepare_safe_namespace()
 
-            # 执行代码
+            # Execute the code
             exec(compiled_code, safe_namespace)
 
-            # 存储命名空间
+            # Store the namespace
             self.script_namespace = safe_namespace
 
             return {
@@ -164,15 +166,15 @@ class SafePythonExecutor:
 
     def execute_function(self, func_name: str, *args, **kwargs) -> Dict[str, Any]:
         """
-        执行已加载脚本中的指定函数
+        Execute a specified function from the loaded script
 
         Args:
-            func_name: 函数名
-            *args: 位置参数
-            **kwargs: 关键字参数
+            func_name: Function name
+            *args: Positional arguments
+            **kwargs: Keyword arguments
 
         Returns:
-            Dict 包含执行结果或错误信息
+            Dict containing execution result or error information
         """
         output = io.StringIO()
         error_output = io.StringIO()
@@ -189,10 +191,11 @@ class SafePythonExecutor:
                     }
 
                 result = target_func(*args, **kwargs)
+                structured_result = self._output_parser(func_name, result)
                 return {
                     'status': 'success',
                     'stdout': output.getvalue(),
-                    'result': result
+                    'result': structured_result
                 }
 
         except Exception as e:
@@ -221,6 +224,7 @@ class SafePythonExecutor:
                 ):
 
                     description = node.body[0].value.value
+                    description = description.strip()
 
                 func_name = node.name
                 args = {}
@@ -238,6 +242,7 @@ class SafePythonExecutor:
 
                     # if it is not a default parameter, then it will not in the required list
                     default_index = i - (total_args - num_defaults)
+
                     if default_index < 0:
                         required.append(arg_name)
                     args[arg_name] = {
@@ -252,3 +257,25 @@ class SafePythonExecutor:
                 )
 
         return functions
+
+    @staticmethod
+    def _output_parser(func_name, stdout=None) -> List:
+        if stdout is None:
+            return []
+        if not isinstance(stdout, List):
+            logger.error("Parsing failed. Please format the standard output of the custom function "
+                         "according to the specified requirements.")
+            return []
+        events = []
+        for out in stdout:
+            if out.get('bot'):
+                events.append(BotUtter(text=out.get('bot')))
+            if out.get('arg'):
+                events.append(SetSlot(slot_name=out.get('arg'),
+                                      value=out.get('value')))
+            if out.get('status') is not None:
+                if out.get('status') == 'success':
+                    events.append(AgentComplete(provider=func_name, metadata=out.get('msg')))
+                elif out.get('status') == 'error':
+                    events.append(AgentFail(provider=func_name, metadata=out.get('msg')))
+        return events

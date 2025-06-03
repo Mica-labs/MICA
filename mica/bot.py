@@ -22,8 +22,7 @@ from mica.exec_tool import SafePythonExecutor
 from mica.llm.openai_model import OpenAIModel
 from mica.model_config import ModelConfig
 from mica.tracker_store import TrackerStore, InMemoryTrackerStore
-from mica.utils import find_config_files, save_file, replace_args_in_string, logger, load_func_info_from_str, \
-    short_uuid
+from mica.utils import find_config_files, save_file, replace_args_in_string, logger, short_uuid
 
 
 class InvalidBot(Exception):
@@ -54,9 +53,6 @@ class Bot(object):
         self.sum_rsp_time = 0
         self.tools = tools
         self._func_args_config = {name: {} for name in self.tools.functions.keys()} or {}
-        self._global_args = list(chain.from_iterable(
-            a.contains_args() or [] for a in agents.values() if isinstance(a, EnsembleAgent)
-        ))
 
     @classmethod
     def from_json(cls,
@@ -67,19 +63,18 @@ class Bot(object):
         name = name or short_uuid(10)
         config = config or {}
 
-        # get schedule method
+        # # get schedule method
+        # from mica.processor import DispatcherProcessor, PriorityProcessor
+        # scheduler_create = {
+        #     "priority": PriorityProcessor.create,
+        #     "dispatcher": DispatcherProcessor.create
+        # }
+        # scheduler = scheduler_create.get(data.get("main").get("steps")[0].get("schedule") or "priority")()
+        # entrypoint = Main.create("main", **data["main"])
+        # data.pop("main")
         from mica.processor import DispatcherProcessor, PriorityProcessor
-        scheduler_create = {
-            "priority": PriorityProcessor.create,
-            "dispatcher": DispatcherProcessor.create
-        }
-        scheduler = scheduler_create.get(data.get("main").get("steps")[0].get("schedule") or "priority")()
-        entrypoint = Main.create("main", **data["main"])
-        data.pop("main")
+        scheduler = PriorityProcessor.create()
 
-        if config.get('server') is not None:
-            config['server'] = config['server'] + "/rpc/rasa/message" \
-                if "openai" not in config["server"] else config["server"]
         llm_model = OpenAIModel.create(config)
 
         # create agent objs
@@ -87,51 +82,38 @@ class Bot(object):
             "llm agent": LLMAgent.create,
             "ensemble agent": EnsembleAgent.create,
             "flow agent": FlowAgent.create,
-            "function": Function.create,
             "kb agent": KBAgent.create
         }
-        agents = {name: create_agents[value.get('type')](name=name, **value, **config, llm_model=llm_model)
-                  for name, value in data.items()
+        agents = {n: create_agents[value.get('type')](name=n, **value, **config, llm_model=llm_model)
+                  for n, value in data.items()
                   if value.get('type') is not None}
 
-        for name, agent in list(agents.items()):
+        for _, agent in list(agents.items()):
             if isinstance(agent, EnsembleAgent):
                 if agent.exit_agent is not None:
-                    if isinstance(agent.exit_agent, Text):
-                        if agent.exit_agent == "default":
-                            exit_agent = DefaultExitAgent.create(name=f"DefaultExitAgent_{agent.name}")
-                            agents[exit_agent.name] = exit_agent
-                        else:
-                            exit_agent = agents.get(agent.exit_agent)
-                        if exit_agent is None:
-                            raise ValueError(f"{name} fail to initialize: Exit agent {agent.exit_agent} not found")
-                        agent.exit_agent = exit_agent
-                    elif isinstance(agent.exit_agent, Dict):
-                        exit_agent = DefaultExitAgent.create(name= f"ExitAgent_{agent.name}",
-                                                             prompt=agent.exit_agent.get('policy'),
-                                                             llm_model=llm_model)
+                    if agent.exit_agent == "default":
+                        exit_agent = DefaultExitAgent.create(name=f"DefaultExitAgent_{agent.name}")
                         agents[exit_agent.name] = exit_agent
+                    else:
+                        exit_agent = agents.get(agent.exit_agent) or \
+                                     DefaultExitAgent.create(name= f"ExitAgent_{agent.name}",
+                                                             prompt=agent.exit_agent,
+                                                             llm_model=llm_model)
 
-                        agent.exit_agent = exit_agent
+                    agent.exit_agent = exit_agent
 
             if isinstance(agent, (FlowAgent, EnsembleAgent)):
                 if agent.fallback is not None:
-                    if isinstance(agent.fallback, Text):
-                        if agent.fallback == 'default':
-                            fallback_agent = DefaultFallbackAgent.create(name=f"DefaultFallbackAgent_{agent.name}")
-                            agents[fallback_agent.name] = fallback_agent
-                        else:
-                            fallback_agent = agents.get(agent.fallback)
-                        if fallback_agent is None:
-                            raise ValueError(f"{name} fail to initialize: Fallback {agent.fallback} not found")
-                        agent.fallback = fallback_agent
-                    elif isinstance(agent.fallback, Dict):
-                        fallback_agent = DefaultFallbackAgent.create(
-                            name=f"FallbackAgent_{agent.name}",
-                            prompt=agent.fallback.get('policy'),
-                            llm_model=llm_model)
+                    if agent.fallback == 'default':
+                        fallback_agent = DefaultFallbackAgent.create(name=f"DefaultFallbackAgent_{agent.name}")
                         agents[fallback_agent.name] = fallback_agent
-                        agent.fallback = fallback_agent
+                    else:
+                        fallback_agent = agents.get(agent.fallback) or \
+                                         DefaultFallbackAgent.create(
+                                             name=f"FallbackAgent_{agent.name}",
+                                             prompt=agent.fallback,
+                                             llm_model=llm_model)
+                    agent.fallback = fallback_agent
 
         # load function tools code into memory
         tools = None
@@ -145,13 +127,15 @@ class Bot(object):
                 logger.error(f"Traceback: {load_rst['traceback']}")
                 raise InvalidBot('Not a valid chatbot')
 
-            func_info = load_func_info_from_str(tool_code)
-            # for func in func_info:
-            #     func_obj = Function.create(**func)
-            #     agents[(type(func_obj), func_obj.name)] = func_obj
-
         tracker_store = InMemoryTrackerStore.create()
         logger.debug(f"here are all the registered agents: {agents}")
+
+        if 'main' not in agents:
+            logger.error("The 'main' agent is missing")
+            raise InvalidBot("A 'main' agent is required.")
+
+        entrypoint = agents['main']
+
         return cls(name,
                    tracker_store=tracker_store,
                    agents=agents,
@@ -167,8 +151,7 @@ class Bot(object):
                              channel: ChatChannel = None):
         tracker = self.tracker_store.get_or_create_tracker(user_id,
                                                            args=copy.deepcopy(self._args_config),
-                                                           functions=copy.deepcopy(self._func_args_config),
-                                                           global_args=self._global_args)
+                                                           functions=copy.deepcopy(self._func_args_config))
         user_event = UserInput(text=message, metadata=channel)
         tracker.update(user_event)
         tracker.latest_message = user_event
@@ -184,7 +167,8 @@ class Bot(object):
     def _find_all_args(self, agents: Dict[Text, Agent]):
         all_args = {
             "sender": "",
-            "bot_name": self.name
+            "bot_name": self.name,
+            "__mapping__": {}
         }
         if agents is None:
             return all_args
@@ -199,6 +183,18 @@ class Bot(object):
                     all_args[name][arg_name] = None
                 else:
                     all_args[name][arg] = None
+            if isinstance(agent, EnsembleAgent):
+                mapping = agent.mapping
+                for revoke_agent_name, arg_info in mapping.items():
+                    all_args['__mapping__'].setdefault(revoke_agent_name, {})
+                    for arg_name, ensemble_arg_name in arg_info.items():
+                        tmp = {
+                            'type': "ref" if ensemble_arg_name.startswith("ref ") else "value",
+                            'agent': name,
+                            'arg': ensemble_arg_name[4:] if ensemble_arg_name.startswith("ref ") else ensemble_arg_name
+                        }
+                        all_args['__mapping__'][revoke_agent_name][arg_name] = tmp
+
         return all_args
 
     # TODO: instead of returning the first one, find the parent.

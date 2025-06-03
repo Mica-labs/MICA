@@ -17,9 +17,9 @@ meta:
   fallback: default
   steps:
     - call: transfer_money
-  exit:
-    - policy: "After 5 seconds, give a closure prompt: Is there anything else I can help you with?  After another 30 seconds, then leave."
+  exit: "After 5 seconds, give a closure prompt: Is there anything else I can help you with?  After another 30 seconds, then leave."
 
 main:
+  type: flow agent
   steps:
     - call: meta

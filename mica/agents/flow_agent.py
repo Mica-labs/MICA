@@ -42,38 +42,24 @@ class FlowAgent(Agent):
         self.args = args
         self.labels = self._find_all_labels(subflows)
         self.main_flow_name = main_flow_name
-        self.fallback = fallback or DefaultFallbackAgent.create(config=config, llm_model=llm_model)
+        self.fallback = fallback
         super().__init__(name, description)
 
     @classmethod
-    def from_dict(cls, data, **kwargs):
-        subflows = {}
-        subflow_steps = []
+    def from_dict(cls, steps: List, subflows=None, **kwargs):
+        all_subflows = {}
 
-        main_flow_name = None
-        for step in data:
-            if isinstance(step, str) and step == "end":
-                subflow_obj = StepLoader.create(subflow_steps, **kwargs)
-                subflow_label = subflow_obj.label
-                if subflows.get(subflow_label) is not None:
-                    raise NameRepeatError()
+        main_subflow_obj = StepLoader.create(steps, label=MAIN_FLOW, **kwargs)
+        main_flow_name = main_subflow_obj.label
+        all_subflows[main_flow_name] = main_subflow_obj
 
-                if main_flow_name is None:
-                    main_flow_name = subflow_label
-                subflows[subflow_label] = subflow_obj
-                subflow_steps = []
-                continue
-            # if isinstance(step, dict) and step.get("begin") is not None:
-            #     subflow_label = step["begin"]
-            subflow_steps.append(step)
+        if subflows is None:
+            return all_subflows, main_flow_name
 
-        # when there's only one flow, no need to write begin/end
-        if len(subflow_steps) > 0 and len(subflows) == 0:
-            subflow_obj = StepLoader.create(subflow_steps, **kwargs)
-            main_flow_name = subflow_obj.label
-            subflows[main_flow_name] = subflow_obj
+        for subflow_name, subflow_steps in subflows.items():
+            all_subflows[subflow_name] = StepLoader.create(subflow_steps, label=subflow_name, **kwargs)
 
-        return subflows, main_flow_name
+        return all_subflows, main_flow_name
 
     @classmethod
     def create(cls,
@@ -83,20 +69,22 @@ class FlowAgent(Agent):
                args: Optional[List[Any]] = None,
                config: Optional[Any] = None,
                llm_model: Optional[Any] = None,
+               server: Optional[Any] = None,
+               headers: Optional[Any] = None,
+               fallback: Optional[Any] = None,
                **kwargs):
-        if kwargs.get("server") and kwargs.get("headers"):
-            if config is None:
-                config = {}
-            config["server"] = kwargs.get("server") + "/rpc/rasa/message"
-            config["headers"] = kwargs.get("headers")
-        steps, main_flow_name = cls.from_dict(steps, config=config, root_agent_name=name, llm_model=llm_model)
+
+        # Delete the type key to avoid creating an incorrect subflow
+        kwargs.pop("type", None)
+        steps, main_flow_name = cls.from_dict(steps, config=config, root_agent_name=name, llm_model=llm_model, subflows=kwargs)
         return cls(name=name,
                    config=config,
                    description=description,
                    subflows=steps,
                    main_flow_name=main_flow_name,
                    args=args,
-                   llm_model=llm_model)
+                   llm_model=llm_model,
+                   fallback=fallback)
 
     @staticmethod
     def _find_all_labels(subflows: Dict) -> Dict:
@@ -142,7 +130,8 @@ class FlowAgent(Agent):
         info = tracker.get_or_create_flow_agent(self.name)
 
         # extract any args from the latest message
-        if not info.has_extract_args_after_latest_user_message(tracker.latest_message):
+        if not info.has_extract_args_after_latest_user_message(tracker.latest_message)\
+                and self.name != 'main':
             agent_exception = await self.get_message_args(tracker, agents)
             if agent_exception is not None:
                 if self.fallback is None:
@@ -178,7 +167,8 @@ class FlowAgent(Agent):
             tracker.remove_flow_agent(self.name)
         return is_end, result
 
-    def get_step_from_path(self, steps, previous_path, depth=0):
+    @staticmethod
+    def get_step_from_path(steps, previous_path, depth=0):
         all_steps = copy.copy(steps)
         while depth < len(previous_path):
             for step in all_steps:
@@ -282,22 +272,23 @@ class FlowAgent(Agent):
                          tracker: Tracker,
                          agents: Optional[Dict[Text, Agent]] = None
                          ) -> List[Dict[Any, Any]]:
-        all_agents = list(tracker.args.keys())
-        all_agents.remove(self.name)
-        for agent_name in self._all_related_agent(agents):
-            if agent_name in all_agents:
-                all_agents.remove(agent_name)
-        # all_agents.remove("meta")
-        agent_names = ", ".join(all_agents)
+        related_agents = [self.name]
+        related_agents += self._all_related_agent()
 
-        sys_content = f"You are a intelligent chatbot. Your name is: {self.name}. " \
+        unrelated_agents_desc = ""
+        for name, info in agents.items():
+            if name in related_agents:
+                continue
+            unrelated_agents_desc += f"{name}: {info.description}"
+
+        sys_content = f"You are an intelligent chatbot. Your name is: {self.name}. " \
                       f"Here's your task: {self.description}. "
         if self._contains_user_node():
             sys_content += f"Your task is to collect user's information " \
                            f"according to the conversation I provided."
         sys_content += f"Please reply in JSON format. There are several response scenarios: \n" \
-                       f"- ONLY when the user’s intent is related to one of the following: " \
-                       f"{agent_names}, or when the user clearly indicates they want to exit or not continue, " \
+                       f"- ONLY when the user’s intent is related to one of the following: \n" \
+                       f"{unrelated_agents_desc},\n or when the user clearly indicates they want to exit or not continue, " \
                        f"output: {{\"status\": \"quit\"}}\n" \
                        f"Example:\n" \
                        f"User: \"{self.name}\"\n" \
@@ -306,9 +297,20 @@ class FlowAgent(Agent):
             args = ", ".join(self.args)
             sys_content += f"- If the user mentions the following data in the conversation: {args}, " \
                            f"extract them. Example: {{\"data\": {{\"{self.args[0]}\": xxx, ...}}}}\n"
+
+            valid_states_info = ""
+            for agent_name, args in tracker.args.items():
+                if agent_name in ["sender", "bot_name", "__mapping__"]:
+                    continue
+                if args is not None and len(args) > 0:
+                    valid_states_info += f"{agent_name}: ("
+                    for arg_name, arg_value in args.items():
+                        valid_states_info += f"{arg_name}: {arg_value}, "
+                    valid_states_info += ")\n"
+            sys_content += f"Current information: {valid_states_info}\n"
         sys_content += "- Otherwise, output: {}"
 
-        user_content = f"User: {tracker.latest_message.text}\n"
+        user_content = f"{tracker.get_history_str()}\n"
         prompt = [{
             "role": "system",
             "content": sys_content}, {
@@ -317,7 +319,7 @@ class FlowAgent(Agent):
         }]
         return prompt
 
-    def _all_related_agent(self, bot_agents: Optional[Dict[Text, Agent]] = None) -> List[Text]:
+    def _all_related_agent(self) -> List[Text]:
         agents = []
 
         def traverse(steps):
