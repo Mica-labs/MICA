@@ -102,6 +102,8 @@ class Tracker(object):
         conversation_history = ""
         for event in self.events:
             if isinstance(event, UserInput):
+                if event.text == "/init":
+                    continue
                 conversation_history += f"User: {event.text}\n"
             if isinstance(event, BotUtter):
                 conversation_history += f"{event.metadata or 'Bot'}: {event.text}\n"
@@ -178,9 +180,9 @@ class Tracker(object):
             if self.args['__mapping__'].get(agent_name) \
                     and self.args['__mapping__'][agent_name].get(arg_name) \
                     and self.args['__mapping__'][agent_name][arg_name].get('type') == 'ref':
-                    ensemble_agent = self.args['__mapping__'][agent_name][arg_name]['agent']
-                    ensemble_arg = self.args['__mapping__'][agent_name][arg_name]['arg']
-                    replaced_args[arg_name] = self.args[ensemble_agent][ensemble_arg]
+                ensemble_agent = self.args['__mapping__'][agent_name][arg_name]['agent']
+                ensemble_arg = self.args['__mapping__'][agent_name][arg_name]['arg']
+                replaced_args[arg_name] = self.args[ensemble_agent][ensemble_arg]
             else:
                 replaced_args[arg_name] = arg_value
         return replaced_args
@@ -230,4 +232,3 @@ class Tracker(object):
 
     def clear_conv_history(self, agent_name):
         self.agent_conv_history[agent_name] = []
-
