@@ -108,7 +108,7 @@ async def deploy_zip(file: UploadFile = File(...)):
                 with open(os.path.join(bot_dir, 'config.yml'), 'w') as f:
                     f.write(config_content)
             
-            if python_script:
+            if python_script != None:
                 with open(os.path.join(bot_dir, 'functions.py'), 'w') as f:
                     f.write(python_script)
             
@@ -191,7 +191,7 @@ async def startup_event():
             # Load bot configuration
             data = None
             config = None
-            python_script = None
+            python_script = ""
             
             # Load agents.yml
             agents_path = os.path.join(bot_dir, 'agents.yml')
@@ -215,16 +215,21 @@ async def startup_event():
             else:
                 bot_name = bot_dir_name
             
-            gpt_config = config.get("gptConfig", {}) if config else {}
-            
+            llm_config = config.get("llm_config", {}) if config else {}
+            connector = {key: value for key, value in config.items() if key in ['facebook', 'slack']}
             # Load the bot
             if data:  # Only load if we have agent definitions
                 try:
-                    manager.load(bot_name, data, gpt_config, python_script)
+                    manager.load(bot_name=bot_name,
+                                          data=data,
+                                          llm_config=llm_config,
+                                          python_script=python_script,
+                                          connector=connector)
                     logger.info(f"Loaded bot: {bot_name} from {bot_dir}")
                     loaded_bots.append(bot_name)
                 except Exception as e:
                     logger.error(f"Error loading bot {bot_name} from {bot_dir}: {str(e)}")
+                    traceback.print_exc()
                     # Continue with other bots
             else:
                 logger.warning(f"Skipping bot {bot_name}: No agent definitions found in {bot_dir}")
