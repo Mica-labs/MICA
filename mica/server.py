@@ -191,7 +191,7 @@ async def startup_event():
             # Load bot configuration
             data = None
             config = None
-            python_script = None
+            python_script = ""
             
             # Load agents.yml
             agents_path = os.path.join(bot_dir, 'agents.yml')
