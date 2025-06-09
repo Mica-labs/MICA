@@ -57,7 +57,8 @@ class SafePythonExecutor:
             'datetime', 'time', 're', 'json',
             'itertools', 'functools', 'collections',
             'requests', 'urllib', 'subprocess', 'sqlite3',
-            'mysql.connector', 'logging', 'pathlib', 'typing'
+            'mysql.connector', 'logging', 'pathlib', 'typing',
+            'jsonpath', 'inspect'
         ]
         self.script_namespace: Dict[Text, Any] = {}
         self.imported_modules: Dict[Text, Any] = {}
