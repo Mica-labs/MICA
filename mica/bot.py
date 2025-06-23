@@ -84,7 +84,7 @@ class Bot(object):
             "flow agent": FlowAgent.create,
             "kb agent": KBAgent.create
         }
-        agents = {n: create_agents[value.get('type')](name=n, **value, **config, llm_model=llm_model)
+        agents = {n: create_agents[value.get('type')](name=n, **value, config=config, llm_model=llm_model)
                   for n, value in data.items()
                   if value.get('type') is not None}
 
@@ -118,7 +118,7 @@ class Bot(object):
         # load function tools code into memory
         tools = None
         if tool_code is not None:
-            tools = SafePythonExecutor()
+            tools = SafePythonExecutor(unsafe_mode=config.get('unsafe_mode'))
             load_rst = tools.load_script(tool_code)
             if load_rst['status'] == 'success':
                 logger.info('Succeed in loading python script.')
