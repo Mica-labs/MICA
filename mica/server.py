@@ -16,10 +16,10 @@ from mica.channel import WebSocketChannel
 from mica.manager import Manager
 from mica.utils import read_yaml_string, logger, read_yaml_file
 
-api_description = """LLM Chatbot Server API."""
+api_description = """MICA Server API."""
 
 app = FastAPI(
-    title="LLM Chatbot Server API",
+    title="MICA Server API",
     description=api_description,
     version="0.1.0",
 )
@@ -130,6 +130,11 @@ async def chat(request: Request, body: ChatRequest):
     return JSONResponse(content=response, media_type="application/json;charset=utf-8")
 
 
+@app.get("/v1/bots")
+async def get_bots():
+    return JSONResponse(content=list(manager.bots.keys()), media_type="application/json;charset=utf-8")
+
+
 @app.websocket("/v1/ws/chat/{bot}")
 async def chat_ws(websocket: WebSocket, bot):
     # generate unique id for each connection
@@ -217,6 +222,7 @@ async def startup_event():
         logger.info(f"Successfully loaded {len(loaded_bots)} bots: {', '.join(loaded_bots)}")
     else:
         logger.warning("No bots were successfully loaded.")
+
 
 if __name__ == "__main__":
     uvicorn.run("mica.server:app", port=5001, host="0.0.0.0", log_level="info")
