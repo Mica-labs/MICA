@@ -60,7 +60,7 @@ function Chatbot(settings, theme) {
   const iframe = (this.iframe = document.createElement('iframe'));
   iframe.src =
     sdkServer + // 使用SDK服务器地址加载iframe页面
-    `/ava?${new URLSearchParams({
+    `/chatbot?${new URLSearchParams({
       config: settings.config,
       // extra
       origin: window.location.origin,
@@ -368,7 +368,7 @@ Chatbot.prototype.destroy = function () {
   this.iframe = null;
   this.container = null;
   const script = Array.form(document.querySelectorAll('script')).find((s) =>
-    /\/ava\/chatbot.app/.test(s.src)
+    /\/chatbot/.test(s.src)
   );
   if (script) {
     document.removeChild(script);

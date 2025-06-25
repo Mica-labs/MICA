@@ -28,6 +28,11 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 # 复制Supervisor配置
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# 复制前端静态文件到nginx html目录
+COPY docker/dist /var/www/html/chatbot
+
+COPY docker/deploy.html /var/www/html/chatbot/deploy.html
+
 # 复制应用代码
 COPY ../mica /mica
 
