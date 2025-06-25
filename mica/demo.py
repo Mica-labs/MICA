@@ -213,4 +213,4 @@ main:
             save_btn.click(save_bot, [bot_name, yaml_input, code_input])
             file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, chatbot, user_id, tracker], trigger_mode="once", show_progress="hidden")
 
-    demo.launch(share=False)
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=False)

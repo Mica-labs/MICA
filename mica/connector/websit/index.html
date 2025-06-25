@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width" />
+  </head>
+  <body>
+    <h1>This is a Heading</h1>
+    <p>This is a paragraph.</p>
+    <div id="width"></div>
+    <button id="full">click fullscreen</button>
+    <!-- <script
+      type="text/javascript"
+      src="http://localhost:3002/ava/chatbot.app?config=ZW5naW5lPXJhc2EmaWQ9YTFfcF9ieGFtNjBjanVzcW8mdG9rZW49WVdZeFpESmxOV1l0Tm1Sa09TMDBOVFEwTFRnNVpqWXRPR1ptWWpFNU1tVmlObUpsJnByb2plY3Q9cF9ieGFtNjBjanVzcW8mbmFtZT1Qcm9tcHQlMjBBSQ%3D%3D"
+    ></script> -->
+    <!-- <script
+    bot_name: a1_debug
+      type="text/javascript"
+      src="http://localhost:3002/ava/chatbot.app?config=ZW5naW5lPXJhc2EmaWQ9YTFfcF9kNmFtc2l5bmh0czAmdG9rZW49TVdVeU5qZzFNVFF0TXpVNE9TMDBabVF6TFdFMU16SXRabU0wWmpoak9USm1ZV1ZtJnByb2plY3Q9cF9kNmFtc2l5bmh0czAmc2NlbmU9cHVibGlzaF9kYiZuYW1lPVByb21wdCUyMEFJ"
+    ></script> -->
+    <!-- <script
+      type="text/javascript"
+      src="http://localhost:3000/ava/chatbot.app?config=Ym90X25hbWU9YTFfcF9lOXJxaGM2Z3pjM2smbmFtZT1NaWNh"
+    ></script> -->
+
+
+    <!-- 单个script包含SDK和初始化 -->
+    <script>
+
+      // 配置参数
+      const CHATBOT_CONFIG = {
+        config: "Ym90X25hbWU9YTFfcF9lOXJxaGM2Z3pjM2smbmFtZT1NaWNh", // base64编码的配置
+        server: 'http://127.0.0.1:5001',
+        minimize: false
+      };
+      const CHATBOT_THEME = "default";
+      
+      // SDK服务地址（用于加载SDK和iframe页面）
+      const SDK_SERVER = 'http://127.0.0.1:9006'; // 或者你的SDK服务地址
+  
+      // 动态加载SDK并初始化
+      function loadChatbot() {
+        const script = document.createElement('script');
+        script.src = SDK_SERVER + '/static/js/sdk.js'; // 从SDK服务器加载SDK
+        script.onload = function() {
+          // SDK加载完成后初始化
+          if (typeof Chatbot !== 'undefined') {
+            // 需要修改SDK，让它支持分离的配置
+            Chatbot.initialize({
+              ...CHATBOT_CONFIG,
+              sdkServer: SDK_SERVER // 新增SDK服务器配置
+            }, CHATBOT_THEME);
+          }
+        };
+        document.head.appendChild(script);
+      }
+
+      // 页面加载完成后执行
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadChatbot);
+      } else {
+        loadChatbot();
+      }
+    </script>
+  </body>
+</html>

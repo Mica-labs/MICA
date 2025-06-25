@@ -2,8 +2,6 @@ FROM python:3.9
 COPY requirements.txt /requirements.txt
 RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r /requirements.txt
 
-COPY /mica /mica
-WORKDIR /mica
 ENV PYTHONPATH=/
 
 EXPOSE 5001
