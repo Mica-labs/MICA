@@ -1,0 +1,55 @@
+{
+  "name": "ava",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.10.4",
+    "@emotion/styled": "^11.10.4",
+    "@mui/icons-material": "^5.10.6",
+    "@mui/material": "^5.10.6",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "cross-fetch": "^3.1.5",
+    "dayjs": "^1.11.5",
+    "i18next": "^23.3.0",
+    "immer": "^9.0.15",
+    "qs": "^6.11.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^13.0.2",
+    "short-uuid": "^4.2.0",
+    "simplebar-react": "^2.4.1",
+    "use-immer": "^0.7.0",
+    "web-vitals": "^2.1.4",
+    "zustand": "^4.4.1"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "dev": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject",
+    "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix",
+    "lint:format": "prettier  --loglevel warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
+    "lint": "pnpm run lint:format && pnpm run lint:fix "
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "babel-polyfill": "^6.26.0",
+    "customize-cra": "^1.0.0",
+    "react-app-rewired": "2.1.8",
+    "react-dev-utils": "^12.0.1"
+  }
+}
