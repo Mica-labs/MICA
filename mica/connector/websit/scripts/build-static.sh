@@ -60,8 +60,16 @@ cat > ${ROOT}/dist/deploy-info.json << EOF
 }
 EOF
 
+# 7. 复制到Docker部署目录
+echo "复制到Docker部署目录..."
+DOCKER_DIST_DIR="${ROOT}/../../../docker/dist"
+mkdir -p "$(dirname "$DOCKER_DIST_DIR")"
+rm -rf "$DOCKER_DIST_DIR"
+cp -R ${ROOT}/dist "$DOCKER_DIST_DIR"
+
 echo "✅ 静态构建完成！"
 echo "📁 部署文件在 ./dist 目录中"
+echo "📁 Docker部署文件已复制到 docker/dist 目录"
 echo "🚀 可以直接将 dist 目录部署到任何静态服务器"
 echo ""
 echo "部署方式示例："
@@ -69,3 +77,4 @@ echo "  - Nginx: 将 dist 目录内容复制到 web 根目录"
 echo "  - Apache: 将 dist 目录内容复制到 htdocs"
 echo "  - CDN: 上传 dist 目录到对象存储"
 echo "  - GitHub Pages: 推送 dist 内容到 gh-pages 分支"
+echo "  - Docker: 使用 docker build 构建包含chatbot前端的镜像"
