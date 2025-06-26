@@ -155,7 +155,9 @@ async def facebook_webhook(bot: str, request: Request):
 async def chat(request: Request, body: ChatRequest):
     sender = body.sender
     message = body.message
+    logger.info(f"Received message from {sender}: {message} for {request.headers}")
     bot = request.headers.get("bot_name")
+
     response = await manager.chat(bot, sender, message)
     # this response needs to be encoded in utf-8
     return JSONResponse(content=response, media_type="application/json;charset=utf-8")

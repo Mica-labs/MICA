@@ -52,20 +52,14 @@ function Chatbot(settings, theme) {
   };
   console.log(JSON.stringify(settings));
   const server = settings.server.replace(/\/$/, '');
-  const sdkServer = (settings.sdkServer || settings.server).replace(/\/$/, ''); // 新增SDK服务器配置
-
-  console.log('API Server:', server);
-  console.log('SDK Server:', sdkServer);
-
   const iframe = (this.iframe = document.createElement('iframe'));
-  iframe.src =
-    sdkServer + // 使用SDK服务器地址加载iframe页面
-    `/chatbot?${new URLSearchParams({
+  // 确保chatbot路径以/开头，避免重定向
+  iframe.src = server + 
+    `/chatbot/?${new URLSearchParams({
       config: settings.config,
       // extra
       origin: window.location.origin,
       theme,
-      apiServer: server // 将真正的API服务器地址传递给iframe
     }).toString()}`;
 
   const container = document.createElement('div');

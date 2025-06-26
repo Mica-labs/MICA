@@ -21,7 +21,7 @@ fi
 
 # 启动新的容器
 echo "正在启动新容器: chat  "$IMAGE""
-if docker run -d -v /Users/chenchen/IdeaProjects/MICA/logs:/mica/logs -v /Users/chenchen/IdeaProjects/MICA/bots:/mica/deployed_bots -p 5001:5001 -p 80:80 -p 7860:7860 --name chat $IMAGE; then
+if docker run -d -v /Users/chenchen/IdeaProjects/MICA/logs:/mica/logs -v /Users/chenchen/IdeaProjects/MICA/bots:/mica/deployed_bots -p 5001:5001 -p 8090:80 -p 7860:7860 --name chat $IMAGE; then
     echo "容器启动成功: chat"
 else
     echo "容器启动失败，请检查镜像或运行参数"

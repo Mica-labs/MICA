@@ -32,18 +32,9 @@ export const qs = (() => {
   if (res.has('origin')) {
     settings['origin'] = res.get('origin');
   }
-  // 添加apiServer参数解析
-  if (res.has('apiServer')) {
-    settings['apiServer'] = res.get('apiServer');
-  }
   return transformStringToBoolean(settings);
 })();
 
-// 新增：导出apiServer配置
-export const apiServer = (() => {
-  const res = new URLSearchParams(window.location.search);
-  return res.get('apiServer') || qs.apiServer;
-})();
 
 export const theme = (() => {
   // 静态模式：使用全局配置

@@ -452,35 +452,24 @@
             const encodedConfig = btoa(configString);
             
             const script = `<script>
-
-       // 配置参数
+       const SERVER = '${currentOrigin}';
        const CHATBOT_CONFIG = {
-         config: "${encodedConfig}", // base64编码的配置
-         server: '${currentOrigin}',
+         config: "${encodedConfig}",
+         server: SERVER,
          minimize: false
        };
-       
-       // SDK服务地址（用于加载SDK和iframe页面）
-       const SDK_SERVER = '${currentOrigin}'; // 或者你的SDK服务地址
-   
-       // 动态加载SDK并初始化
        function loadChatbot() {
          const script = document.createElement('script');
-         script.src = SDK_SERVER + '/chatbot/static/js/sdk.js'; // 从SDK服务器加载SDK
+         script.src = SERVER + '/chatbot/static/js/sdk.js';
          script.onload = function() {
-           // SDK加载完成后初始化
            if (typeof Chatbot !== 'undefined') {
-             // 需要修改SDK，让它支持分离的配置
              Chatbot.initialize({
                ...CHATBOT_CONFIG,
-               sdkServer: SDK_SERVER // 新增SDK服务器配置
-             }, "defualt");
+             });
            }
          };
          document.head.appendChild(script);
        }
-
-       // 页面加载完成后执行
        if (document.readyState === 'loading') {
          document.addEventListener('DOMContentLoaded', loadChatbot);
        } else {

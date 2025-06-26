@@ -2,13 +2,6 @@ import request from './request';
 import { decodeAttachmentText } from './attachment';
 import { store } from './store';
 
-async function createChat(headers, body) {
-  return request('/chat/api/chat', {
-    method: 'POST',
-    headers,
-    body
-  });
-}
 // 定义URI常量
 const _URI_CHAT = '/v1/chat';
 
