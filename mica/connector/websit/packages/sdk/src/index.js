@@ -66,14 +66,19 @@ function Chatbot(settings, theme) {
   container.className = 'chatbot';
   this.container = container;
 
-  const tooltip = document.createElement('div');
-  tooltip.className = 'tooltip';
-  const tooltipText = document.createElement('span');
-  //I'm an AI bot that's here to help! 😊
-  tooltipText.innerText = settings.tooltip || settings.config?.tooltip || '';
+  // 只有当settings中有tooltip内容时才创建tooltip元素
+  const tooltipContent = settings.tooltip || settings.config?.tooltip;
+  if (tooltipContent) {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    const tooltipText = document.createElement('span');
+    tooltipText.innerText = tooltipContent;
 
-  tooltip.appendChild(tooltipText);
-  this.tooltip = tooltip;
+    tooltip.appendChild(tooltipText);
+    this.tooltip = tooltip;
+  } else {
+    this.tooltip = null;
+  }
 
   const close = document.createElement('div');
   close.className = 'close';
@@ -220,7 +225,10 @@ function Chatbot(settings, theme) {
   container.appendChild(iframe);
 
   container.appendChild(close);
-  container.appendChild(tooltip);
+  // 只有当tooltip存在时才添加到容器中
+  if (this.tooltip) {
+    container.appendChild(this.tooltip);
+  }
   this.correctAppHeight();
 
   window.addEventListener('resize', this.correctAppHeight, false);
@@ -233,16 +241,19 @@ function Chatbot(settings, theme) {
     toggle(null, true);
   }
   close.addEventListener('click', toggle, false);
-  tooltip.addEventListener(
-    'click',
-    (e) => {
-      e.stopPropagation();
-      if (!tooltip.classList.contains('closed')) {
-        tooltip.classList.add('closed');
-      }
-    },
-    false
-  );
+  // 只有当tooltip存在时才添加事件监听器
+  if (this.tooltip) {
+    this.tooltip.addEventListener(
+      'click',
+      (e) => {
+        e.stopPropagation();
+        if (!this.tooltip.classList.contains('closed')) {
+          this.tooltip.classList.add('closed');
+        }
+      },
+      false
+    );
+  }
   container.addEventListener('click', toggle, false);
 }
 
@@ -265,7 +276,8 @@ Chatbot.prototype.onMinNormalToggle = function (e, ignoreTooltip = false) {
   if (e) {
     e.stopPropagation();
   }
-  if (!ignoreTooltip && !this.tooltip.classList.contains('closed')) {
+  // 只有当tooltip存在且不忽略tooltip时才处理
+  if (!ignoreTooltip && this.tooltip && !this.tooltip.classList.contains('closed')) {
     this.tooltip.classList.add('closed');
   }
   this.container.classList.toggle('minimize');
@@ -284,7 +296,8 @@ Chatbot.prototype.resize = function () {
       if (!this.container.classList.contains('open')) {
         this.container.classList.add('open');
       }
-      if (!this.tooltip.classList.contains('closed')) {
+      // 只有当tooltip存在时才操作其classList
+      if (this.tooltip && !this.tooltip.classList.contains('closed')) {
         this.tooltip.classList.add('closed');
       }
       break;
