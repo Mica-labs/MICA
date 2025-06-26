@@ -9,7 +9,6 @@ from typing import Text, Dict, Optional, Any
 
 from fastapi import FastAPI, Request, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
@@ -25,16 +24,6 @@ app = FastAPI(
     title="MICA Server API",
     description=api_description,
     version="0.1.0",
-)
-
-# 添加CORS中间件
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://127.0.0.1:9006"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"]
 )
 
 # Initialize the manager
