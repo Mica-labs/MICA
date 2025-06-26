@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MICA Bot 部署脚本生成器</title>
+    <title>MICA Bot Deployment Script Generator</title>
     <style>
         * {
             margin: 0;
@@ -12,122 +12,121 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
             min-height: 100vh;
             padding: 20px;
+            color: #334155;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            padding: 30px;
+            background: #1e293b;
+            padding: 32px;
             text-align: center;
             color: white;
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-size: 1.875rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 0.875rem;
         }
 
         .main-content {
-            display: block;
-            min-height: 500px;
-        }
-
-        .left-panel {
-            width: 100%;
-            padding: 30px;
-            border-right: none;
+            padding: 32px;
         }
 
         .input-section {
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
 
         .input-section h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 1.3em;
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-size: 1.125rem;
+            font-weight: 500;
         }
 
         .input-group {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
         }
 
         .input-group select {
             flex: 1;
-            padding: 12px 20px;
-            border: 2px solid #e9ecef;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
             border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.2s;
         }
 
         .input-group select:focus {
             outline: none;
-            border-color: #4facfe;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
         .input-group button {
-            padding: 12px 25px;
-            background: #ff6b6b;
+            padding: 12px 24px;
+            background: #3b82f6;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: nowrap;
+            transition: background-color 0.2s;
         }
 
         .input-group button:hover {
-            background: #ff5252;
-            transform: translateY(-2px);
+            background: #2563eb;
         }
 
         .error-message {
-            margin-top: 10px;
+            margin-top: 12px;
             padding: 12px;
-            background: #ffebee;
-            border: 1px solid #f44336;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
             border-radius: 6px;
-            color: #c62828;
+            color: #dc2626;
             font-size: 14px;
-            line-height: 1.4;
         }
 
         .retry-section {
-            margin-top: 10px;
+            margin-top: 12px;
             text-align: center;
         }
 
         .retry-button {
             padding: 8px 16px;
-            background: #ff9800;
+            background: #f59e0b;
             color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
-            transition: all 0.3s ease;
+            transition: background-color 0.2s;
         }
 
         .retry-button:hover {
-            background: #f57c00;
-            transform: translateY(-1px);
+            background: #d97706;
         }
 
         .script-section {
@@ -135,218 +134,78 @@
         }
 
         .script-section h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 1.3em;
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-size: 1.125rem;
+            font-weight: 500;
         }
 
         .script-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .copy-button {
-            background: #28a745;
+            background: #10b981;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
-            transition: background 0.3s ease;
+            font-weight: 500;
+            transition: background-color 0.2s;
         }
 
         .copy-button:hover {
-            background: #218838;
+            background: #059669;
         }
 
         .copy-button.copied {
-            background: #6c757d;
+            background: #6b7280;
         }
 
         .copy-box {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
             line-height: 1.5;
-            color: #495057;
+            color: #475569;
             white-space: pre-wrap;
             word-wrap: break-word;
-            min-height: 80px;
-            max-height: 200px;
+            min-height: 120px;
+            max-height: 400px;
             overflow-y: auto;
+            resize: vertical;
         }
 
         .deployment-note {
-            margin-top: 15px;
-            padding: 15px;
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
+            margin-top: 16px;
+            padding: 16px;
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
             border-radius: 4px;
             font-size: 14px;
-            color: #1565c0;
+            color: #1e40af;
         }
 
         .deployment-note strong {
-            color: #0d47a1;
-        }
-
-        /* 聊天机器人浮动图标 */
-        .chatbot-float {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .chatbot-float:hover {
-            transform: scale(1.1);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
-        }
-
-        .chatbot-float::before {
-            content: '💬';
-            font-size: 24px;
-        }
-
-        /* 聊天框 */
-        .chat-container {
-            position: fixed;
-            bottom: 100px;
-            right: 30px;
-            width: 350px;
-            height: 500px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            display: none;
-            flex-direction: column;
-            z-index: 1001;
-            overflow: hidden;
-        }
-
-        .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-header h4 {
-            margin: 0;
-            font-size: 16px;
-        }
-
-        .close-chat {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 0;
-            width: 25px;
-            height: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: #f8f9fa;
-        }
-
-        .message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 15px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        .message.user {
-            background: #007bff;
-            color: white;
-            margin-left: auto;
-            text-align: right;
-        }
-
-        .message.bot {
-            background: #e9ecef;
-            color: #333;
-        }
-
-        .chat-input {
-            padding: 15px;
-            border-top: 1px solid #dee2e6;
-            display: flex;
-            gap: 10px;
-        }
-
-        .chat-input input {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid #ced4da;
-            border-radius: 20px;
-            outline: none;
-        }
-
-        .chat-input button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .chat-input button:hover {
-            background: #0056b3;
+            color: #1e3a8a;
         }
 
         @media (max-width: 768px) {
-            .main-content {
-                flex-direction: column;
-            }
-            
-            .left-panel {
-                border-right: none;
-                border-bottom: 1px solid #e9ecef;
-            }
-            
             .input-group {
                 flex-direction: column;
             }
             
             .input-group select {
                 width: 100%;
-                margin-bottom: 10px;
-            }
-            
-            .chat-container {
-                width: 90vw;
-                right: 5vw;
-                height: 70vh;
+                margin-bottom: 12px;
             }
         }
     </style>
@@ -354,51 +213,45 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 MICA Bot 部署脚本生成器</h1>
-            <p>快速生成可嵌入的聊天机器人脚本</p>
+            <h1>MICA Bot Deployment</h1>
+            <p>Generate embeddable chatbot scripts</p>
         </div>
         
         <div class="main-content">
-            <div class="left-panel">
-                <div class="input-section">
-                    <h3>📝 选择Bot</h3>
-                    <div class="input-group">
-                        <select id="botSelect">
-                            <option value="">正在加载Bot列表...</option>
-                        </select>
-                        <button onclick="generateScript()">生成脚本</button>
-                    </div>
-                    <div id="errorMessage" class="error-message" style="display: none;"></div>
-                    <div id="retrySection" class="retry-section" style="display: none;">
-                        <button onclick="retryLoadBots()" class="retry-button">🔄 重新加载Bot列表</button>
-                    </div>
+            <div class="input-section">
+                <h3>Select Bot</h3>
+                <div class="input-group">
+                    <select id="botSelect">
+                        <option value="">Loading bot list...</option>
+                    </select>
+                    <button onclick="generateScript()">Generate Script</button>
                 </div>
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <div id="retrySection" class="retry-section" style="display: none;">
+                    <button onclick="retryLoadBots()" class="retry-button">Retry Loading</button>
+                </div>
+            </div>
+            
+            <div id="scriptSection" class="script-section">
+                <h3>Generated Embed Code</h3>
+                <div class="script-controls">
+                    <span style="color: #64748b; font-size: 14px;">Copy this code to your webpage</span>
+                    <button class="copy-button" onclick="copyScript()">Copy Code</button>
+                </div>
+                <div class="copy-box" id="scriptContent"></div>
                 
-                <div id="scriptSection" class="script-section">
-                    <h3>📋 生成的嵌入代码</h3>
-                    <div class="script-controls">
-                        <span style="color: #666; font-size: 14px;">复制以下代码到你的网页中</span>
-                        <button class="copy-button" onclick="copyScript()">复制代码</button>
-                    </div>
-                    <div class="copy-box" id="scriptContent"></div>
-                    
-                    <div class="deployment-note">
-                        <strong>📡 部署说明：</strong><br>
-                        • 本地开发环境：直接使用生成的代码即可<br>
-                        • 生产环境部署：请将代码中的 <code>http://localhost:5001</code> 替换为你的服务器域名或IP地址<br>
-                        • 例如：<code>https://your-domain.com</code> 或 <code>http://your-server-ip:5001</code>
-                    </div>
+                <div class="deployment-note">
+                    <strong>Deployment Instructions:</strong><br>
+                    • Development: Use the generated code directly<br>
                 </div>
             </div>
         </div>
-
-        <!-- 动态嵌入的聊天机器人将在这里显示 -->
     </div>
 
     <script>
         let selectedBot = null;
 
-        // 加载机器人列表
+        // Load bot list
         function loadBotList() {
             fetch('/v1/bots')
                 .then(response => {
@@ -409,20 +262,20 @@
                 })
                 .then(data => {
                     populateBotSelect(data);
-                    hideError(); // 成功加载时隐藏错误信息
+                    hideError();
                 })
                 .catch(error => {
-                    console.error('加载机器人列表失败:', error);
+                    console.error('Failed to load bot list:', error);
                     const select = document.getElementById('botSelect');
-                    select.innerHTML = '<option value="">加载失败</option>';
-                    showError(`无法加载机器人列表: ${error.message}\n请确保MICA服务正在运行并且可以访问 /v1/bots 接口`);
+                    select.innerHTML = '<option value="">Failed to load</option>';
+                    showError(`Unable to load bot list: ${error.message}\nPlease ensure MICA service is running and /v1/bots endpoint is accessible`);
                 });
         }
 
-        // 填充Bot选择下拉框
+        // Populate bot select dropdown
         function populateBotSelect(bots) {
             const select = document.getElementById('botSelect');
-            select.innerHTML = '<option value="">请选择一个Bot...</option>';
+            select.innerHTML = '<option value="">Please select a bot...</option>';
             
             bots.forEach(bot => {
                 const option = document.createElement('option');
@@ -432,22 +285,22 @@
             });
         }
 
-        // 生成脚本
+        // Generate script
         function generateScript() {
             const select = document.getElementById('botSelect');
             const botId = select.value;
             
             if (!botId) {
-                alert('请先选择一个Bot');
+                alert('Please select a bot first');
                 return;
             }
             
             selectedBot = botId;
             
-            // 获取当前页面的协议、host和端口
+            // Get current page protocol, host and port
             const currentOrigin = window.location.origin;
             
-            // 生成配置字符串并进行base64编码
+            // Generate config string and base64 encode
             const configString = `bot_name=${botId}&name=Mica`;
             const encodedConfig = btoa(configString);
             
@@ -480,82 +333,42 @@
             document.getElementById('scriptContent').textContent = script;
             document.getElementById('scriptSection').style.display = 'block';
             
-            // 嵌入生成的脚本到当前页面
-            embedScriptToPage(botId);
+            // Embed script to current page using the same generated script
+            embedScriptToPage(script, botId);
         }
         
-        // 将脚本嵌入到当前页面
-        function embedScriptToPage(botId) {
-            // 移除之前的聊天机器人脚本
+        // Embed script to current page
+        function embedScriptToPage(scriptContent, botId) {
+            // Remove previous chatbot script
             const existingScript = document.getElementById('embedded-chatbot');
             if (existingScript) {
                 existingScript.remove();
             }
             
-            // 获取当前页面的协议、host和端口
-            const currentOrigin = window.location.origin;
-            
-            // 生成配置字符串并进行base64编码
-            const configString = `bot_name=${botId}&name=Mica`;
-            const encodedConfig = btoa(configString);
-            
-            // 创建新的脚本元素并设置内容
+            // Create new script element
             const scriptElement = document.createElement('script');
             scriptElement.id = 'embedded-chatbot';
             scriptElement.type = 'text/javascript';
             
-            // 设置脚本内容而不是src
-            scriptElement.innerHTML = `
-       // 配置参数
-       const CHATBOT_CONFIG = {
-         config: "${encodedConfig}", // base64编码的配置
-         server: '${currentOrigin}/chatbot',
-         minimize: false
-       };
-       
-       // SDK服务地址（用于加载SDK和iframe页面）
-       const SDK_SERVER = '${currentOrigin}/chatbot'; // 或者你的SDK服务地址
-   
-       // 动态加载SDK并初始化
-       function loadChatbot() {
-         const script = document.createElement('script');
-         script.src = SDK_SERVER + '/static/js/sdk.js'; // 从SDK服务器加载SDK
-         script.onload = function() {
-           // SDK加载完成后初始化
-           if (typeof Chatbot !== 'undefined') {
-             // 需要修改SDK，让它支持分离的配置
-             Chatbot.initialize({
-               ...CHATBOT_CONFIG,
-               sdkServer: SDK_SERVER // 新增SDK服务器配置
-             }, CHATBOT_THEME);
-           }
-         };
-         document.head.appendChild(script);
-       }
-
-       // 页面加载完成后执行
-       if (document.readyState === 'loading') {
-         document.addEventListener('DOMContentLoaded', loadChatbot);
-       } else {
-         loadChatbot();
-       }
-            `;
+            // Extract the inner content from the script string (remove <script> tags)
+            const innerScript = scriptContent.replace(/<script>|<\/script>/g, '');
+            scriptElement.innerHTML = innerScript;
             
-            // 将脚本添加到页面
+            // Add script to page
             document.head.appendChild(scriptElement);
             
-            showNotification('✅ 聊天机器人脚本已成功嵌入页面！', 'success');
+            showNotification('Chatbot script successfully embedded!', 'success');
         }
         
-        // 显示通知
+        // Show notification
         function showNotification(message, type) {
-            // 移除现有通知
+            // Remove existing notification
             const existingNotification = document.getElementById('notification');
             if (existingNotification) {
                 existingNotification.remove();
             }
             
-            // 创建通知元素
+            // Create notification element
             const notification = document.createElement('div');
             notification.id = 'notification';
             notification.textContent = message;
@@ -563,20 +376,20 @@
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                padding: 15px 20px;
+                padding: 12px 16px;
                 border-radius: 8px;
                 color: white;
-                font-weight: bold;
+                font-weight: 500;
                 z-index: 10000;
                 max-width: 300px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 transition: all 0.3s ease;
-                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+                background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
             `;
             
             document.body.appendChild(notification);
             
-            // 3秒后自动移除
+            // Auto remove after 3 seconds
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.style.opacity = '0';
@@ -590,28 +403,26 @@
             }, 3000);
         }
 
-        // 复制脚本
+        // Copy script
         function copyScript() {
             const scriptContent = document.getElementById('scriptContent').textContent;
             navigator.clipboard.writeText(scriptContent).then(() => {
                 const button = document.querySelector('.copy-button');
                 const originalText = button.textContent;
-                button.textContent = '已复制!';
-                button.style.background = '#4CAF50';
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
                 
                 setTimeout(() => {
                     button.textContent = originalText;
-                    button.style.background = '';
+                    button.classList.remove('copied');
                 }, 2000);
             }).catch(err => {
-                console.error('复制失败:', err);
-                alert('复制失败，请手动复制');
+                console.error('Copy failed:', err);
+                alert('Copy failed, please copy manually');
             });
         }
 
-        // 聊天机器人功能已通过动态嵌入实现
-
-        // 显示错误信息
+        // Show error message
         function showError(message) {
             const errorElement = document.getElementById('errorMessage');
             const retrySection = document.getElementById('retrySection');
@@ -621,7 +432,7 @@
             retrySection.style.display = 'block';
         }
         
-        // 隐藏错误信息
+        // Hide error message
         function hideError() {
             const errorElement = document.getElementById('errorMessage');
             const retrySection = document.getElementById('retrySection');
@@ -630,15 +441,15 @@
             retrySection.style.display = 'none';
         }
         
-        // 重新加载Bot列表
+        // Retry loading bots
         function retryLoadBots() {
             hideError();
             const select = document.getElementById('botSelect');
-            select.innerHTML = '<option value="">正在重新加载...</option>';
+            select.innerHTML = '<option value="">Reloading...</option>';
             loadBotList();
         }
 
-        // 页面加载完成后初始化
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadBotList();
             document.getElementById('scriptSection').style.display = 'none';

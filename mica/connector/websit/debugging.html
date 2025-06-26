@@ -9,31 +9,29 @@
 
 <!--  Script  from Mica deploy  -->
 <script>
-    const SERVER = 'http://127.0.0.1:8090';
-    const CHATBOT_CONFIG = {
-        config: "Ym90X25hbWU9YTFfcF9lOXJxaGM2Z3pjM2smbmFtZT1NaWNh",
-        server: SERVER,
-        minimize: false
-    };
-
-    function loadChatbot() {
-        const script = document.createElement('script');
-        script.src = SERVER + '/chatbot/static/js/sdk.js';
-        script.onload = function () {
-            if (typeof Chatbot !== 'undefined') {
-                Chatbot.initialize({
-                    ...CHATBOT_CONFIG,
-                });
-            }
-        };
-        document.head.appendChild(script);
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadChatbot);
-    } else {
-        loadChatbot();
-    }
-</script>
+       const SERVER = 'http://127.0.0.1:8090';
+       const CHATBOT_CONFIG = {
+         config: "Ym90X25hbWU9YTFfcF9lOXJxaGM2Z3pjM2smbmFtZT1NaWNh",
+         server: SERVER,
+         minimize: false
+       };
+       function loadChatbot() {
+         const script = document.createElement('script');
+         script.src = SERVER + '/chatbot/static/js/sdk.js';
+         script.onload = function() {
+           if (typeof Chatbot !== 'undefined') {
+             Chatbot.initialize({
+               ...CHATBOT_CONFIG,
+             });
+           }
+         };
+         document.head.appendChild(script);
+       }
+       if (document.readyState === 'loading') {
+         document.addEventListener('DOMContentLoaded', loadChatbot);
+       } else {
+         loadChatbot();
+       }
+     </script>
 </body>
 </html>
