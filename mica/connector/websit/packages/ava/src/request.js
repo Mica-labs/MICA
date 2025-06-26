@@ -1,5 +1,4 @@
 import fetch from 'cross-fetch';
-import { apiServer } from './invoker';
 
 const parseResponse = (data) => ({ data });
 
@@ -15,10 +14,6 @@ const parseBody = async (response) => {
 };
 
 export function request(url, { headers, ...opt }) {
-  // 优先使用URL参数中的apiServer，其次使用环境变量
-  const baseUrl = apiServer || process.env.REACT_APP_API_BASE_URL;
-  url = baseUrl ? new URL(url, baseUrl) : url;
-  console.log('api server from url params:', apiServer);
   console.log('base url from env:', process.env.REACT_APP_API_BASE_URL);
   console.log('final url:', url);
   console.log('headers:', headers);

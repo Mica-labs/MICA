@@ -25,37 +25,63 @@
 
 
     <!-- 单个script包含SDK和初始化 -->
-    <script>
+<!--    <script>-->
 
-      // 配置参数
+<!--      // 配置参数-->
+<!--      const CHATBOT_CONFIG = {-->
+<!--        config: "Ym90X25hbWU9YTFfcF9lOXJxaGM2Z3pjM2smbmFtZT1NaWNh", // base64编码的配置-->
+<!--        server: 'http://127.0.0.1:5001',-->
+<!--        minimize: false-->
+<!--      };-->
+<!--      const CHATBOT_THEME = "default";-->
+<!--      -->
+<!--      // SDK服务地址（用于加载SDK和iframe页面）-->
+<!--      const SDK_SERVER = 'http://127.0.0.1:9006'; // 或者你的SDK服务地址-->
+<!--  -->
+<!--      // 动态加载SDK并初始化-->
+<!--      function loadChatbot() {-->
+<!--        const script = document.createElement('script');-->
+<!--        script.src = SDK_SERVER + '/static/js/sdk.js'; // 从SDK服务器加载SDK-->
+<!--        script.onload = function() {-->
+<!--          // SDK加载完成后初始化-->
+<!--          if (typeof Chatbot !== 'undefined') {-->
+<!--            // 需要修改SDK，让它支持分离的配置-->
+<!--            Chatbot.initialize({-->
+<!--              ...CHATBOT_CONFIG,-->
+<!--              sdkServer: SDK_SERVER // 新增SDK服务器配置-->
+<!--            }, CHATBOT_THEME);-->
+<!--          }-->
+<!--        };-->
+<!--        document.head.appendChild(script);-->
+<!--      }-->
+
+<!--      // 页面加载完成后执行-->
+<!--      if (document.readyState === 'loading') {-->
+<!--        document.addEventListener('DOMContentLoaded', loadChatbot);-->
+<!--      } else {-->
+<!--        loadChatbot();-->
+<!--      }-->
+<!--    </script>-->
+
+    <script>
+      const SERVER = 'http://127.0.0.1:8090';
       const CHATBOT_CONFIG = {
-        config: "Ym90X25hbWU9YTFfcF9lOXJxaGM2Z3pjM2smbmFtZT1NaWNh", // base64编码的配置
-        server: 'http://127.0.0.1:5001',
+        config: "Ym90X25hbWU9YTFfcF9lOXJxaGM2Z3pjM2smbmFtZT1NaWNh",
+        server: SERVER,
         minimize: false
       };
-      const CHATBOT_THEME = "default";
-      
-      // SDK服务地址（用于加载SDK和iframe页面）
-      const SDK_SERVER = 'http://127.0.0.1:9006'; // 或者你的SDK服务地址
-  
-      // 动态加载SDK并初始化
       function loadChatbot() {
         const script = document.createElement('script');
-        script.src = SDK_SERVER + '/static/js/sdk.js'; // 从SDK服务器加载SDK
+        script.src = SERVER + '/chatbot/static/js/sdk.js';
         script.onload = function() {
-          // SDK加载完成后初始化
           if (typeof Chatbot !== 'undefined') {
-            // 需要修改SDK，让它支持分离的配置
             Chatbot.initialize({
               ...CHATBOT_CONFIG,
-              sdkServer: SDK_SERVER // 新增SDK服务器配置
-            }, CHATBOT_THEME);
+            });
           }
         };
         document.head.appendChild(script);
       }
-
-      // 页面加载完成后执行
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadChatbot);
       } else {
