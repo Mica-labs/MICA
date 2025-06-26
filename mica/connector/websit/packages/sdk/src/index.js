@@ -50,11 +50,9 @@ function Chatbot(settings, theme) {
       defaultOpenWidth: '100%'
     }
   };
-  console.log(JSON.stringify(settings));
   const server = settings.server.replace(/\/$/, '');
   const iframe = (this.iframe = document.createElement('iframe'));
-  // 确保chatbot路径以/开头，避免重定向
-  iframe.src = server + 
+  iframe.src = server +
     `/chatbot/?${new URLSearchParams({
       config: settings.config,
       // extra
@@ -66,7 +64,6 @@ function Chatbot(settings, theme) {
   container.className = 'chatbot';
   this.container = container;
 
-  // 只有当settings中有tooltip内容时才创建tooltip元素
   const tooltipContent = settings.tooltip || settings.config?.tooltip;
   if (tooltipContent) {
     const tooltip = document.createElement('div');
@@ -236,12 +233,10 @@ function Chatbot(settings, theme) {
   window.addEventListener('message', this.receiveMessage.bind(this), false);
 
   let toggle = this.onMinNormalToggle.bind(this);
-  // 默认最小化
   if (settings.minimize) {
     toggle(null, true);
   }
   close.addEventListener('click', toggle, false);
-  // 只有当tooltip存在时才添加事件监听器
   if (this.tooltip) {
     this.tooltip.addEventListener(
       'click',
@@ -272,7 +267,6 @@ Chatbot.initialize = function (settings, theme = 'default') {
 };
 
 Chatbot.prototype.onMinNormalToggle = function (e, ignoreTooltip = false) {
-  // 手动触发时没有event对象
   if (e) {
     e.stopPropagation();
   }

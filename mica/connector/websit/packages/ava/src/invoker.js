@@ -16,7 +16,6 @@ function transformStringToBoolean(object) {
 }
 
 export const qs = (() => {
-  // 静态模式：使用全局配置而不是 URL 参数
   if (window.STATIC_MODE && window.CHATBOT_CONFIG) {
     return transformStringToBoolean({
       bot_name: window.CHATBOT_CONFIG.bot_name,
@@ -26,7 +25,6 @@ export const qs = (() => {
     });
   }
 
-  // 原来的 URL 参数解析逻辑（保持兼容性）
   const res = new URLSearchParams(window.location.search);
   const settings = QueryString.parse(base64.decode(res.get('config') || ''));
   if (res.has('origin')) {
@@ -37,12 +35,10 @@ export const qs = (() => {
 
 
 export const theme = (() => {
-  // 静态模式：使用全局配置
   if (window.STATIC_MODE && window.CHATBOT_THEME) {
     return window.CHATBOT_THEME;
   }
 
-  // 原来的 URL 参数解析逻辑
   const res = new URLSearchParams(window.location.search);
   return res.get('theme') || 'default';
 })();
@@ -68,7 +64,7 @@ export const autoOpen = (() => {
 })();
 
 export const locale = (() => {
-  return new URLSearchParams(window.location.search).get('locale') || 'zh';
+  return new URLSearchParams(window.location.search).get('locale') || 'en';
 })();
 export const DEFAULT_LANG = locale;
 export const isIntegrated = creator && window.top !== window && !isPreview && !isOnlyChatbot;
