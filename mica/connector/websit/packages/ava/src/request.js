@@ -14,9 +14,6 @@ const parseBody = async (response) => {
 };
 
 export function request(url, { headers, ...opt }) {
-  console.log('base url from env:', process.env.REACT_APP_API_BASE_URL);
-  console.log('final url:', url);
-  console.log('headers:', headers);
   return fetch(url, {
     headers: {
       'Content-Type': 'application/json',

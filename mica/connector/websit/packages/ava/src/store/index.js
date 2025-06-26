@@ -1,6 +1,6 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
-import { evaluateService, sendMessage as fetchMessage } from '@/services';
+import { sendMessage as fetchMessage } from '@/services';
 import i18next from '@/i18n';
 import invoker, {
   isIntegrated,
@@ -400,33 +400,7 @@ const useChat = createWithEqualityFn(
       }
       set({ creating: false });
     },
-    /**
-     * evaluate the bot message
-     * @param {'bad' | 'helped'} helpful value of evaluate
-     * @param {string} id generate id
-     * @param {string} msgId id of response
-     */
-    evaluateMessage: async (helpful, id, msgId) => {
-      if (isPreview) return;
-      const { current, settings, conversations } = get();
-      try {
-        await evaluateService(
-          { helpful: helpful === 'bad' ? '2' : '1', chatId: current, messageId: msgId },
-          getAuthentication(settings)
-        );
-        const newConversations = updateItemInArray(
-          (item) => ({
-            ...item,
-            messages: updateItemInArray({ helpful }, item.messages, (m) => m.id === id)
-          }),
-          conversations,
-          (c) => c.id === current
-        );
-        set({ conversations: newConversations });
-      } catch (error) {
-        //
-      }
-    },
+
     /**
      * append a message to current conversation messages
      * @param {Message} message
