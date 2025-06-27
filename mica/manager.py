@@ -23,13 +23,22 @@ class Manager:
             await channel.send_message(bot_responses)
         return final_response
 
-    def load(self, bot_name: Text, data: Any, config: Any, python_script: Text = None):
+    def load(self,
+             bot_name: Text,
+             data: Any,
+             llm_config: Optional[Dict] = None,
+             python_script: Optional[Text] = None,
+             connector: Optional[Dict] = None):
         try:
             validator = Validator()
             validate_result = validator.validate(data)
             assert validate_result == []
             parsed_data = parser.parse_agents(data)
-            self.bots[bot_name] = Bot.from_json(bot_name, parsed_data, config, python_script)
+            self.bots[bot_name] = Bot.from_json(name=bot_name,
+                                                data=parsed_data,
+                                                llm_config=llm_config,
+                                                tool_code=python_script,
+                                                connector=connector)
             return True
         except AssertionError as e:
             msgs = [f"Error Type: {err.rule_name}, Message: {err.message}" for err in validate_result]
@@ -38,8 +47,31 @@ class Manager:
                          f"Identified the following potential issues: {msgs_str}")
             raise Exception(msgs_str)
 
-    # @classmethod
-    # def load(cls, path: Text,
-    #          bots: Optional[Dict[Text, Bot]] = None
-    #          ) -> Manager:
-    #     return Manager(bots)
+    def get_credential_info(self, bot_name, key):
+        if self.bots.get(bot_name) is None:
+            return
+        return self.bots.get(bot_name).connector.get(key)
+
+    def slack_incoming_webhook(self, bot_name):
+        slack = self.get_credential_info(bot_name, "slack")
+        if slack is None:
+             return None
+        return slack.get('incoming_webhook')
+
+    def facebook_secret(self, bot_name):
+        facebook = self.get_credential_info(bot_name, "facebook")
+        if facebook is None:
+            return None
+        return facebook.get('secret')
+
+    def facebook_verify_token(self, bot_name):
+        facebook = self.get_credential_info(bot_name, "facebook")
+        if facebook is None:
+            return None
+        return facebook.get('verify_token')
+
+    def facebook_page_access_token(self, bot_name):
+        facebook = self.get_credential_info(bot_name, "facebook")
+        if facebook is None:
+            return None
+        return facebook.get('page_access_token')

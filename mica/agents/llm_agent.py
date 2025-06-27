@@ -209,6 +209,7 @@ class LLMAgent(Agent):
                  f"## RULES\n1. Respond STRICTLY according to the instruction above.\n" \
                  f"2. Try to clarify user's intent instead of quit directly.\n" \
                  f"3. Unless specified in the task, do not make assumptions about any information the user has not provided.\n" \
+                 f"4. If User: /init, which means conversation start. \n" \
                  f"## INFORMATION\n{valid_states_info}.\n" \
                  f"## OUTPUT\n" \
                  f"1. If a user's intent is unrelated to the current conversation and instruction, for example: " \
