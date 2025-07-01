@@ -7,13 +7,13 @@
 </p>
 
 ## Agent Declarative Language
-There are numerous agent frameworks available—such as [AutoGen](https://github.com/microsoft/autogen), [CrewAI](https://github.com/crewAIInc/crewAI), [LangChain](https://github.com/langchain-ai/langchain), [Amazon MAO](https://github.com/awslabs/multi-agent-orchestrator), and [Swarm](https://github.com/openai/swarm) —these frameworks offer high flexibility for constructing agents in general settings. However, they are often too complex for professionals in customer service, who typically have limited programming experience. To address this, we introduce Agent Declarative Language (ADL)—a lightweight language  for developing chatbots through natural language programming.
+MICA (Multiple Intelligent Conversational Agents) is a running environment that can interpret and run programs written in [ADL](https://arxiv.org/abs/2504.14787).  There are numerous agent frameworks available—such as [AutoGen](https://github.com/microsoft/autogen), [CrewAI](https://github.com/crewAIInc/crewAI), [LangChain](https://github.com/langchain-ai/langchain), [Amazon MAO](https://github.com/awslabs/multi-agent-orchestrator), and [Swarm](https://github.com/openai/swarm) —these frameworks offer high flexibility for constructing agents in general settings. However, they are overly complex for professionals in the customer service domain. For example, when business logic needs to be updated, users are required to modify low-level Python code.  Agent Declarative Language (ADL)—a lightweight language introduces a dedicated abstraction layer that could make the maintenance of customer service bots much easier. In ADL, users can simply revise and share agent.yaml files, which encapsulate the entire logic in a declarative and human-readable format. 
 
-Below is a bookstore chatbot implemented in ADL. This chatbot includes three agents: a book recommendation agent, an order placing agent, and an agent responsible for FAQs and bookstore policy.
+Below is a [bookstore](https://github.com/Mica-labs/MICA/tree/main/examples/bookstore) chatbot described in ADL. This chatbot includes three agents: a book recommendation agent, an order placing agent, and an agent responsible for FAQs and bookstore policy. Everything is described in one file except a few function calls connecting to different services. 
 
 ![bookstore chatbot](./bookstore.jpg)
 
-MICA (Multiple Intelligent Conversational Agents) can interpret and run programs written in ADL.  It is designed to simplify the development of customer service bots. 
+ADL emphasizes three key characteristics: declarative language, modular design, and natural language oriented—features that are largely overlooked in existing frameworks. It is designed to simplify the development of customer service bots.
 
 ## Quick Start
 > Before installing MICA, make sure your machine meets the following minimum system requirements:
