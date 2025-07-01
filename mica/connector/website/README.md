@@ -24,8 +24,8 @@ python -m mica.server
 
 Add the following code to your HTML page:
 
-- If you're running MICA with Docker, visit http://your_mica_server/chatbot/deploy.html, select your bot and generate the integration script.
-
+- If you're running Chatbot with Docker, visit http://your_mica_server/chatbot/deploy.html, select your bot and generate the integration script.
+- If you're running Chatbot without Docker, [read this](RUN-CHATBOT.md).
 ```html
 <!DOCTYPE html>
 <html>
