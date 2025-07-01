@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MICA Bot Deployment Script Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            padding: 20px;
+            color: #334155;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1e293b;
+            padding: 32px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 0.875rem;
+        }
+
+        .main-content {
+            padding: 32px;
+        }
+
+        .input-section {
+            margin-bottom: 32px;
+        }
+
+        .input-section h3 {
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-group select {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .input-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-group button {
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .input-group button:hover {
+            background: #2563eb;
+        }
+
+        .error-message {
+            margin-top: 12px;
+            padding: 12px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: #dc2626;
+            font-size: 14px;
+        }
+
+        .retry-section {
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        .retry-button {
+            padding: 8px 16px;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .retry-button:hover {
+            background: #d97706;
+        }
+
+        .script-section {
+            display: none;
+        }
+
+        .script-section h3 {
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        .script-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .copy-button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .copy-button:hover {
+            background: #059669;
+        }
+
+        .copy-button.copied {
+            background: #6b7280;
+        }
+
+        .copy-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #475569;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 120px;
+            max-height: 400px;
+            overflow-y: auto;
+            resize: vertical;
+        }
+
+        .deployment-note {
+            margin-top: 16px;
+            padding: 16px;
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #1e40af;
+        }
+
+        .deployment-note strong {
+            color: #1e3a8a;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-group select {
+                width: 100%;
+                margin-bottom: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MICA Bot Deployment</h1>
+            <p>Generate embeddable chatbot scripts</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h3>Select Bot</h3>
+                <div class="input-group">
+                    <select id="botSelect">
+                        <option value="">Loading bot list...</option>
+                    </select>
+                    <button onclick="generateScript()">Generate Script</button>
+                </div>
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <div id="retrySection" class="retry-section" style="display: none;">
+                    <button onclick="retryLoadBots()" class="retry-button">Retry Loading</button>
+                </div>
+            </div>
+            
+            <div id="scriptSection" class="script-section">
+                <h3>Generated Embed Code</h3>
+                <div class="script-controls">
+                    <span style="color: #64748b; font-size: 14px;">Copy this code to your webpage</span>
+                    <button class="copy-button" onclick="copyScript()">Copy Code</button>
+                </div>
+                <div class="copy-box" id="scriptContent"></div>
+                
+                <div class="deployment-note">
+                    <strong>Deployment Instructions:</strong><br>
+                    • Development: Use the generated code directly<br>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedBot = null;
+
+        // Load bot list
+        function loadBotList() {
+            fetch('/v1/bots')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    populateBotSelect(data);
+                    hideError();
+                })
+                .catch(error => {
+                    console.error('Failed to load bot list:', error);
+                    const select = document.getElementById('botSelect');
+                    select.innerHTML = '<option value="">Failed to load</option>';
+                    showError(`Unable to load bot list: ${error.message}\nPlease ensure MICA service is running and /v1/bots endpoint is accessible`);
+                });
+        }
+
+        // Populate bot select dropdown
+        function populateBotSelect(bots) {
+            const select = document.getElementById('botSelect');
+            select.innerHTML = '<option value="">Please select a bot...</option>';
+            
+            bots.forEach(bot => {
+                const option = document.createElement('option');
+                option.value = bot;
+                option.textContent = bot;
+                select.appendChild(option);
+            });
+        }
+
+        // Generate script
+        function generateScript() {
+            const select = document.getElementById('botSelect');
+            const botId = select.value;
+            
+            if (!botId) {
+                alert('Please select a bot first');
+                return;
+            }
+            
+            selectedBot = botId;
+            
+            // Get current page protocol, host and port
+            const currentOrigin = window.location.origin;
+            
+            // Generate config string and base64 encode
+            const configString = `bot_name=${botId}&name=Mica`;
+            const encodedConfig = btoa(configString);
+            
+            const script = `<script>
+       const SERVER = '${currentOrigin}';
+       const CHATBOT_CONFIG = {
+         config: "${encodedConfig}",
+         server: SERVER,
+         minimize: false
+       };
+       function loadChatbot() {
+         const script = document.createElement('script');
+         script.src = SERVER + '/chatbot/static/js/sdk.js';
+         script.onload = function() {
+           if (typeof Chatbot !== 'undefined') {
+             Chatbot.initialize({
+               ...CHATBOT_CONFIG,
+             });
+           }
+         };
+         document.head.appendChild(script);
+       }
+       if (document.readyState === 'loading') {
+         document.addEventListener('DOMContentLoaded', loadChatbot);
+       } else {
+         loadChatbot();
+       }
+     <\/script>`;
+            
+            document.getElementById('scriptContent').textContent = script;
+            document.getElementById('scriptSection').style.display = 'block';
+            
+            // Embed script to current page using the same generated script
+            embedScriptToPage(script, botId);
+        }
+        
+        // Embed script to current page
+        function embedScriptToPage(scriptContent, botId) {
+            // Remove previous chatbot script
+            const existingScript = document.getElementById('embedded-chatbot');
+            if (existingScript) {
+                existingScript.remove();
+            }
+            
+            // Create new script element
+            const scriptElement = document.createElement('script');
+            scriptElement.id = 'embedded-chatbot';
+            scriptElement.type = 'text/javascript';
+            
+            // Extract the inner content from the script string (remove <script> tags)
+            const innerScript = scriptContent.replace(/<script>|<\/script>/g, '');
+            scriptElement.innerHTML = innerScript;
+            
+            // Add script to page
+            document.head.appendChild(scriptElement);
+            
+            showNotification('Chatbot script successfully embedded!', 'success');
+        }
+        
+        // Show notification
+        function showNotification(message, type) {
+            // Remove existing notification
+            const existingNotification = document.getElementById('notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.id = 'notification';
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 16px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transition: all 0.3s ease;
+                background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, 3000);
+        }
+
+        // Copy script
+        function copyScript() {
+            const scriptContent = document.getElementById('scriptContent').textContent;
+            navigator.clipboard.writeText(scriptContent).then(() => {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                alert('Copy failed, please copy manually');
+            });
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            const retrySection = document.getElementById('retrySection');
+            
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            retrySection.style.display = 'block';
+        }
+        
+        // Hide error message
+        function hideError() {
+            const errorElement = document.getElementById('errorMessage');
+            const retrySection = document.getElementById('retrySection');
+            
+            errorElement.style.display = 'none';
+            retrySection.style.display = 'none';
+        }
+        
+        // Retry loading bots
+        function retryLoadBots() {
+            hideError();
+            const select = document.getElementById('botSelect');
+            select.innerHTML = '<option value="">Reloading...</option>';
+            loadBotList();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBotList();
+            document.getElementById('scriptSection').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

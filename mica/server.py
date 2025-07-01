@@ -9,6 +9,7 @@ from typing import Text, Dict, Optional, Any
 
 from fastapi import FastAPI, Request, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
@@ -18,12 +19,21 @@ from mica.utils import read_yaml_string, logger, read_yaml_file
 from mica.connector.facebook import verify_facebook_webhook, handle_facebook_webhook
 from mica.connector.slack import handle_slack_webhook
 
-api_description = """LLM Chatbot Server API."""
+api_description = """MICA Server API."""
 
 app = FastAPI(
-    title="LLM Chatbot Server API",
+    title="MICA Server API",
     description=api_description,
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    # local test for chatbot
+    allow_origins=["http://127.0.0.1:8090", "http://localhost:8090"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize the manager
@@ -144,10 +154,17 @@ async def facebook_webhook(bot: str, request: Request):
 async def chat(request: Request, body: ChatRequest):
     sender = body.sender
     message = body.message
+    logger.info(f"Received message from {sender}: {message} for {request.headers}")
     bot = request.headers.get("bot_name")
+
     response = await manager.chat(bot, sender, message)
     # this response needs to be encoded in utf-8
     return JSONResponse(content=response, media_type="application/json;charset=utf-8")
+
+
+@app.get("/v1/bots")
+async def get_bots():
+    return JSONResponse(content=list(manager.bots.keys()), media_type="application/json;charset=utf-8")
 
 
 @app.websocket("/v1/ws/chat/{bot}")
@@ -242,6 +259,7 @@ async def startup_event():
         logger.info(f"Successfully loaded {len(loaded_bots)} bots: {', '.join(loaded_bots)}")
     else:
         logger.warning("No bots were successfully loaded.")
+
 
 if __name__ == "__main__":
     uvicorn.run("mica.server:app", port=5001, host="0.0.0.0", log_level="info")

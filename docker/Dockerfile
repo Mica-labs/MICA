@@ -1,8 +1,12 @@
 FROM micalabs/micabase:v1
 
-COPY /mica /mica
-WORKDIR /mica
-ENV PYTHONPATH=/
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-EXPOSE 5001
-CMD ["python", "-u", "server.py"]
+COPY docker/dist /var/www/html/chatbot
+
+COPY mica /mica
+
+WORKDIR /mica
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
