@@ -3,6 +3,7 @@ from pathlib import Path
 import sqlite3
 
 
+
 # Determine the path to dental.db relative to this script
 ROOT = Path(__file__).parent
 DB_DIR = ROOT / "data"
@@ -98,11 +99,16 @@ def action_schedule_appointment(name=None, appointment_datetime=None):
     conn.close()
 
     result = {
-        "appointment_id": appt_id,
-        "text": f"Appointment #{appt_id} scheduled for {name} on {appointment_datetime}."
+      "data": {
+        "name": name,
+        "appointment_datetime": appointment_datetime
+      },
+      "appointment_id": appt_id,
+      "text": f"Appointment #{appt_id} scheduled for {name} on {appointment_datetime}."
     }
     print(json.dumps(result))
     return result
+
 
 
 def action_get_patient_info(name=None, patient_id=None):

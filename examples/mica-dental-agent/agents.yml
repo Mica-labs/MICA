@@ -49,7 +49,7 @@ PatientInformationInquiry:
     4. When the function returns, emit **only** this JSON (no extra text):
        {
        "data": {"patient_id": "<id>", "name": "<name>", "contact_info": "<contact>", "date_of_birth": "<dob>", "appointments": [{"appointment_id": "<id>", "datetime": "<dt>"}, ...]}, 
-       "bot": "Here's the information for <name>:\n• Patient ID: <id>\n• Contact: <contact>\n• DOB: <dob>\n• Appointments:\n•     Appointment: <id1> on <dt1>\n•    – ID: <id2> at <dt2>\n",
+       "bot": "Here's the information for <name>:\n• Patient ID: <id>\n• Contact: <contact>\n• DOB: <dob>\n• Appointments:\n     ApptNo <id1> on <dt1>\n   ApptNO <id2> at <dt2>\n", 
        "status": "complete"
        }
   args:
