@@ -37,65 +37,19 @@ AppointmentScheduler:
     - action_check_availability
     - action_schedule_appointment
 
-# ImageAnalysis:
-#   type: llm agent
-#   description: Handles X-ray or image analysis requests.
-#   prompt: |
-#     1. Confirm the user wants an image analyzed.
-#     2. Ask for the image identifier or URL.
-#     3. Call `action_analyze_image(image_id)`.
-#     4. Present the analysis results to the user.
-#   args:
-#     - image_id
-#   uses:
-#     - action_analyze_image
-
-# ImageAnalysis:
-#   type: llm agent
-#   description: Handles X-ray or image analysis requests.
-#   prompt: |
-#     1. Confirm the user wants an image analyzed.
-#     2. Ask for the image identifier or URL.
-#     3. Call `action_analyze_image(image_id)`.
-#     4. When the function returns, emit this JSON (no extra text):
-#        {"data": {"image_id": "<the id>", "analysis": "<the analysis>"}, "status": "complete"}
-#     5. Present the analysis results to the user.
-#   args:
-#     - image_id
-#   uses:
-#     - action_analyze_image
-
-
-
-
-NotificationSender:
-  type: llm agent
-  description: Sends appointment reminders or notifications.
-  prompt: |
-    1. Receive notification details (patient name, message).
-    2. Call `action_send_notification(recipient, message)`.
-    3. Confirm notification was sent.
-  args:
-    - recipient
-    - message
-  uses:
-    - action_send_notification
-
-
-
 
 
 PatientInformationInquiry:
   type: llm agent
-  description: Looks up an existing** patient’s personal and appointment info. Requires patient_id or exact name.
+  description: Looks up an existing** patient's personal and appointment info. Requires patient_id or exact name.
   prompt: |
-    1. Confirm the user wants to look up a patient’s information.
+    1. Confirm the user wants to look up a patient's information.
     2. Ask for the patient's full name or ID.
     3. Call `action_get_patient_info(name, patient_id)`.
     4. When the function returns, emit **only** this JSON (no extra text):
        {
        "data": {"patient_id": "<id>", "name": "<name>", "contact_info": "<contact>", "date_of_birth": "<dob>", "appointments": [{"appointment_id": "<id>", "datetime": "<dt>"}, ...]}, 
-       "bot": "Here’s the information for <name>:\n• Patient ID: <id>\n• Contact: <contact>\n• DOB: <dob>\n• Appointments:\n•     Appointment: <id1> on <dt1>\n•    – ID: <id2> at <dt2>\n",
+       "bot": "Here's the information for <name>:\n• Patient ID: <id>\n• Contact: <contact>\n• DOB: <dob>\n• Appointments:\n•     Appointment: <id1> on <dt1>\n•    – ID: <id2> at <dt2>\n",
        "status": "complete"
        }
   args:
@@ -115,8 +69,6 @@ meta:
   contains:
     - PatientRecord
     - AppointmentScheduler
-    # - ImageAnalysis
-    - NotificationSender
     - PatientInformationInquiry
   fallback: default
   exit: default
