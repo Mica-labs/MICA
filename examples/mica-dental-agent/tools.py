@@ -1,9 +1,6 @@
 import json
 from pathlib import Path
 import sqlite3
-import openai
-import requests
-import base64
 
 
 # Determine the path to dental.db relative to this script
@@ -106,52 +103,6 @@ def action_schedule_appointment(name=None, appointment_datetime=None):
     }
     print(json.dumps(result))
     return result
-
-
-
-def action_analyze_image(image_id):
-    """
-    Download an image from the provided URL, encode it in base64, send it to the vision model,
-    and return the analysis result.
-    """
-    # Download the image
-    response = requests.get(image_id)
-    response.raise_for_status()
-    image_data = response.content
-    image_b64 = base64.b64encode(image_data).decode('utf-8')
-
-    # Call the vision-capable LLM model
-    messages = [
-        {"role": "system", "content": "You are an expert dental radiologist analyzing a dental X-ray image."},
-        {"role": "user", "content": f"<image>{image_b64}</image>\nInstructions: Analyze the image and identify any dental issues."}
-    ]
-    completion = openai.ChatCompletion.create(
-        model="grok-2-vision-001",
-        messages=messages,
-        temperature=0
-    )
-    analysis = completion.choices[0].message.content.strip()
-
-    result = {
-        "image_id": image_id,
-        "analysis": analysis
-    }
-    print(json.dumps(result))
-    return result
-
-
-def action_send_notification(message, recipient):
-    """
-    Simulate sending a notification (e.g. via Twilio).
-    Prints a JSON object to stdout indicating who'd get what.
-    """
-    result = {
-        "recipient": recipient,
-        "message": message,
-        "status": "notification queued"
-    }
-    # Print to stdout so your bot can capture it
-    print(json.dumps(result))
 
 
 def action_get_patient_info(name=None, patient_id=None):
