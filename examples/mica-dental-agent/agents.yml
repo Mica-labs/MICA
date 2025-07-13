@@ -61,6 +61,19 @@ PatientInformationInquiry:
   uses:
     - action_get_patient_info
 
+ImageAnalysis:
+  type: llm agent
+  description: Handles X-ray or image analysis requests.
+  prompt: |
+    1. Confirm the user wants an image analyzed.
+    2. Ask for the image identifier or URL.
+    3. Call `action_analyze_image(image_id)`.
+    4. Present the analysis results to the user.
+  args:
+    - image_id
+  uses:
+    - action_analyze_image
+
 
 
 meta:
@@ -70,6 +83,7 @@ meta:
     - PatientRecord
     - AppointmentScheduler
     - PatientInformationInquiry
+    - ImageAnalysis
   fallback: default
   exit: default
   steps:
