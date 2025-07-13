@@ -1,6 +1,9 @@
 import json
 from pathlib import Path
 import sqlite3
+from os import getenv
+from dotenv import load_dotenv
+from openai import OpenAI
 
 
 
@@ -8,6 +11,9 @@ import sqlite3
 ROOT = Path(__file__).parent
 DB_DIR = ROOT / "data"
 DB_PATH = DB_DIR / "dental.db"
+load_dotenv()
+client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
+
 
 
 # Ensure the data directory exists and initialize the database
@@ -155,3 +161,37 @@ def action_get_patient_info(name=None, patient_id=None):
     }
     print(json.dumps(result))
     return result
+
+
+def action_analyze_image(image_id):
+    """
+    Download the image from the given URL, send it to gpt-4o with vision support,
+    and return exactly one BotUtter event so the analysis appears only once.
+    """
+    prompt = "Please provide a very brief analysis and diagnosis of this dental image."
+
+    try:
+        chat_completion = client.chat.completions.create(
+            model="gpt-4o",
+            max_tokens=300,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text",      "text": prompt},
+                        {"type": "image_url", "image_url": {"url": image_id}}
+                    ]
+                }
+            ]
+        )
+        analysis = chat_completion.choices[0].message.content.strip()
+    except Exception as e:
+        analysis = f"Error during image analysis: {e}"
+
+    # Return a single event so the bot speaks only this once
+    return [
+        {
+            "bot": analysis,
+            "status": "success"
+        }
+    ]
