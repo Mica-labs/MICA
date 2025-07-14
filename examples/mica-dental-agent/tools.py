@@ -50,17 +50,34 @@ def get_conn():
 
 
 def action_create_patient_record(name, contact_info=None, date_of_birth=None):
+    """Create DB row, emit tool JSON, then fill slots and speak once."""
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("INSERT INTO patients(name,contact,dob) VALUES (?,?,?)",
-                (name, contact_info, date_of_birth))
+    cur.execute(
+        "INSERT INTO patients(name, contact, dob) VALUES (?,?,?)",
+        (name, contact_info, date_of_birth)
+    )
     conn.commit()
-    pid = cur.lastrowid
+    patient_id = cur.lastrowid
     conn.close()
-    # *** Print JSON to stdout, not just return it ***
-    result = {"patient_id": pid, "text": f"Created patient #{pid} for {name}"}
-    print(json.dumps(result))
-    return result
+
+    tool_payload = {
+        "patient_id": patient_id,
+        "name": name,
+        "contact_info": contact_info,
+        "date_of_birth": date_of_birth
+    }
+    print(json.dumps(tool_payload))
+
+    return [
+        {"arg": "name",          "value": name},
+        {"arg": "contact_info",  "value": contact_info},
+        {"arg": "date_of_birth", "value": date_of_birth},
+        {
+            "bot": f" Patient record #{patient_id} created for {name}.",
+            "status": "success"
+        }
+    ]
 
 
 def action_check_availability(appointment_datetime, patient_id=None):
@@ -118,40 +135,27 @@ def action_schedule_appointment(name=None, appointment_datetime=None):
 
 
 def action_get_patient_info(name=None, patient_id=None):
-    """Retrieve patient's personal and appointment information."""
+    """Fetch info, fill slots, and reply."""
     conn = get_conn()
     cur = conn.cursor()
+
     if name:
-        cur.execute(
-            "SELECT id, name, contact, dob FROM patients WHERE name = ?",
-            (name,)
-        )
+        cur.execute("SELECT id, name, contact, dob FROM patients WHERE name = ?", (name,))
     elif patient_id:
-        cur.execute(
-            "SELECT id, name, contact, dob FROM patients WHERE id = ?",
-            (patient_id,)
-        )
+        cur.execute("SELECT id, name, contact, dob FROM patients WHERE id = ?", (patient_id,))
     else:
-        conn.close()
-        result = {"text": "Error: please provide a patient name or ID."}
-        print(json.dumps(result))
-        return result
+        return [{"bot": "Please provide the patient's name or ID.", "status": "error"}]
 
     row = cur.fetchone()
     if not row:
-        conn.close()
-        result = {"text": f"Error: No patient found with name or ID '{name or patient_id}'."}
-        print(json.dumps(result))
-        return result
+        who = name or patient_id
+        return [{"bot": f"No patient found matching '{who}'.", "status": "error"}]
 
     pid, pname, contact, dob = row
-    cur.execute(
-        "SELECT id, datetime FROM appointments WHERE patient_id = ?",
-        (pid,)
-    )
+    cur.execute("SELECT id, datetime FROM appointments WHERE patient_id = ?", (pid,))
     appts = [{"appointment_id": aid, "datetime": dt} for aid, dt in cur.fetchall()]
-
     conn.close()
+
     result = {
         "patient_id": pid,
         "name": pname,
@@ -159,8 +163,17 @@ def action_get_patient_info(name=None, patient_id=None):
         "dob": dob,
         "appointments": appts
     }
+
     print(json.dumps(result))
-    return result
+
+    return [
+        {"arg": "patient_id: ", "value": pid},
+        {"arg": "name",       "value": pname},
+        {"arg": "contact_info","value": contact},
+        {"arg": "date_of_birth","value": dob},
+        {"arg": "appointments","value": appts},
+        {"status": "success"}
+    ]
 
 
 def action_analyze_image(image_id):
@@ -188,7 +201,6 @@ def action_analyze_image(image_id):
     except Exception as e:
         analysis = f"Error during image analysis: {e}"
 
-    # Return a single event so the bot speaks only this once
     return [
         {
             "bot": analysis,
