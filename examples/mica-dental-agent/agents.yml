@@ -1,23 +1,21 @@
 # agents.yml
 PatientRecord:
   type: llm agent
-  description: Creates a brand-new patient record** by gathering name, contact info, and DOB.
+  description: Creates a brand-new patient record by gathering name, contact info, and DOB.
   prompt: |
     1. Greet the user and confirm they want to create a new patient record.
     2. Ask for the patient's full name.
     3. Ask for contact information (phone or email).
-    4. Ask for the patient's date of birth and instruct:
-       “Please enter your date of birth in **MM/DD/YYYY** format (e.g. 08/24/1990).”
-    5. When the user gives a date, output:
-       {"data": {"date_of_birth": "<their date>"}, "bot": "Thanks!", "status": "running"}  
-    6. Call `action_create_patient_record(name, contact_info, date_of_birth)`.
-    7. Confirm record creation to the user.
+    4. Ask for the patient's date of birth in **MM/DD/YYYY** format (e.g. 08/24/1990).
+    5. Call `action_create_patient_record(name, contact_info, date_of_birth)`.
+    6. Confirm record creation to the user.
   args:
     - name
     - contact_info
     - date_of_birth
   uses:
     - action_create_patient_record
+
 
 AppointmentScheduler:
   type: llm agent
@@ -26,7 +24,7 @@ AppointmentScheduler:
     1. Greet the user and confirm they want to schedule an appointment.
     2. Ask for the patient's name.
     3. Ask for the desired appointment **date only**, and instruct:
-       “Please enter the date in **MM/DD/YYYY** format (e.g. 08/24/2025).”
+       “Please enter the date in **MM/DD/YYYY** format (e.g. 07/06/2025).”
     4. Call `action_check_availability(appointment_datetime)`.
     5. If available, call `action_schedule_appointment(name, appointment_datetime)` and confirm.
     6. If not available, apologize and ask for a different date (again reminding them of the MM/DD/YYYY format).
@@ -41,17 +39,12 @@ AppointmentScheduler:
 
 PatientInformationInquiry:
   type: llm agent
-  description: Looks up an existing** patient's personal and appointment info. Requires patient_id or exact name.
+  description: Looks up an existing patient's personal and appointment info.
   prompt: |
     1. Confirm the user wants to look up a patient's information.
-    2. Ask for the patient's full name or ID.
+    2. Ask for the patient's full name **or** ID.
     3. Call `action_get_patient_info(name, patient_id)`.
-    4. When the function returns, emit **only** this JSON (no extra text):
-       {
-       "data": {"patient_id": "<id>", "name": "<name>", "contact_info": "<contact>", "date_of_birth": "<dob>", "appointments": [{"appointment_id": "<id>", "datetime": "<dt>"}, ...]}, 
-       "bot": "Here's the information for <name>:\n• Patient ID: <id>\n• Contact: <contact>\n• DOB: <dob>\n• Appointments:\n     ApptNo <id1> on <dt1>\n   ApptNO <id2> at <dt2>\n", 
-       "status": "complete"
-       }
+    4. Present the returned information to the user.
   args:
     - name
     - patient_id
@@ -60,6 +53,8 @@ PatientInformationInquiry:
     - appointments
   uses:
     - action_get_patient_info
+
+
 
 ImageAnalysis:
   type: llm agent
