@@ -60,11 +60,11 @@ class Bot(object):
     def from_json(cls,
                   name: Optional[Text] = None,
                   data: Optional[Any] = None,
-                  llm_config: Optional[Any] = None,
+                  config: Optional[Any] = None,
                   tool_code: Optional[Text] = None,
                   connector: Optional[Any] = None):
         name = name or short_uuid(10)
-        config = llm_config or {}
+        config = config or {}
 
         # # get schedule method
         # from mica.processor import DispatcherProcessor, PriorityProcessor

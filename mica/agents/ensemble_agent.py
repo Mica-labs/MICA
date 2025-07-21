@@ -94,6 +94,9 @@ class EnsembleAgent(Agent):
 
         if tracker.latest_message.text == '/init':
             return True, result + [tracker.peek_agent()]
+        
+        if tracker.latest_message.text.startswith('/click'):
+            return True, []
 
         # call rag_agent first
         rag_result = None
