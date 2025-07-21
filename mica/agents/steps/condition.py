@@ -67,6 +67,16 @@ class If(Base):
             if response_flag:
                 return "Do", []
             return "Skip", []
+        elif "the user clicks" in self.statement:
+            target_button_name = self._extract_button_name(self.statement)
+            if not target_button_name:
+                logger.error("No button name found in the statement: %s", self.statement)
+                return "Skip", []
+            user_input = tracker.latest_message.text
+            extracted_button_name = self._extract_button_name(user_input)
+            if extracted_button_name and extracted_button_name == target_button_name:
+                return "Do", []
+            return "Skip", []
         else:
             flag = parse_and_evaluate(self.statement, tracker, self._flow_name)
             if flag:
@@ -101,6 +111,19 @@ class If(Base):
         pattern = r'"(.*?)"'
         return re.findall(pattern, self.statement)
 
+    def _extract_button_name(self, user_input: Text):
+        # Extract button name from either 'the user clicks "Button 1"' or '/click: Button 1'
+        # Pattern 1: the user clicks "Button 1"
+        pattern1 = r'the user clicks\s+"([^"]+)"'
+        match1 = re.search(pattern1, user_input)
+        if match1:
+            return match1.group(1).strip()
+        # Pattern 2: /click: Button 1
+        pattern2 = r'^/click:\s*(.+)$'
+        match2 = re.match(pattern2, user_input)
+        if match2:
+            return match2.group(1).strip()
+        return None
 
 class ElseIf(Base):
     def __init__(self,
@@ -159,6 +182,16 @@ class ElseIf(Base):
                 return "Do", []
             else:
                 return "Skip", []
+        elif "the user clicks" in self.statement:
+            target_button_name = self._extract_button_name(self.statement)
+            if not target_button_name:
+                logger.error("No button name found in the statement: %s", self.statement)
+                return "Skip", []
+            user_input = tracker.latest_message.text
+            extracted_button_name = self._extract_button_name(user_input)
+            if extracted_button_name and extracted_button_name == target_button_name:
+                return "Do", []
+            return "Skip", []
         else:
             flag = parse_and_evaluate(self.statement, tracker, self._flow_name)
             if flag:
@@ -190,6 +223,19 @@ class ElseIf(Base):
         pattern = r'"(.*?)"'
         return re.findall(pattern, self.statement)
 
+    def _extract_button_name(self, user_input: Text):
+        # Extract button name from either 'the user clicks "Button 1"' or '/click: Button 1'
+        # Pattern 1: the user clicks "Button 1"
+        pattern1 = r'the user clicks\s+"([^"]+)"'
+        match1 = re.search(pattern1, user_input)
+        if match1:
+            return match1.group(1).strip()
+        # Pattern 2: /click: Button 1
+        pattern2 = r'^/click:\s*(.+)$'
+        match2 = re.match(pattern2, user_input)
+        if match2:
+            return match2.group(1).strip()
+        return None
 
 class Else(Base):
     def __init__(self,

@@ -130,8 +130,9 @@ class FlowAgent(Agent):
         info = tracker.get_or_create_flow_agent(self.name)
 
         # extract any args from the latest message
+        # if the latest message is a click event, skip the args extraction
         if not info.has_extract_args_after_latest_user_message(tracker.latest_message)\
-                and self.name != 'main':
+                and self.name != 'main' and not tracker.latest_message.text.startswith('/click'):
             agent_exception = await self.get_message_args(tracker, agents)
             if agent_exception is not None:
                 if self.fallback is None:
