@@ -36,7 +36,7 @@ class Manager:
             parsed_data = parser.parse_agents(data)
             self.bots[bot_name] = Bot.from_json(name=bot_name,
                                                 data=parsed_data,
-                                                llm_config=llm_config,
+                                                config=llm_config,
                                                 tool_code=python_script,
                                                 connector=connector)
             return True
