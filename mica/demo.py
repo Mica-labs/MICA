@@ -29,6 +29,7 @@ def generate_random_string(length=6):
 
 async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
     try:
+        print(yaml_input)
         parsed_yaml = yaml.safe_load(yaml_input)
         # validate
         validator = Validator()
@@ -36,7 +37,10 @@ async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
         assert result == [], "Did not pass the validation."
         # convert
         parsed_agents = parser.parse_agents(parsed_yaml)
-        parsed_config = yaml.safe_load(config_input)
+        # by default: unsafe_mode on
+        parsed_config = {"unsafe_mode": True}
+        if config_input and config_input != "":
+            parsed_config = yaml.safe_load(config_input)
         print("!!!", parsed_config)
         bot = Bot.from_json(name=bot_name, data=parsed_agents, tool_code=code, config=parsed_config)
         gr.Info(f"Success generate bot {bot_name}", duration=3)
@@ -140,7 +144,7 @@ async def load_bot(files, chatbot, user_id):
         logger.error(f"Failed to load bot: {bot_name} from disk, {e}")
         logger.error(traceback.format_exc())
         gr.Error(f"Failed")
-        return None, bot_name or "", agents or "", tools or "", "", user_id, ""
+        return None, bot_name or "", agents or "", tools or "", config or "", "", user_id, ""
 
 
 async def get_response(message, history, bot, user_id):
