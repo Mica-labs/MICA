@@ -90,6 +90,10 @@ class PriorityProcessor(Processor):
                                   bot: Optional[Bot] = None
                                   ) -> List[Event]:
         logger.info("Received user message: %s", tracker.latest_message.text)
+        user_text: Text = tracker.latest_message.text
+        # block click operation
+        if user_text.startswith("/click link"):
+            return []
         response = []
         is_end = False
 
