@@ -76,7 +76,7 @@ The local GUI provides features for online editing, testing, loading bots from l
 You can customize your bot on the left side of the page. After editing, click the `Run` button at the top right to generate the bot. If the generation fails, an alert will be displayed. Please check if your agents' format is correct.
 
 #### Load from Local Examples
-You can also load a bot from local examples and modify it as needed. After selecting the bot you want to load, you can start a conversation immediately or modify it further.
+You can also load a bot from local examples and modify it as needed. Select any directory name to automatically load the bot. After selecting the bot you want to load, you can start a conversation immediately or modify it further.
 
 > Note: If you modify the examples, you need to click the `Run` button before testing the latest bot. Additionally, selecting multiple directories at the same time will cause a bot loading error. When deselecting, all unsaved changes will be lost immediately.
 
