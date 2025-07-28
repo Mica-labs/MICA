@@ -4,6 +4,8 @@ import json
 import os
 import sys
 import traceback
+import logging
+import io
 
 import gradio as gr
 import yaml
@@ -21,6 +23,25 @@ from mica.channel import GradioChannel
 from mica.parser import Validator
 from mica.utils import logger
 
+# Add a string buffer to capture logs
+log_stream = io.StringIO()
+handler = logging.StreamHandler(log_stream)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Add handler to the root logger to capture logs from all standard loggers.
+root_logger = logging.getLogger()
+root_logger.addHandler(handler)
+
+# The main application logger "mica" (imported as `logger`) does not
+# propagate to the root logger, so we need to add the handler to it directly as well.
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+
+def get_log_contents():
+    return log_stream.getvalue()
+
 
 def generate_random_string(length=6):
     letters = string.ascii_letters
@@ -29,7 +50,6 @@ def generate_random_string(length=6):
 
 async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
     try:
-        print(yaml_input)
         parsed_yaml = yaml.safe_load(yaml_input)
         # validate
         validator = Validator()
@@ -41,7 +61,7 @@ async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
         parsed_config = {"unsafe_mode": True}
         if config_input and config_input != "":
             parsed_config = yaml.safe_load(config_input)
-        print("!!!", parsed_config)
+        gr.Info(f"Starting to generate bot {bot_name}", duration=3)
         bot = Bot.from_json(name=bot_name, data=parsed_agents, tool_code=code, config=parsed_config)
         gr.Info(f"Success generate bot {bot_name}", duration=3)
         _, chatbot, user_id, tracker = await init_conversation(bot, [], user_id)
@@ -116,12 +136,10 @@ async def load_bot(files, chatbot, user_id):
     try:
         tools = ""
         agents = ""
-        config = ""
+        config = "unsafe_mode: true"
         bot_name = None
 
         for file_path in files:
-            if os.path.isdir(file_path) and not bot_name:
-                bot_name = os.path.basename(file_path)
             if os.path.isfile(file_path):
                 try:
                     if file_path.endswith('.py'):
@@ -137,6 +155,10 @@ async def load_bot(files, chatbot, user_id):
                                 config = f.read()
                 except Exception as e:
                     gr.Error(f"Cannot load file {file_path}: {str(e)}\n")
+        if bot_name is None and files:
+            first_path = files[0]
+            if os.path.isfile(first_path):
+                bot_name = os.path.basename(os.path.dirname(first_path))
         bot, chatbot, user_id, tracker = await generate_bot(bot_name, agents, tools, config, user_id)
         return bot, bot_name, agents, tools, config, chatbot, user_id, tracker
 
@@ -222,14 +244,16 @@ main:
                     submit_btn = gr.Button("Run")
                     save_btn = gr.Button("Save")
                 tracker = gr.Textbox(label="States", interactive=False, lines=1)
+                log_output = gr.Textbox(label="Logs", interactive=False, lines=10)
+                demo.load(get_log_contents, None, log_output, every=2)
                 chatbot = gr.Chatbot(height=600, layout="panel")
                 msg = gr.Textbox(label="You")
                 clear = gr.ClearButton([msg, chatbot], value="Clear the conversation")
                 user_id = gr.State("default")
 
-            msg.submit(get_response, [msg, chatbot, bot, user_id], [msg, chatbot, user_id, tracker])
-            submit_btn.click(generate_bot, [bot_name, yaml_input, code_input, config_input, user_id], [bot, chatbot, user_id, tracker])
-            save_btn.click(save_bot, [bot_name, yaml_input, code_input, config_input])
-            file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, config_input, chatbot, user_id, tracker], trigger_mode="once", show_progress="hidden")
+        msg.submit(get_response, [msg, chatbot, bot, user_id], [msg, chatbot, user_id, tracker])
+        submit_btn.click(generate_bot, [bot_name, yaml_input, code_input, config_input, user_id], [bot, chatbot, user_id, tracker])
+        save_btn.click(save_bot, [bot_name, yaml_input, code_input, config_input])
+        file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, config_input, chatbot, user_id, tracker], trigger_mode="once", show_progress="hidden")
 
     demo.launch(share=False)

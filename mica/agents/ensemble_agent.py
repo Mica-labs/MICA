@@ -80,6 +80,7 @@ class EnsembleAgent(Agent):
                   agents: Optional[Dict[Text, Agent]] = None,
                   **kwargs
                   ):
+        logger.info(f"Ensemble agent {self.name} is running")
         result = []
         # when the conversation start, first execute self.step
         if len(tracker.events) == 1 and self.steps is not None and not isinstance(self.steps[0], User):

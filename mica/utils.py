@@ -32,7 +32,7 @@ LOGGING_CONFIG = {
     },
     "root": {
         "handlers": ["console", "file"],
-        "level": "DEBUG",
+        "level": "INFO",
     },
     "loggers": {
         "uvicorn": {
@@ -40,7 +40,7 @@ LOGGING_CONFIG = {
             "level": "INFO",
             "propagate": False,
         },
-        "LLMChatbot": {
+        "mica": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": False,
@@ -48,7 +48,7 @@ LOGGING_CONFIG = {
     },
 }
 dictConfig(LOGGING_CONFIG)
-logger = logging.getLogger("LLMChatbot")
+logger = logging.getLogger("mica")
 
 def read_file(filename, encoding="utf-8"):
     """Read text from a file."""
@@ -510,5 +510,10 @@ def parse_and_evaluate(expr_str, tracker, revoke_agent_name):
     """
     parser = ExpressionParser(expr_str)
     expr_tree = parser.parse()
+    return evaluate_expression(expr_tree, tracker, revoke_agent_name)
+
+
+def get_expression_from_condition(condition: Text, tracker, revoke_agent_name=None):
+    expr_tree = parser.parse(condition)
     return evaluate_expression(expr_tree, tracker, revoke_agent_name)
 

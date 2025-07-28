@@ -53,6 +53,7 @@ class LLMAgent(Agent):
         return f"LLM_agent(name={self.name}, description={description})"
 
     async def run(self, tracker: Tracker, is_tool=False, **kwargs):
+        logger.info(f"LLM agent {self.name} is running")
         llm_result = []
         # initiate agent
         current_evt = tracker.peek_agent()
