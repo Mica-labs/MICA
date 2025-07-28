@@ -58,7 +58,7 @@ class Call(Base):
                 logger.error(msg)
                 raise ValueError(msg)
             tool_rst = tools.execute_function(self.name, **self._get_args_value(tracker))
-            logger.debug(f"Execute function: {self.name}, get result: {tool_rst}")
+            logger.info(f"Agent: [{self.flow_name}] execute function: {self.name}, get result: {tool_rst}")
             if tool_rst['status'] == 'error':
                 return "Finished", []
             if tool_rst['result'] is not None:
@@ -83,6 +83,7 @@ class Call(Base):
                 if isinstance(call_result, AgentFail):
                     return "Failed", []
                 return "Finished", []
+            logger.info(f"Agent: [{self.flow_name}] call other agent: {self.name} with args: {self.args}")
             tracker.push_agent(CurrentAgent(
                 agent=agents.get(self.name),
                 metadata={"flow": self.flow_name,

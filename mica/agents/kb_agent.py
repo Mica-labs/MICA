@@ -144,7 +144,7 @@ class KBAgent(Agent):
             Dict containing matches and their scores if similarity threshold is met,
             None otherwise
         """
-        logger.info(f"KB agent {self.name} is running")
+        logger.info(f"KB agent: [{self.name}] is running")
         if not self.vector_store:
             raise ValueError("Knowledge base not prepared. Call prepare() first.")
 

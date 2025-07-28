@@ -1,11 +1,7 @@
 import asyncio
-import glob
 import json
 import os
-import sys
 import traceback
-import logging
-import io
 
 import gradio as gr
 import yaml
@@ -23,29 +19,17 @@ from mica.channel import GradioChannel
 from mica.parser import Validator
 from mica.utils import logger
 
-# Add a string buffer to capture logs
-log_stream = io.StringIO()
-handler = logging.StreamHandler(log_stream)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-
-# Add handler to the root logger to capture logs from all standard loggers.
-root_logger = logging.getLogger()
-root_logger.addHandler(handler)
-
-# The main application logger "mica" (imported as `logger`) does not
-# propagate to the root logger, so we need to add the handler to it directly as well.
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
-
+# use the web log function defined in utils.py
+from mica.utils import get_web_log_contents, clear_web_log_contents
 
 def get_log_contents():
-    return log_stream.getvalue()
+    """Get the log contents for the frontend (only INFO level and above)"""
+    return get_web_log_contents()
 
 
 def generate_random_string(length=6):
     letters = string.ascii_letters
-    return ''.join(random.choice(letters) for i in range(length))
+    return ''.join(random.choice(letters) for _ in range(length))
 
 
 async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
@@ -61,7 +45,6 @@ async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
         parsed_config = {"unsafe_mode": True}
         if config_input and config_input != "":
             parsed_config = yaml.safe_load(config_input)
-        gr.Info(f"Starting to generate bot {bot_name}", duration=3)
         bot = Bot.from_json(name=bot_name, data=parsed_agents, tool_code=code, config=parsed_config)
         gr.Info(f"Success generate bot {bot_name}", duration=3)
         _, chatbot, user_id, tracker = await init_conversation(bot, [], user_id)
@@ -132,8 +115,7 @@ def save_bot(bot_name: str, agents: str, tools: str = None, config: str = None):
 async def load_bot(files, chatbot, user_id):
     if len(files) == 0:
         return None, "", "", "", "", "", user_id, ""
-
-    try:
+    try:      
         tools = ""
         agents = ""
         config = "unsafe_mode: true"
@@ -232,7 +214,7 @@ main:
     with gr.Blocks(theme=gr.themes.Base()) as demo:
         with gr.Row():
             with gr.Column():
-                file_loader = gr.FileExplorer(root_dir="./examples", glob="**/*.*", label="Open")
+                file_loader = gr.FileExplorer(root_dir="./examples", glob="**/*.*", label="Click any directory name to automatically load the bot. If it includes a knowledge base (KB), embedding may take some time.")
                 bot_name = gr.Textbox(label="Enter Bot Name", lines=1, value="Default bot")
                 yaml_input = gr.Code(value=default_agents, label="Enter agents.yml", language="yaml", lines=15)
                 code_input = gr.Code(label="Enter tools.py", language="python", lines=10, value=None)
@@ -244,7 +226,7 @@ main:
                     submit_btn = gr.Button("Run")
                     save_btn = gr.Button("Save")
                 tracker = gr.Textbox(label="States", interactive=False, lines=1)
-                log_output = gr.Textbox(label="Logs", interactive=False, lines=10)
+                log_output = gr.Textbox(label="Logs", interactive=False, lines=10, autofocus=False, autoscroll=True)
                 demo.load(get_log_contents, None, log_output, every=2)
                 chatbot = gr.Chatbot(height=600, layout="panel")
                 msg = gr.Textbox(label="You")
