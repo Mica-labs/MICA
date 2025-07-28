@@ -1,6 +1,7 @@
 #!/bin/bash
 
-IMAGE_LATEST="micalabs/mica:latest"
+# use a default value: micalabs/mica:latest
+IMAGE_LATEST="${1:-micalabs/mica:latest}"
 
 CURRENT_DIR=$(pwd)
 
@@ -16,7 +17,7 @@ fi
 cd "$CURRENT_DIR" || { echo "Failed to return to original directory"; exit 1; }
 
 echo "Building Docker image: $IMAGE_LATEST"
-if docker build -t "$IMAGE_LATEST" -f docker/Dockerfile .; then
+if docker build  -t "$IMAGE_LATEST" -f docker/Dockerfile .; then
     echo "Docker image built successfully: $IMAGE_LATEST"
 else
     echo "Docker image build failed, please check Dockerfile and build environment"
