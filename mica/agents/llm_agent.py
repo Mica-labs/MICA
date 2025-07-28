@@ -53,7 +53,7 @@ class LLMAgent(Agent):
         return f"LLM_agent(name={self.name}, description={description})"
 
     async def run(self, tracker: Tracker, is_tool=False, **kwargs):
-        logger.info(f"LLM agent {self.name} is running")
+        logger.info(f"LLM agent: [{self.name}] is running")
         llm_result = []
         # initiate agent
         current_evt = tracker.peek_agent()
@@ -91,7 +91,7 @@ class LLMAgent(Agent):
                     raise ValueError(msg)
 
                 tool_rst = tools.execute_function(event.function_name, **event.args)
-                logger.debug(f"Execute function: {event.function_name}, get result: {tool_rst}")
+                logger.info(f"Agent: [{self.name}] execute function: {event.function_name}, get result: {tool_rst}")
                 if tool_rst['status'] == 'error':
                     is_end = True
                     return is_end, [BotUtter("function call ["+event.function_name+"] error: "+tool_rst['error'],
@@ -150,7 +150,7 @@ class LLMAgent(Agent):
                             raise json.JSONDecodeError("No valid JSON object found", event.text, 0)
                             
                 except json.JSONDecodeError as e:
-                    logger.error(f"JSON extraction failed: {e}. Text: {event.text}")
+                    logger.error(f"JSON extraction failed: {e}. Get response from llm: {event.text}")
                     response = {
                         "bot": event.text
                     }

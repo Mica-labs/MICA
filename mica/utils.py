@@ -16,6 +16,9 @@ LOGGING_CONFIG = {
         "default": {
             "format": "%(asctime)s - %(name)s.%(filename)-25s - %(levelname)-8s - %(message)s",
         },
+        "web": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        },
     },
     "handlers": {
         "console": {
@@ -49,6 +52,23 @@ LOGGING_CONFIG = {
 }
 dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("mica")
+
+# Web log stream - for frontend display
+import io
+web_log_stream = io.StringIO()
+web_handler = logging.StreamHandler(web_log_stream)
+web_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+web_handler.setLevel(logging.INFO)  # Only record INFO and above
+logger.addHandler(web_handler)
+
+def get_web_log_contents():
+    """Get the log contents for the frontend (only INFO level and above)"""
+    return web_log_stream.getvalue()
+
+def clear_web_log_contents():
+    """Clear the web log buffer"""
+    web_log_stream.seek(0)
+    web_log_stream.truncate(0)
 
 def read_file(filename, encoding="utf-8"):
     """Read text from a file."""
