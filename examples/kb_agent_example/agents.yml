@@ -12,7 +12,8 @@ kb:
 meta:
   type: ensemble agent
   description: You can select an agent to answer user's question.
-  contains: []
+  contains: 
+    - kb
   steps:
     - bot: Hello, I can help you answer some common tax questions. Feel free to ask me!
 

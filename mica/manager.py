@@ -12,6 +12,9 @@ class Manager:
                  bots: Optional[Dict[Text, Bot]] = None
                  ):
         self.bots = bots or {}
+    
+    def get_bot(self, bot_name: Text) -> Optional[Bot]:
+        return self.bots.get(bot_name)
 
     async def chat(self, bot_name: Text, user_id: Text, message: Text, channel: Optional[ChatChannel] = None):
         if self.bots.get(bot_name) is None:

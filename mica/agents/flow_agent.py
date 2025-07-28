@@ -127,6 +127,7 @@ class FlowAgent(Agent):
                   agents: Optional[Dict[Text, Agent]] = None,
                   current_nodes=None,
                   **kwargs):
+        logger.info(f"Flow agent {self.name} is running")
         info = tracker.get_or_create_flow_agent(self.name)
 
         # extract any args from the latest message
