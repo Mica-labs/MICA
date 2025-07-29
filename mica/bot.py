@@ -54,17 +54,17 @@ class Bot(object):
         self.sum_rsp_time = 0
         self.tools = tools
         self.connector = connector or {}
-        self._func_args_config = {name: {} for name in self.tools.functions.keys()} or {}
+        self._func_args_config = {name: {} for name in self.tools.functions.keys()} if tools is not None else {}
 
     @classmethod
     def from_json(cls,
                   name: Optional[Text] = None,
                   data: Optional[Any] = None,
-                  llm_config: Optional[Any] = None,
+                  config: Optional[Any] = None,
                   tool_code: Optional[Text] = None,
                   connector: Optional[Any] = None):
         name = name or short_uuid(10)
-        config = llm_config or {}
+        config = config or {}
 
         # # get schedule method
         # from mica.processor import DispatcherProcessor, PriorityProcessor

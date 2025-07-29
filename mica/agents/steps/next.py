@@ -2,11 +2,12 @@ from typing import Optional
 
 from mica.agents.steps.base import Base
 from mica.tracker import Tracker, FlowInfo
-
+from mica.utils import logger
 
 class Next(Base):
-    def __init__(self, name, tries=None):
+    def __init__(self, name, flow_name, tries=None):
         self.name = name
+        self.flow_name = flow_name
         self.tries = tries or float('inf')
         super().__init__()
 
@@ -14,7 +15,8 @@ class Next(Base):
     def from_dict(cls, data, **kwargs):
         name = data.get("next")
         tries = data.get("tries")
-        return cls(name, tries)
+        flow_name = kwargs.get("root_agent_name")
+        return cls(name, flow_name, tries)
 
     def __repr__(self):
         return f"Next(name={self.name})"
@@ -27,5 +29,6 @@ class Next(Base):
             info.is_listen = False
             if info.get_counter(id(self)) < self.tries:
                 info.count(id(self))
+                logger.info(f"Agent: [{self.flow_name}] execute next step: turn to next step: {self.name}")
                 return "Do", []
         return "Skip", []

@@ -3,7 +3,7 @@ from typing import List, Optional, Text, Any, Dict
 from mica.agents.steps.base import Base
 from mica.event import SetSlot
 from mica.tracker import Tracker, FlowInfo
-from mica.utils import arg_format
+from mica.utils import arg_format, logger
 
 
 class Set(Base):
@@ -46,6 +46,7 @@ class Set(Base):
 
             tracker.set_arg(target_arg_info["flow_name"],
                             target_arg_info["arg_name"], source_value)
+        logger.info(f"Agent: [{self.flow_name}] execute set step: {self.data}")
         return "Finished", result
 
 

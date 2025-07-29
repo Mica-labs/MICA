@@ -156,7 +156,7 @@ class Tracker(object):
 
         if agent_name in self.func_args:
             self.func_args[agent_name][arg_name] = arg_value
-            logger.debug(f"Set argument Success. This is an argument in Functions: {self.func_args}")
+            logger.info(f"Set argument Success. This is an argument in Functions: {self.func_args}")
             return True
 
         self.args[agent_name][arg_name] = arg_value
@@ -167,10 +167,10 @@ class Tracker(object):
             ensemble_agent = self.args['__mapping__'][agent_name][arg_name]['agent']
             ensemble_arg = self.args['__mapping__'][agent_name][arg_name]['arg']
             self.args[ensemble_agent][ensemble_arg] = arg_value
-            logger.debug("Successfully synchronized '%s' in '%s'", ensemble_arg, ensemble_agent)
+            logger.info("Successfully synchronized '%s' in '%s'", ensemble_arg, ensemble_agent)
         else:
             filtered = {k: v for k, v in self.args.items() if k != "__mapping__"}
-            logger.debug(f"Set argument Success. Current agents' arguments: {filtered}")
+            logger.info(f"Set argument Success. Current agents' arguments: {filtered}")
         return True
 
     def get_args(self, agent_name):
