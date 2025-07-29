@@ -39,7 +39,7 @@ class KBAgent(Agent):
             openai_api_key=config.get('api_key') or "open-api-key",
             base_url=config.get('server') + "/v1",
             default_headers=config.get('headers')
-        ) if config else OpenAIEmbeddings()
+        ) if (config and config.get('server')) else OpenAIEmbeddings()
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
@@ -144,6 +144,7 @@ class KBAgent(Agent):
             Dict containing matches and their scores if similarity threshold is met,
             None otherwise
         """
+        logger.info(f"KB agent: [{self.name}] is running")
         if not self.vector_store:
             raise ValueError("Knowledge base not prepared. Call prepare() first.")
 

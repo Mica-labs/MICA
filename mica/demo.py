@@ -1,8 +1,6 @@
 import asyncio
-import glob
 import json
 import os
-import sys
 import traceback
 
 import gradio as gr
@@ -21,10 +19,17 @@ from mica.channel import GradioChannel
 from mica.parser import Validator
 from mica.utils import logger
 
+# use the web log function defined in utils.py
+from mica.utils import get_web_log_contents, clear_web_log_contents
+
+def get_log_contents():
+    """Get the log contents for the frontend (only INFO level and above)"""
+    return get_web_log_contents()
+
 
 def generate_random_string(length=6):
     letters = string.ascii_letters
-    return ''.join(random.choice(letters) for i in range(length))
+    return ''.join(random.choice(letters) for _ in range(length))
 
 
 async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
@@ -36,8 +41,10 @@ async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
         assert result == [], "Did not pass the validation."
         # convert
         parsed_agents = parser.parse_agents(parsed_yaml)
-        parsed_config = yaml.safe_load(config_input)
-        print("!!!", parsed_config)
+        # by default: unsafe_mode on
+        parsed_config = {"unsafe_mode": True}
+        if config_input and config_input != "":
+            parsed_config = yaml.safe_load(config_input)
         bot = Bot.from_json(name=bot_name, data=parsed_agents, tool_code=code, config=parsed_config)
         gr.Info(f"Success generate bot {bot_name}", duration=3)
         _, chatbot, user_id, tracker = await init_conversation(bot, [], user_id)
@@ -108,16 +115,13 @@ def save_bot(bot_name: str, agents: str, tools: str = None, config: str = None):
 async def load_bot(files, chatbot, user_id):
     if len(files) == 0:
         return None, "", "", "", "", "", user_id, ""
-
-    try:
+    try:      
         tools = ""
         agents = ""
-        config = ""
+        config = "unsafe_mode: true"
         bot_name = None
 
         for file_path in files:
-            if os.path.isdir(file_path) and not bot_name:
-                bot_name = os.path.basename(file_path)
             if os.path.isfile(file_path):
                 try:
                     if file_path.endswith('.py'):
@@ -133,6 +137,10 @@ async def load_bot(files, chatbot, user_id):
                                 config = f.read()
                 except Exception as e:
                     gr.Error(f"Cannot load file {file_path}: {str(e)}\n")
+        if bot_name is None and files:
+            first_path = files[0]
+            if os.path.isfile(first_path):
+                bot_name = os.path.basename(os.path.dirname(first_path))
         bot, chatbot, user_id, tracker = await generate_bot(bot_name, agents, tools, config, user_id)
         return bot, bot_name, agents, tools, config, chatbot, user_id, tracker
 
@@ -140,7 +148,7 @@ async def load_bot(files, chatbot, user_id):
         logger.error(f"Failed to load bot: {bot_name} from disk, {e}")
         logger.error(traceback.format_exc())
         gr.Error(f"Failed")
-        return None, bot_name or "", agents or "", tools or "", "", user_id, ""
+        return None, bot_name or "", agents or "", tools or "", config or "", "", user_id, ""
 
 
 async def get_response(message, history, bot, user_id):
@@ -206,7 +214,7 @@ main:
     with gr.Blocks(theme=gr.themes.Base()) as demo:
         with gr.Row():
             with gr.Column():
-                file_loader = gr.FileExplorer(root_dir="./examples", glob="**/*.*", label="Open")
+                file_loader = gr.FileExplorer(root_dir="./examples", glob="**/*.*", label="Click any directory name to automatically load the bot. If it includes a knowledge base (KB), embedding may take some time.")
                 bot_name = gr.Textbox(label="Enter Bot Name", lines=1, value="Default bot")
                 yaml_input = gr.Code(value=default_agents, label="Enter agents.yml", language="yaml", lines=15)
                 code_input = gr.Code(label="Enter tools.py", language="python", lines=10, value=None)
@@ -218,14 +226,16 @@ main:
                     submit_btn = gr.Button("Run")
                     save_btn = gr.Button("Save")
                 tracker = gr.Textbox(label="States", interactive=False, lines=1)
+                log_output = gr.Textbox(label="Logs", interactive=False, lines=10, autofocus=False, autoscroll=True)
+                demo.load(get_log_contents, None, log_output, every=2)
                 chatbot = gr.Chatbot(height=600, layout="panel")
                 msg = gr.Textbox(label="You")
                 clear = gr.ClearButton([msg, chatbot], value="Clear the conversation")
                 user_id = gr.State("default")
 
-            msg.submit(get_response, [msg, chatbot, bot, user_id], [msg, chatbot, user_id, tracker])
-            submit_btn.click(generate_bot, [bot_name, yaml_input, code_input, config_input, user_id], [bot, chatbot, user_id, tracker])
-            save_btn.click(save_bot, [bot_name, yaml_input, code_input, config_input])
-            file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, config_input, chatbot, user_id, tracker], trigger_mode="once", show_progress="hidden")
+        msg.submit(get_response, [msg, chatbot, bot, user_id], [msg, chatbot, user_id, tracker])
+        submit_btn.click(generate_bot, [bot_name, yaml_input, code_input, config_input, user_id], [bot, chatbot, user_id, tracker])
+        save_btn.click(save_bot, [bot_name, yaml_input, code_input, config_input])
+        file_loader.change(load_bot, inputs=[file_loader, chatbot, user_id], outputs=[bot, bot_name, yaml_input, code_input, config_input, chatbot, user_id, tracker], trigger_mode="once", show_progress="hidden")
 
     demo.launch(server_name="0.0.0.0", server_port=7860, share=False)

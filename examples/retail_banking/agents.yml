@@ -1,6 +1,7 @@
 kb:
   type: kb agent
-  file: ./examples/retail_banking/docs
+  sources: 
+    - ./examples/retail_banking/docs
 
 what_can_you_do:
   type: flow agent
@@ -145,6 +146,7 @@ add_payee:
 meta:
   type: ensemble agent
   contains:
+    - kb
     - check_balance:
         args:
           username: ref username

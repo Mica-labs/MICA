@@ -11,3 +11,4 @@ ruamel.yaml
 jsonpath
 mysql-connector-python
 openai
+pytest

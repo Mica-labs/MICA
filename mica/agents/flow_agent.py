@@ -130,11 +130,13 @@ class FlowAgent(Agent):
         info = tracker.get_or_create_flow_agent(self.name)
 
         # extract any args from the latest message
+        # if the latest message is a click event, skip the args extraction
         if not info.has_extract_args_after_latest_user_message(tracker.latest_message)\
-                and self.name != 'main':
+                and self.name != 'main' and not tracker.latest_message.text.startswith('/click'):
             agent_exception = await self.get_message_args(tracker, agents)
             if agent_exception is not None:
                 if self.fallback is None:
+                    logger.info(f"Flow agent: [{self.name}] fallback")
                     return False, agent_exception
                 _, fallback_response = await self.fallback.run(tracker)
                 for evt in fallback_response:
@@ -165,6 +167,7 @@ class FlowAgent(Agent):
             if isinstance(complete, Event):
                 result.append(complete)
             tracker.remove_flow_agent(self.name)
+        logger.info(f"Flow agent: [{self.name}] running results: {result}")
         return is_end, result
 
     @staticmethod
@@ -255,6 +258,7 @@ class FlowAgent(Agent):
                                                            tracker=tracker)
         for event in llm_result:
             if isinstance(event, AgentFail):
+                logger.info(f"Flow agent: [{self.name}] recognize user's intent as quit.")
                 return llm_result
             if isinstance(event, BotUtter):
                 response = safe_json_loads(event.text)
@@ -282,10 +286,10 @@ class FlowAgent(Agent):
             unrelated_agents_desc += f"{name}: {info.description}"
 
         sys_content = f"You are an intelligent chatbot. Your name is: {self.name}. " \
-                      f"Here's your task: {self.description}. "
+                      f"Here's the description: {self.description}.\n"
         if self._contains_user_node():
-            sys_content += f"Your task is to collect user's information " \
-                           f"according to the conversation I provided."
+            sys_content += f"Please collect user's information " \
+                           f"according to the conversation I provided and also recognize if the user want to quit or change the topic."
         sys_content += f"Please reply in JSON format. There are several response scenarios: \n" \
                        f"- ONLY when the user’s intent is related to one of the following: \n" \
                        f"{unrelated_agents_desc},\n or when the user clearly indicates they want to exit or not continue, " \
