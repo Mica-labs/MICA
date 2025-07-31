@@ -32,6 +32,12 @@ LOGGING_CONFIG = {
             "formatter": "default",
             "level": "DEBUG",
         },
+        "llm_file": {
+            "class": "logging.FileHandler",
+            "filename": "llm_request.log",
+            "formatter": "default",
+            "level": "DEBUG",
+        }
     },
     "root": {
         "handlers": ["console", "file"],
@@ -48,10 +54,16 @@ LOGGING_CONFIG = {
             "level": "DEBUG",
             "propagate": False,
         },
+        "mica.llm": {
+            "handlers": ["console", "file", "llm_file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
     },
 }
 dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("mica")
+script_logger = logging.getLogger("mica.llm")
 
 # Web log stream - for frontend display
 import io

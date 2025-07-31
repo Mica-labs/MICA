@@ -255,7 +255,8 @@ class FlowAgent(Agent):
         logger.debug("Flow agent prompt: %s", json.dumps(prompt, indent=2, ensure_ascii=False))
 
         llm_result = await self.llm_model.generate_message(prompts=prompt,
-                                                           tracker=tracker)
+                                                           tracker=tracker,
+                                                           provider=self.name)
         for event in llm_result:
             if isinstance(event, AgentFail):
                 logger.info(f"Flow agent: [{self.name}] recognize user's intent as quit.")

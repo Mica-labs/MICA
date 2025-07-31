@@ -256,7 +256,9 @@ class EnsembleAgent(Agent):
 
         prompt = self._generate_agent_prompt(tracker, agents, agents_remain, rag_result)
         logger.debug("Ensemble agent prompt: \n%s", json.dumps(prompt, indent=2, ensure_ascii=False))
-        llm_result = await self.llm_model.generate_message(prompt, tracker)
+        llm_result = await self.llm_model.generate_message(prompt,
+                                                           tracker=tracker,
+                                                           provider=self.name)
         # analyze llm result, generate agent result
         agent_result = []
         for event in llm_result:

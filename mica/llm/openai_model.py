@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from typing import Any, Optional, Dict, Text, List
 
@@ -11,7 +12,7 @@ from mica.event import BotUtter, SetSlot, AgentComplete, AgentFail, FunctionCall
 from mica.llm.base import BaseModel
 from mica.llm.constants import OPENAI_CHAT_URL
 from mica.tracker import Tracker
-from mica.utils import logger
+from mica.utils import logger, script_logger
 
 
 class NoValidRequestHeader(Exception):
@@ -66,8 +67,11 @@ class OpenAIModel(BaseModel):
         llm_result = []
 
         logger.debug(f"url: {self.url}, headers: {self.headers}")
+        script_logger.debug("who call me: %s", provider)
+        script_logger.debug(f"prompt: {formatted_prompts}")
         response = await self.client.post(self.url, headers=self.headers, json=formatted_prompts)
         logger.debug("GPT response status: %s", response.status_code)
+        script_logger.debug("GPT response status: %s", response.status_code)
         if response.status_code == 200:
             response_json = response.json()
             if response_json is not None \
@@ -75,6 +79,7 @@ class OpenAIModel(BaseModel):
                     and len(response_json.get("choices")) > 0:
                 message: Dict = response_json.get("choices")[0].get("message")
                 logger.debug("GPT message: \n%s", json.dumps(message, indent=2, ensure_ascii=False))
+                script_logger.debug(f"GPT message: {message}")
                 if message.get("content") is not None:
                     next_response_text = message.get("content")
                     llm_result.append(BotUtter(text=next_response_text, metadata=provider, additional=message))

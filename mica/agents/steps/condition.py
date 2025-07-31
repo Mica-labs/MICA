@@ -61,7 +61,7 @@ class If(Base):
             user_input = tracker.latest_message.text
             prompt = self._generate_prompt(all_examples, user_input, tracker)
             logger.debug("If prompt: \n%s", json.dumps(prompt, indent=2, ensure_ascii=False))
-            llm_result = await self.llm_model.generate_message(prompt)
+            llm_result = await self.llm_model.generate_message(prompt, provider=self.flow_name)
             response = llm_result[0].text
             response_flag = "True" in response
             if response_flag:
@@ -181,7 +181,7 @@ class ElseIf(Base):
             user_input = tracker.latest_message.text
             prompt = self._generate_prompt(all_examples, user_input, tracker)
             logger.debug("Else If prompt: \n%s", json.dumps(prompt, indent=2, ensure_ascii=False))
-            llm_result = await self.llm_model.generate_message(prompt)
+            llm_result = await self.llm_model.generate_message(prompt, provider=self.flow_name)
             response = llm_result[0].text
             response_flag = "True" in response
             if response_flag:
