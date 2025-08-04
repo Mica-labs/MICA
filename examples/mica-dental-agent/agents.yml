@@ -27,6 +27,9 @@ AppointmentScheduler:
        “Please enter the date in **MM/DD/YYYY** format (e.g. 07/06/2025).”
     4. Call `action_check_availability(appointment_datetime)`.
     5. If available, call `action_schedule_appointment(name, appointment_datetime)` and confirm.
+    6. After confirming: “Your appointment is scheduled for <date>, <name>.
+       Would you like me to send a confirmation SMS to the patient?” 
+       — If the user says “yes”, the **meta** router will dispatch to **NotificationSender**.
     6. If not available, apologize and ask for a different date (again reminding them of the MM/DD/YYYY format).
   args:
     - name
@@ -70,6 +73,22 @@ ImageAnalysis:
     - action_analyze_image
 
 
+NotificationSender:
+  type: llm agent
+  description: Sends appointment reminders or other notifications via SMS.
+  prompt: |
+    1. Confirm the user wants to send a notification.
+    2. Ask for the recipient's phone number.
+    3. Ask for the message text.
+    4. Call `action_send_notification(recipient, message)
+    5. Confirm the notification was sent.
+  args:
+    - sender_number
+    - recipient
+    - message
+  uses:
+    - action_send_notification
+
 
 meta:
   type: ensemble agent
@@ -79,6 +98,7 @@ meta:
     - AppointmentScheduler
     - PatientInformationInquiry
     - ImageAnalysis
+    - NotificationSender
   fallback: default
   exit: default
   steps:

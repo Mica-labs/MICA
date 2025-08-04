@@ -1,24 +1,23 @@
+#tools.py
 import json
 from pathlib import Path
 import sqlite3
 from os import getenv
 from dotenv import load_dotenv
 from openai import OpenAI
+from twilio.rest import Client as TwilioClient
 
 
-
-# Determine the path to dental.db relative to this script
-ROOT = Path(__file__).parent
-DB_DIR = ROOT / "data"
-DB_PATH = DB_DIR / "dental.db"
 load_dotenv()
 client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
 
+twilio_client = TwilioClient(
+    username=getenv("TWILIO_ACCOUNT_SID"),
+    password=getenv("TWILIO_AUTH_TOKEN")
+)
 
-
-# Ensure the data directory exists and initialize the database
-DB_DIR.mkdir(parents=True, exist_ok=True)
-conn = sqlite3.connect(str(DB_PATH))
+# initialize the database
+conn = sqlite3.connect("dental.db")
 cur = conn.cursor()
 cur.execute("""
 CREATE TABLE IF NOT EXISTS patients (
@@ -46,7 +45,7 @@ conn.close()
 
 def get_conn():
     """Open a connection to the SQLite database."""
-    return sqlite3.connect(str(DB_PATH))
+    return sqlite3.connect("dental.db")
 
 
 def action_create_patient_record(name, contact_info=None, date_of_birth=None):
@@ -207,3 +206,25 @@ def action_analyze_image(image_id):
             "status": "success"
         }
     ]
+
+def action_send_notification(
+        sender_number,       # <- ask for / store this once
+        recipient,
+        message,
+):
+    """
+    Send an SMS to `recipient`
+    with text `message`.  Prints JSON: {"sid": "...", "status": "sent"}
+    so the agent can echo it verbatim.
+    """
+    try:
+        msg = twilio_client.messages.create(
+            body=message,
+            from_=sender_number,
+            to=recipient,
+        )
+        result = {"sid": msg.sid, "status": "sent"}
+    except Exception as e:
+        result = {"error": str(e)}
+    print(json.dumps(result))
+    return result
