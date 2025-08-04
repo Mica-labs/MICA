@@ -58,7 +58,7 @@ class SafePythonExecutor:
             'itertools', 'functools', 'collections',
             'requests', 'urllib', 'subprocess', 'sqlite3',
             'mysql.connector', 'logging', 'pathlib', 'typing',
-            'jsonpath', 'inspect', 'openai', 'dotenv', 'os'
+            'jsonpath', 'inspect', 'openai', 'dotenv', 'os', 'twilio', 'twilio.rest'
         ]
         self.script_namespace: Dict[Text, Any] = {}
         self.imported_modules: Dict[Text, Any] = {}
