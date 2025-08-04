@@ -1,112 +1,98 @@
-![index.png](static/index.png)
+# Dental Assistant Chatbot – Agent Functionality Guide
 
-<p align="center">
-  <a href="https://arxiv.org/abs/2504.14787">ADL Language</a> ·
-  <a href="https://mica-labs.github.io/">Documentation</a>  ·
-  <a href="https://www.promptai.us">Mica studio</a>
-</p>
+This assistant supports 5 core functionalities using database operations, OpenAI's GPT-4o, and Twilio SMS. Each function is handled by a dedicated agent and a corresponding backend tool function.
 
-## Agent Declarative Language
-MICA (Multiple Intelligent Conversational Agents) is a running environment that can interpret and run programs written in [ADL](https://arxiv.org/abs/2504.14787).  There are numerous agent frameworks available—such as [AutoGen](https://github.com/microsoft/autogen), [CrewAI](https://github.com/crewAIInc/crewAI), [LangChain](https://github.com/langchain-ai/langchain), [Amazon MAO](https://github.com/awslabs/multi-agent-orchestrator), and [Swarm](https://github.com/openai/swarm) —these frameworks offer high flexibility for constructing agents in general settings. However, they are overly complex for professionals in the customer service domain. For example, when business logic needs to be updated, users are required to modify low-level Python code.  Agent Declarative Language (ADL)—a lightweight language introduces a dedicated abstraction layer that could make the maintenance of customer service bots much easier. In ADL, users can simply revise and share agent.yaml files, which encapsulate the entire logic in a declarative and human-readable format. 
 
-Below is a [bookstore](https://github.com/Mica-labs/MICA/tree/main/examples/bookstore) chatbot described in ADL. This chatbot includes three agents: a book recommendation agent, an order placing agent, and an agent responsible for FAQs and bookstore policy. Everything is described in one file except a few function calls connecting to different services. 
+## 1. Create Patient Record
 
-![bookstore chatbot](./bookstore.jpg)
+**Agent:** `PatientRecord`  
+**Function:** `action_create_patient_record(name, contact_info, date_of_birth)`
 
-ADL emphasizes three key characteristics: declarative language, modular design, and natural language oriented—features that are largely overlooked in existing frameworks. It is designed to simplify the development of customer service bots.
+**What it does:**  
+Creates a new entry in the `patients` table with the patient's name, contact information (email or phone), and date of birth.
 
-## Quick Start
-> Before installing MICA, make sure your machine meets the following minimum system requirements:
->
->- Python >= 3.9
->- OpenAI API Key
+**Flow:**
+- Asks for name, contact, and DOB (in MM/DD/YYYY format)
+- Stores the entry in SQLite
+- Returns a success message and patient ID
 
-</br>
 
-The easiest way to start using MICA is through the local GUI frontend:
 
-```bash
-# Install dependencies
-pip install -r requirement.txt
+## 2. Schedule Appointment
 
-# Set OpenAI API key
-export OPENAI_API_KEY=<your key>
+**Agent:** `AppointmentScheduler`  
+**Functions:** 
+- `action_check_availability(appointment_datetime)`
+- `action_schedule_appointment(name, appointment_datetime)`
 
-# Start the service
-python -m mica.demo
-```
+**What it does:**  
+Schedules an appointment for an existing patient if the time slot is available.
 
-After running, you can access the MICA dashboard in your browser at [http://localhost:7860](http://localhost:7860) and start designing your bot.
+**Flow:**
+- Asks for patient name and appointment date
+- Checks if the date is already booked
+- If free, inserts a new record in the `appointments` table linking to the patient
+- Confirms with a success message
 
-> If the port `7860` is occupied, another port will be assigned automatically, and the specific address will be displayed in the logging information.
 
-## Key Features
 
-**1. Multi-Agent System**:
-Design and implement complex conversational systems with multiple agents that work together to handle customer service tasks.
+## 3. Patient Information Inquiry
 
-**2. Natural Language Configuration**:
-Define your agents using simple natural language descriptions without complex coding.
+**Agent:** `PatientInformationInquiry`  
+**Function:** `action_get_patient_info(name=None, patient_id=None)`
 
-**3. Real-time Editing**:
-Customize your bot through an intuitive interface with immediate feedback.
+**What it does:**  
+Looks up a patient's stored information using either name or patient ID and retrieves:
+- Contact info
+- Date of birth
+- All associated appointments
 
-![generate-sussess.png](static/generate-sussess.png)
+**Flow:**
+- Prompts user for name or ID
+- Queries the `patients` and `appointments` tables
+- Displays detailed record if found
 
-**4. Local Examples**:
-Load pre-built bots from local examples to jumpstart your development.
 
-![Load example bot](static/load-from-disk.png)
 
-**5. State Tracking**:
-Monitor the conversation state and agent arguments in real-time.
+## 4. Image Analysis
 
-![chat with bot](static/chat.png)
+**Agent:** `ImageAnalysis`  
+**Function:** `action_analyze_image(image_id)`
 
-**6. Local Deployment**:
-Deploy your bot as a service on your own infrastructure.
+**What it does:**  
+Takes a dental X-ray or image URL and sends it to GPT-4o with a prompt asking for a brief analysis/diagnosis.
 
-## Using MICA
+**Flow:**
+- Asks user for image URL or identifier
+- Uses GPT-4o Vision API to analyze image
+- Returns a short diagnostic summary
 
-### Local GUI Frontend
 
-The local GUI provides features for online editing, testing, loading bots from local files, and saving bots to local storage.
 
-#### Real-time Editing
-You can customize your bot on the left side of the page. After editing, click the `Run` button at the top right to generate the bot. If the generation fails, an alert will be displayed. Please check if your agents' format is correct.
+## 5. Send SMS Notification
 
-#### Load from Local Examples
-You can also load a bot from local examples and modify it as needed. After selecting the bot you want to load, you can start a conversation immediately or modify it further.
+**Agent:** `NotificationSender`  
+**Function:** `action_send_notification(sender_number, recipient, message)`
 
-> Note: If you modify the examples, you need to click the `Run` button before testing the latest bot. Additionally, selecting multiple directories at the same time will cause a bot loading error. When deselecting, all unsaved changes will be lost immediately.
+**What it does:**  
+Sends an SMS message using Twilio from a sender number to a recipient with the desired text.
 
-#### Conversation and State
-Once the bot is generated, you can start a conversation with it. Enter your message in the `You` dialog box and press `Enter` to send it. The `Clear the conversation` button clears the conversation history and also resets the `States` panel. The `States` panel displays the current argument values for each agent in the bot.
+**Flow:**
+- Asks for the recipient's phone number
+- Asks for message text
+- Sends SMS via Twilio API and confirms status
 
-#### Save to Local
-You can save all bots from the left panel to a local file. Clicking the `Save` button will save the current bot information (excluding conversation and state data) to the local folder `../bot-output`. A folder named after the bot will be created, with `agents.yml` storing the agents' information and `tools.py` storing the Python code.
+❗ **Note: Twilio Setup Required**
+To use this functionality, you must set the following environment variables in your `.env` file:
 
-### Server Deployment
+````
 
-If you need to deploy the bot as a service, you can set up a server using the following steps:
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
 
-```bash
-# Install dependencies
-pip install -r requirement.txt
+````
 
-# Set OpenAI API key
-export OPENAI_API_KEY=<your key>
+The sender's phone number must be a verified or purchased number from your Twilio account.
 
-# Start the service
-python -m mica.server
-```
 
-## Staying ahead
 
-Star Mica on GitHub and be instantly notified of new releases.
-
-![star-us](static/star.gif)
-
-## License
-
-Licensed under the Apache License, Version 2.0. Copyright 2025 Mica-labs. [Copy of the license](LICENSE.txt)
