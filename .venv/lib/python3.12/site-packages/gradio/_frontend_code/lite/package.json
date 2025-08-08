@@ -1,0 +1,23 @@
+{
+	"name": "@gradio/lite",
+	"version": "4.37.2",
+	"description": "Serverless Gradio",
+	"type": "module",
+	"main": "dist/lite.js",
+	"author": "Gradio Team",
+	"license": "Apache-2.0",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "pnpm --filter @gradio/app build:lite"
+	},
+	"dependencies": {
+		"gradio": "workspace:^"
+	},
+	"devDependencies": {
+		"@gradio/app": "workspace:^",
+		"@gradio/wasm": "workspace:^",
+		"gradio": "workspace:^"
+	}
+}

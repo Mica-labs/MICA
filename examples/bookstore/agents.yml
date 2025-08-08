@@ -1,6 +1,8 @@
 store_policy_kb:
   type: kb agent
   description: I can answer questions related to the store’s policy.
+  model_selection: gpt-4.1
+
   sources:
     - https://www.bookstores.com/policies/shipping
     - https://www.bookstores.com/about
@@ -16,6 +18,7 @@ book_recommendation:
     - book_name
     - book_info
     - book_wanted
+  model_selection: gpt-4.1
   prompt: |
     1. Ask the user if they have a preferred book genre.
     2. If the user has a favorite book, call the "query_book_genre" function based on their favorite book to obtain the "genre".
@@ -32,6 +35,7 @@ order:
     - books
     - order_status
   fallback: "Sorry, I didn’t understand that. Could you rephrase it?"
+  model_selection: gpt-4.1
   steps:
     - bot: "I’ll place the order for you."
     - label: confirm_books
@@ -62,6 +66,8 @@ order:
 triage:
   type: ensemble agent
   description: Select an agent to respond to the user.
+  model_selection: gpt-4.1
+  fallback: "Sorry, I didn’t understand that. Could you rephrase it?"
   args:
     - date
     - book

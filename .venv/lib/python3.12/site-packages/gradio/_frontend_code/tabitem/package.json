@@ -1,0 +1,22 @@
+{
+	"name": "@gradio/tabitem",
+	"version": "0.2.11",
+	"description": "Gradio UI packages",
+	"type": "module",
+	"author": "",
+	"license": "ISC",
+	"private": false,
+	"main_changeset": true,
+	"exports": {
+		".": "./Index.svelte",
+		"./package.json": "./package.json"
+	},
+	"dependencies": {
+		"@gradio/column": "workspace:^",
+		"@gradio/tabs": "workspace:^",
+		"@gradio/utils": "workspace:^"
+	},
+	"devDependencies": {
+		"@gradio/preview": "workspace:^"
+	}
+}

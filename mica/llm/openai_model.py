@@ -21,7 +21,7 @@ class NoValidRequestHeader(Exception):
 
 class OpenAIModel(BaseModel):
     def __init__(self,
-                 model: Optional[Text] = "gpt-4",
+                 model: Optional[Text] = "gpt-4.1",
                  temperature: Optional[float] = 0.0,
                  top_p: Optional[float] = 0.8,
                  presence_penalty: Optional[float] = 0.1,
@@ -41,10 +41,11 @@ class OpenAIModel(BaseModel):
         self.url = server + "/v1/chat/completions" if server else OPENAI_CHAT_URL
         self.headers = headers or {}
         self.client = httpx.AsyncClient(timeout=10)
-
+ 
         if headers is None:
             if api_key is None:
                 api_key = os.getenv(OPENAI_API_KEY)
+                print("\n\nOPENAI_API_KEY=", os.getenv(OPENAI_API_KEY))
             if api_key is None:
                 raise NoValidRequestHeader()
             self.headers = {
@@ -64,7 +65,27 @@ class OpenAIModel(BaseModel):
                          **kwargs: Any
                          ) -> List:
         formatted_prompts = self._generate_prompts(prompts, functions)
+        #print(formatted_prompts)
         llm_result = []
+        
+        f = open("agent_data.txt", "r")
+        lines = f.readlines()
+        line = lines[lines.index(provider+"\n")+1]
+        if (line.find("model_selection") > -1):
+            if (line[line.find("model_selection")+18] == "["):
+                sub = line[line.find("model_selection")+19:line.find("]", line.find("model_selection")+19, len(line))]
+                print(sub)
+                split = sub.split("'")
+                model = ""
+                for c in split:
+                    if c.isalnum() or c == '-' or c == '.':
+                        model += c
+                        
+                print("extracted model is ", model)
+                formatted_prompts['model'] = model
+            else:
+                formatted_prompts['model'] = line[line.find("model_selection")+19:line.find('\'', line.find("model_selection")+19, len(line))]
+        f.close()
 
         logger.debug(f"url: {self.url}, headers: {self.headers}")
         script_logger.debug("who call me: %s", provider)
@@ -100,6 +121,7 @@ class OpenAIModel(BaseModel):
         return llm_result
 
     def _generate_prompts(self, prompts: Any, functions: Optional[List] = None):
+        
         data = {
             "model": self.model,
             "messages": prompts,

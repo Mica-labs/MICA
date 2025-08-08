@@ -41,6 +41,11 @@ async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
         assert result == [], "Did not pass the validation."
         # convert
         parsed_agents = parser.parse_agents(parsed_yaml)
+        #print(parsed_agents)
+        f = open("agent_data.txt", "w")
+        for k, v in parsed_agents.items():
+            f.write("{}\n{}\n".format(str(k), str(v)))
+        f.close()
         # by default: unsafe_mode on
         parsed_config = {"unsafe_mode": True}
         if config_input and config_input != "":

@@ -8,8 +8,10 @@ from dataclasses import dataclass
 # TODO: if there's any subflow, do the same operation
 def parse_agents(raw_agents: Dict):
     processed_agents = {}
+    
     for agent_name, agent_content in raw_agents.items():
         processed_agent_content = agent_content
+        
         if agent_content.get("type") and agent_content["type"] == "flow agent":
             for key, value in agent_content.items():
                 if key in ['type', 'description', 'fallback', 'exit', 'args']:
@@ -251,11 +253,12 @@ class EnsembleAgentValidator(AgentValidator):
     def __init__(self):
         super().__init__()
         self.required_keys = {'type'}
-        self.valid_keys = {'description', 'args', 'steps', 'type', 'contains', 'fallback', 'exit'}
+        self.valid_keys = {'description', 'args', 'steps', 'type', 'contains', 'fallback', 'exit', "model_selection"}
         self.type_specs = {
             "type": TypeSpec(Text),
             "contains": TypeSpec(List),
             "description": TypeSpec(Text),
+            "model_selection": TypeSpec(Text),
             "args": TypeSpec(List),
             "steps": TypeSpec(List)
         }
@@ -303,13 +306,14 @@ class KBAgentValidator(AgentValidator):
     def __init__(self):
         super().__init__()
         self.required_keys = {'type'}
-        self.valid_keys = {'faq', 'web', 'file', 'sources', 'type', 'description'}
+        self.valid_keys = {'faq', 'web', 'file', 'sources', 'type', 'description', 'model_selection'}
         self.type_specs = {
             "type": TypeSpec(Text),
             "web": TypeSpec(List),
             "file": TypeSpec(Text),
             "faq": TypeSpec(List),
-            "sources": TypeSpec(List)
+            "sources": TypeSpec(List),
+            "model_selection": TypeSpec(Text),
         }
 
     def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
@@ -328,7 +332,7 @@ class FlowAgentValidator(AgentValidator):
     def __init__(self):
         super().__init__()
         self.required_keys = {'type', 'steps'}
-        self.valid_keys = {'description', 'args', 'type', 'steps', 'fallback', '*'}
+        self.valid_keys = {'description', 'args', 'type', 'steps', 'fallback', 'model_selection', '*'}
         self.step_schema = {
             'keywords': {'bot', 'user', 'if', 'else if', 'else', 'then', 'tries',
                          'call', 'next', 'label', 'return', 'set', 'args'},
@@ -337,6 +341,7 @@ class FlowAgentValidator(AgentValidator):
         }
 
     def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
+
         errors = []
 
         # 验证必需的键
@@ -355,16 +360,18 @@ class LLMAgentValidator(AgentValidator):
     def __init__(self):
         super().__init__()
         self.required_keys = {'type', 'prompt'}
-        self.valid_keys = {'description', 'prompt', 'args', 'uses', 'type', 'steps'}
+        self.valid_keys = {'description', 'prompt', 'model_selection', 'args', 'uses', 'type', 'steps'}
         self.type_specs = {
             "type": TypeSpec(Text),
             "description": TypeSpec(Text),
             "prompt": TypeSpec(Text),
+            "model_selection": TypeSpec(Text),
             "args": TypeSpec(List),
             "uses": TypeSpec(List)
         }
 
     def validate(self, content: Dict[Text, Any], path: Text, context: Dict[Text, Any], code_str: Text = None) -> List[ValidationError]:
+
         errors = []
 
         errors.extend(self.validate_required_keys(content, self.required_keys, path))

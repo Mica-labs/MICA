@@ -179,6 +179,7 @@ class KBAgent(Agent):
         return True, [AgentComplete(provider=self.name, metadata=None)]
 
     async def generate(self, tracker, context, query):
+        print("in kb_agent.py, self is type ", type(self))
         prompt = self._generate_prompt(context, query)
         answer = await self.llm_model.generate_message(prompt,
                                                        tracker=tracker,

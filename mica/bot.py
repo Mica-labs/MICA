@@ -78,6 +78,7 @@ class Bot(object):
         from mica.processor import DispatcherProcessor, PriorityProcessor
         scheduler = PriorityProcessor.create()
 
+        
         llm_model = OpenAIModel.create(config)
 
         # create agent objs
@@ -92,6 +93,7 @@ class Bot(object):
                   if value.get('type') is not None}
 
         for _, agent in list(agents.items()):
+            
             if isinstance(agent, EnsembleAgent):
                 if agent.exit_agent is not None:
                     if agent.exit_agent == "default":
