@@ -82,7 +82,7 @@ Sends an SMS message using Twilio from a sender number to a recipient with the d
 - Asks for message text
 - Sends SMS via Twilio API and confirms status
 
-❗ **Note: Twilio Setup Required**
+**Note: Twilio Setup Required**
 To use this functionality, you must set the following environment variables in your `.env` file:
 
 ````
