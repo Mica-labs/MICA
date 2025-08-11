@@ -17,7 +17,9 @@ import string
 
 from mica.channel import GradioChannel
 from mica.parser import Validator
-from mica.utils import logger
+import logging
+# Use a specific logger for demo.py to enable left-aligned logs
+demo_logger = logging.getLogger("mica.demo")
 
 # use the web log function defined in utils.py
 from mica.utils import get_web_log_contents, clear_web_log_contents
@@ -145,8 +147,8 @@ async def load_bot(files, chatbot, user_id):
         return bot, bot_name, agents, tools, config, chatbot, user_id, tracker
 
     except Exception as e:
-        logger.error(f"Failed to load bot: {bot_name} from disk, {e}")
-        logger.error(traceback.format_exc())
+        demo_logger.error(f"Failed to load bot: {bot_name} from disk, {e}")
+        demo_logger.error(traceback.format_exc())
         gr.Error(f"Failed")
         return None, bot_name or "", agents or "", tools or "", config or "", "", user_id, ""
 
@@ -211,7 +213,15 @@ main:
   steps:
   - call: meta
 """
-    with gr.Blocks(theme=gr.themes.Base()) as demo:
+    with gr.Blocks(theme=gr.themes.Base(), css="""
+        #log_output textarea {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Courier New', monospace !important;
+            font-size: 12px !important;
+            line-height: 1.2 !important;
+            white-space: pre !important;
+            overflow-x: auto !important;
+        }
+        """) as demo:
         with gr.Row():
             with gr.Column():
                 file_loader = gr.FileExplorer(root_dir="./examples", glob="**/*.*", label="Click any directory name to automatically load the bot. If it includes a knowledge base (KB), embedding may take some time.")
@@ -226,7 +236,7 @@ main:
                     submit_btn = gr.Button("Run")
                     save_btn = gr.Button("Save")
                 tracker = gr.Textbox(label="States", interactive=False, lines=1)
-                log_output = gr.Textbox(label="Logs", interactive=False, lines=10, autofocus=False, autoscroll=True)
+                log_output = gr.Textbox(label="Logs", interactive=False, lines=10, autofocus=False, autoscroll=True, elem_id="log_output")
                 demo.load(get_log_contents, None, log_output, every=2)
                 chatbot = gr.Chatbot(height=600, layout="panel")
                 msg = gr.Textbox(label="You")

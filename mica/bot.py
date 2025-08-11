@@ -124,7 +124,7 @@ class Bot(object):
             tools = SafePythonExecutor(unsafe_mode=config.get('unsafe_mode'))
             load_rst = tools.load_script(tool_code)
             if load_rst['status'] == 'success':
-                logger.info('Succeed in loading python script.')
+                logger.debug('Succeed in loading python script.')
             else:
                 logger.error(f"Failed in loading python script. Error: {load_rst['error']}")
                 logger.error(f"Traceback: {load_rst['traceback']}")
@@ -161,6 +161,7 @@ class Bot(object):
         tracker.latest_message = user_event
         start = time.time()
         response = await self.scheduler.predict_next_action(user_id, tracker, self)
+        logger.info("Bot: " + " ".join(response))
         end = time.time()
         print("####response time:", end-start)
         self.count += 1

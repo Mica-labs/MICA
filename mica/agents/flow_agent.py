@@ -167,7 +167,7 @@ class FlowAgent(Agent):
             if isinstance(complete, Event):
                 result.append(complete)
             tracker.remove_flow_agent(self.name)
-        logger.info(f"Flow agent: [{self.name}] running results: {result}")
+        logger.debug(f"Flow agent: [{self.name}] running results: {result}")
         return is_end, result
 
     @staticmethod

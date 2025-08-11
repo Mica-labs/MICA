@@ -29,6 +29,6 @@ class Next(Base):
             info.is_listen = False
             if info.get_counter(id(self)) < self.tries:
                 info.count(id(self))
-                logger.info(f"Agent: [{self.flow_name}] execute next step: turn to next step: {self.name}")
+                logger.info(f"Agent: [{self.flow_name}] > step > next: {self.name}")
                 return "Do", []
         return "Skip", []

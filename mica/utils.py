@@ -14,22 +14,22 @@ LOGGING_CONFIG = {
     "disable_existing_loggers": False,
     "formatters": {
         "default": {
-            "format": "%(asctime)s - %(name)s.%(filename)-25s - %(levelname)-8s - %(message)s",
+            "format": "%(asctime)s - %(name)s.%(filename)-10s - %(levelname)-6s - %(message)s",
         },
-        "web": {
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "console_file": {
+            "format": "%(levelname)s - %(message)s",
         },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "default",
+            "formatter": "console_file",
             "level": "DEBUG",
         },
         "file": {
             "class": "logging.FileHandler",
             "filename": "app.log",
-            "formatter": "default",
+            "formatter": "console_file",
             "level": "DEBUG",
         },
     },
@@ -38,27 +38,121 @@ LOGGING_CONFIG = {
         "level": "INFO",
     },
     "loggers": {
-        "uvicorn": {
+        "user_info": {
             "handlers": ["console", "file"],
             "level": "INFO",
             "propagate": False,
         },
-        "mica": {
+        "bot_info": {
             "handlers": ["console", "file"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": False,
         },
     },
 }
 dictConfig(LOGGING_CONFIG)
-logger = logging.getLogger("mica")
 
 # Web log stream - for frontend display
 import io
+
+class WebLogFormatter(logging.Formatter):
+    """Custom formatter for web logs with user_info (left) and bot_info (right) alignment"""
+    
+    def __init__(self, total_width=120):
+        super().__init__()
+        self.total_width = total_width
+    
+    def get_display_width(self, text):
+        """Calculate the actual display width considering different character types"""
+        width = 0
+        for char in text:
+            if ord(char) > 127:  # Non-ASCII characters (including Chinese)
+                width += 2
+            elif char in '[](){}/?\\|<>.,;:!@#$%^&*-=+`~"\'':  # Special symbols that might be narrower
+                width += 0.8  # Slightly less than full width
+            else:
+                width += 1
+        return width
+    
+    def calculate_precise_padding(self, content, target_width):
+        """Calculate padding more precisely to account for font rendering differences"""
+        display_width = self.get_display_width(content)
+        padding_needed = target_width - display_width
+        
+        # Add extra compensation for potential font rendering differences
+        # This is an empirical adjustment based on your observation
+        if padding_needed > 0:
+            # For every special character, add a bit more padding
+            special_chars = sum(1 for c in content if c in '[](){}/?\\|<>.,;:!@#$%^&*-=+`~"\'')
+            compensation = special_chars * 0.2
+            padding_needed += compensation
+        
+        return max(0, int(padding_needed))
+    
+    def truncate_to_width(self, text, max_width):
+        """Truncate text to fit within max_width display characters"""
+        if self.get_display_width(text) <= max_width:
+            return text
+        
+        result = ""
+        current_width = 0
+        
+        for char in text:
+            char_width = 2 if ord(char) > 127 else 1
+            if current_width + char_width > max_width - 3:  # Reserve 3 chars for "..."
+                return result + "..."
+            result += char
+            current_width += char_width
+        
+        return result
+    
+    def format(self, record):
+        level = record.levelname
+        message = record.getMessage()
+        
+        if record.name == "user_info":
+            # Left-aligned format: level | message
+            base_message = f"{message}"
+            # Truncate if too long to prevent line wrapping
+            formatted_message = self.truncate_to_width(base_message, self.total_width)
+            return formatted_message
+            
+        elif record.name == "bot_info":
+            # Right-aligned format: level | spaces + message (message ends at right edge)
+            available_width = self.total_width
+            
+            if self.get_display_width(message) > available_width:
+                message = self.truncate_to_width(message, available_width)
+            
+            # Use precise padding calculation
+            complete_content = message
+            padding_needed = self.calculate_precise_padding(complete_content, self.total_width)
+            
+            if padding_needed > 0:
+                formatted_message = " " * padding_needed + message
+            else:
+                formatted_message = complete_content
+            
+            return formatted_message
+        
+        else:
+            # Default format for any other loggers
+            return f"{level} | {message}"
+
 web_log_stream = io.StringIO()
 web_handler = logging.StreamHandler(web_log_stream)
-web_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+# Set total width for alignment (adjust based on your dialog box width)
+TOTAL_WIDTH = 90  # You can adjust this value
+
+web_handler.setFormatter(WebLogFormatter(total_width=TOTAL_WIDTH))
 web_handler.setLevel(logging.INFO)  # Only record INFO and above
+
+# Add web handler to the specific loggers
+user_info_logger = logging.getLogger("user_info")
+user_info_logger.addHandler(web_handler)
+
+logger = logging.getLogger("bot_info")
 logger.addHandler(web_handler)
 
 def get_web_log_contents():
