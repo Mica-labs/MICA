@@ -130,7 +130,7 @@ def save_file(file_name, content):
 
 
 def extract_expression_parts(expression: Text):
-    # 正则表达式，匹配操作数和操作符（==, !=, <, >, <=, >=）
+    # regex, match operator and operand (==, !=, <=, >=, <, >)
     pattern = r'(\S+)\s*(==|!=|<=|>=|<|>)\s*(\S+)'
 
     match = re.match(pattern, expression)
@@ -163,20 +163,20 @@ def parse_and_evaluate_expression(expression, tracker=None, flow_name=None):
     regex_delimiters = ["re.match", "re.search", "re.fullmatch"]
 
     while i < len(expression):
-        # 检查是否进入正则表达式
+        # check if entering regex
         if any(expression[i:].startswith(delim) for delim in regex_delimiters):
             start = i
-            # 查找正则表达式函数的起始和结束括号
+            # find the start and end of the regex function
             regex_start = expression.find("(", start)
             regex_end = find_matching_paren(expression, regex_start)
             regex_expr = expression[start:regex_end + 1]
 
-            # 替换正则表达式中的变量
+            # replace variables in regex
             regex_expr = replace_context_values(regex_expr, tracker, flow_name)
             parsed_expression.append(regex_expr)
             i = regex_end + 1
         elif expression[i:i+3] == "and" or expression[i:i+2] == "or" or expression[i] in "()":
-            # 直接添加逻辑运算符和括号
+            # add logical operators and parentheses directly
             if expression[i:i+3] == "and":
                 parsed_expression.append("and")
                 i += 3
@@ -187,7 +187,7 @@ def parse_and_evaluate_expression(expression, tracker=None, flow_name=None):
                 parsed_expression.append(expression[i])
                 i += 1
         else:
-            # 匹配单个条件表达式
+            # match single condition expression
             condition_match = re.match(r'(\w+\s*[!=<>]=?\s*\w+)', expression[i:])
             if condition_match:
                 token = condition_match.group()
@@ -203,10 +203,10 @@ def parse_and_evaluate_expression(expression, tracker=None, flow_name=None):
             else:
                 i += 1
 
-    # 生成完整的表达式字符串
+    # generate the final expression string
     final_expression = " ".join(parsed_expression)
     print("this is the final expression", final_expression)
-    # 计算表达式结果
+    # calculate the expression result
     try:
         result = eval(final_expression)
     except Exception as e:
@@ -215,13 +215,13 @@ def parse_and_evaluate_expression(expression, tracker=None, flow_name=None):
     return result
 
 def replace_context_values(regex_expr, tracker, flow_name):
-    """替换正则表达式中的变量为context中的值"""
+    """replace variables in regex with context values"""
     for key, value in tracker.get_args(flow_name).items():
         regex_expr = regex_expr.replace(key, repr(value))
     return regex_expr
 
 def find_matching_paren(text, start_index):
-    """在字符串中查找与给定索引处的开括号匹配的闭括号位置"""
+    """find the matching closing parenthesis in the string"""
     stack = 1
     for i in range(start_index + 1, len(text)):
         if text[i] == "(":
@@ -292,6 +292,7 @@ def safe_json_loads(json_str):
 def short_uuid(length=8):
     return str(uuid.uuid4()).replace("-", "")[:length]
 
+
 class ExpressionParser:
     def __init__(self, expr_str):
         self.expr_str = expr_str
@@ -314,10 +315,10 @@ class ExpressionParser:
             elif expr_str[i] == ')':
                 tokens.append(')')
                 i += 1
-            elif expr_str[i:i + 3] in ['and', 'AND']:
+            elif self._is_logical_operator(expr_str, i, 'and'):
                 tokens.append('and')
                 i += 3
-            elif expr_str[i:i + 2] in ['or', 'OR']:
+            elif self._is_logical_operator(expr_str, i, 'or'):
                 tokens.append('or')
                 i += 2
             elif expr_str[i:i + 8] == 're.match':
@@ -340,7 +341,7 @@ class ExpressionParser:
             else:
                 # Handle general comparison expressions (a == b, a != b, a > b, etc.)
                 j = i
-                while j < len(expr_str) and expr_str[j] not in '()' and expr_str[j:j + 3] != 'and' and expr_str[j:j + 2] != 'or':
+                while j < len(expr_str) and expr_str[j] not in '()' and not self._is_logical_operator(expr_str, j, 'and') and not self._is_logical_operator(expr_str, j, 'or'):
                     j += 1
                 if i != j:
                     expr = expr_str[i:j].strip()
@@ -349,6 +350,44 @@ class ExpressionParser:
                 i = j
 
         return tokens
+
+    def _is_logical_operator(self, expr_str, pos, operator):
+        """
+        check if the specified position is a logical operator (not part of a variable name)
+        
+        Args:
+            expr_str: expression string
+            pos: current position
+            operator: the operator to check ('and' or 'or')
+        
+        Returns:
+            bool: if it is a standalone logical operator, return True, otherwise return False
+        """
+        op_len = len(operator)
+        
+        # check if the string length is enough
+        if pos + op_len > len(expr_str):
+            return False
+        
+        # check if the operator itself matches (ignore case)
+        if expr_str[pos:pos + op_len].lower() != operator.lower():
+            return False
+        
+        # check if the operator is preceded by a character
+        if pos > 0:
+            prev_char = expr_str[pos - 1]
+            # if the character before is a letter, number, underscore, or dot, it is part of a variable name
+            if prev_char.isalnum() or prev_char in '_.':
+                return False
+        
+        # check if the operator is followed by a character
+        if pos + op_len < len(expr_str):
+            next_char = expr_str[pos + op_len]
+            # if the character after is a letter, number, underscore, or dot, it is part of a variable name
+            if next_char.isalnum() or next_char in '_.':
+                return False
+        
+        return True
 
     def parse(self):
         return self._parse_expression()
