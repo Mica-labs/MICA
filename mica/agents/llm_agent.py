@@ -53,7 +53,7 @@ class LLMAgent(Agent):
         return f"LLM_agent(name={self.name}, description={description})"
 
     async def run(self, tracker: Tracker, is_tool=False, **kwargs):
-        logger.info(f"LLM agent: [{self.name}] is running")
+        logger.debug(f"LLM agent: [{self.name}] is running")
         llm_result = []
         # initiate agent
         current_evt = tracker.peek_agent()
@@ -91,7 +91,7 @@ class LLMAgent(Agent):
                     raise ValueError(msg)
 
                 tool_rst = tools.execute_function(event.function_name, **event.args)
-                logger.info(f"Agent: [{self.name}] execute function: {event.function_name}, get result: {tool_rst}")
+                logger.info(f"Agent: [{self.name}] call function: {event.function_name}, get result: {tool_rst}")
                 if tool_rst['status'] == 'error':
                     is_end = True
                     return is_end, [BotUtter("function call ["+event.function_name+"] error: "+tool_rst['error'],
@@ -115,8 +115,10 @@ class LLMAgent(Agent):
                     final_result.extend(sec_call_result)
 
             if isinstance(event, SetSlot):
+                logger.info(f"LLM Agent: [{self.name}] > extract: {event.slot_name} = {event.value}")
                 tracker.set_arg(self.name, event.slot_name, event.value)
             if isinstance(event, AgentFail):
+                logger.info(f"LLM Agent: [{self.name}] failed")
                 is_end = False
             if isinstance(event, BotUtter):
                 try:
@@ -150,7 +152,7 @@ class LLMAgent(Agent):
                             raise json.JSONDecodeError("No valid JSON object found", event.text, 0)
                             
                 except json.JSONDecodeError as e:
-                    logger.error(f"JSON extraction failed: {e}. Get response from llm: {event.text}")
+                    logger.debug(f"JSON extraction failed: {e}. Get response from llm: {event.text}")
                     response = {
                         "bot": event.text
                     }
@@ -162,23 +164,28 @@ class LLMAgent(Agent):
 
                 if data is not None:
                     for name, value in data.items():
+                        logger.info(f"LLM agent: [{self.name}] > extract: {name} = {value}")
                         tracker.set_arg(self.name, name, value)
                         final_result.append(SetSlot(name, value, self.name))
                 if status is not None and status == "quit":
                     is_end = False
+                    logger.info(f"LLM agent: [{self.name}] failed")
                     event = AgentFail(provider=self.name)
                     if bot_reply is not None:
+                        logger.info(f"LLM agent: [{self.name}] > Bot: {bot_reply}")
                         final_result.append(BotUtter(bot_reply, metadata=self.name))
                 elif status == "complete":
                     is_end = False
+                    logger.info(f"LLM agent: [{self.name}] complete")
                     event = AgentComplete(provider=self.name)
                     tracker.clear_conv_history(self.name)
 
                     if bot_reply is not None:
+                        logger.info(f"LLM agent: [{self.name}] > Bot: {bot_reply}")
                         final_result.append(BotUtter(bot_reply, metadata=self.name))
                 else:
                     event = BotUtter(bot_reply, metadata=self.name)
-
+                    logger.info(f"LLM agent: [{self.name}] > Bot: {bot_reply}")
             final_result.append(event)
 
         return is_end, final_result
