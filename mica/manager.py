@@ -12,6 +12,9 @@ class Manager:
                  bots: Optional[Dict[Text, Bot]] = None
                  ):
         self.bots = bots or {}
+    
+    def get_bot(self, bot_name: Text) -> Optional[Bot]:
+        return self.bots.get(bot_name)
 
     async def chat(self, bot_name: Text, user_id: Text, message: Text, channel: Optional[ChatChannel] = None):
         if self.bots.get(bot_name) is None:
@@ -36,7 +39,7 @@ class Manager:
             parsed_data = parser.parse_agents(data)
             self.bots[bot_name] = Bot.from_json(name=bot_name,
                                                 data=parsed_data,
-                                                llm_config=llm_config,
+                                                config=llm_config,
                                                 tool_code=python_script,
                                                 connector=connector)
             return True

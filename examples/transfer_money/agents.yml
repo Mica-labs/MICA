@@ -11,7 +11,7 @@ transfer_money:
 
 meta:
   type: ensemble agent
-  description: You can select an agent to response user's question.
+  description: You can select an agent to respond to the user's question.
   contains:
     - transfer_money
   fallback: default

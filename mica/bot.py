@@ -54,17 +54,17 @@ class Bot(object):
         self.sum_rsp_time = 0
         self.tools = tools
         self.connector = connector or {}
-        self._func_args_config = {name: {} for name in self.tools.functions.keys()} or {}
+        self._func_args_config = {name: {} for name in self.tools.functions.keys()} if tools is not None else {}
 
     @classmethod
     def from_json(cls,
                   name: Optional[Text] = None,
                   data: Optional[Any] = None,
-                  llm_config: Optional[Any] = None,
+                  config: Optional[Any] = None,
                   tool_code: Optional[Text] = None,
                   connector: Optional[Any] = None):
         name = name or short_uuid(10)
-        config = llm_config or {}
+        config = config or {}
 
         # # get schedule method
         # from mica.processor import DispatcherProcessor, PriorityProcessor
@@ -87,7 +87,7 @@ class Bot(object):
             "flow agent": FlowAgent.create,
             "kb agent": KBAgent.create
         }
-        agents = {n: create_agents[value.get('type')](name=n, **value, **config, llm_model=llm_model)
+        agents = {n: create_agents[value.get('type')](name=n, **value, config=config, llm_model=llm_model)
                   for n, value in data.items()
                   if value.get('type') is not None}
 
@@ -121,7 +121,7 @@ class Bot(object):
         # load function tools code into memory
         tools = None
         if tool_code is not None:
-            tools = SafePythonExecutor()
+            tools = SafePythonExecutor(unsafe_mode=config.get('unsafe_mode'))
             load_rst = tools.load_script(tool_code)
             if load_rst['status'] == 'success':
                 logger.info('Succeed in loading python script.')

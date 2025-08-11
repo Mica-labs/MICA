@@ -1,0 +1,7 @@
+node_modules
+docker
+dist
+build
+dist-ssr
+*.local
+packages/app/views/sdk.js
