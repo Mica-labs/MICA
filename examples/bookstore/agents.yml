@@ -1,12 +1,12 @@
- store_policy_kb:
-   type: kb agent
-   description: I can answer questions related to the store’s policy.
-   sources:
-     - https://www.bookstores.com/policies/shipping
-     - https://www.bookstores.com/about
-   faq:
-     - q: Thanks, bye
-       a: Looking forward to serving you next time.
+store_policy_kb:
+  type: kb agent
+  description: I can answer questions related to the store’s policy.
+  sources:
+    - https://www.bookstores.com/policies/shipping
+    - https://www.bookstores.com/about
+  faq:
+    - q: Thanks, bye
+      a: Looking forward to serving you next time.
       
 book_recommendation:
   type: llm agent

@@ -29,7 +29,8 @@ class OpenAIModel(BaseModel):
                  headers: Optional[Any] = None,
                  server: Optional[Text] = None,
                  api_key: Optional[Text] = None,
-                 max_concurrent_requests: int = 5):
+                 max_concurrent_requests: int = 5,
+                 **kwargs):
         self.model = model
         self.temperature = temperature
         self.top_p = top_p

@@ -1,0 +1,28 @@
+{
+  "name": "sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/sdk.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.22.10",
+    "@babel/preset-env": "^7.22.10",
+    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-commonjs": "^25.0.3",
+    "@rollup/plugin-node-resolve": "^15.1.0",
+    "@rollup/plugin-terser": "^0.4.3",
+    "rollup": "^2.79.0",
+    "rollup-plugin-polyfill-node": "^0.12.0"
+  },
+  "dependencies": {
+    "js-base64": "^3.7.5",
+    "qs": "^6.11.2"
+  }
+}

@@ -42,7 +42,8 @@ class SafePythonExecutor:
             self,
             allowed_modules: Optional[List[str]] = None,
             max_execution_time: int = 30,
-            max_memory_mb: int = 200
+            max_memory_mb: int = 200,
+            unsafe_mode: bool = None
     ):
         """
         Safe code executor
@@ -51,7 +52,9 @@ class SafePythonExecutor:
             allowed_modules: Whitelist of allowed modules to import
             max_execution_time: Maximum execution time (seconds)
             max_memory_mb: Maximum memory limit (MB)
+            unsafe_mode: If True, disables all safety checks and allows any import
         """
+        self.unsafe_mode = unsafe_mode or False
         self.allowed_modules = allowed_modules or [
             'math', 'random', 'statistics',
             'datetime', 'time', 're', 'json',
@@ -66,6 +69,14 @@ class SafePythonExecutor:
 
     def _safe_import(self, name, *args, **kwargs):
         """Safe import function"""
+        if self.unsafe_mode:
+            if name not in self.imported_modules:
+                try:
+                    module = importlib.import_module(name)
+                    self.imported_modules[name] = module
+                except ImportError as e:
+                    raise ImportError(f"Failed to import {name}: {str(e)}")
+            return self.imported_modules[name]
         if name in self.allowed_modules:
             if name not in self.imported_modules:
                 try:
@@ -86,13 +97,13 @@ class SafePythonExecutor:
         # Create a copy of basic built-in functions
         safe_builtins = dict(builtins.__dict__)
 
-        # Remove dangerous built-in functions
-        for name in [
-            'exec', 'eval', 'compile', 'open', 'input',
-            '__import__', 'globals', 'locals', 'vars'
-        ]:
-            safe_builtins.pop(name, None)
-
+        if not self.unsafe_mode:
+            # Remove dangerous built-in functions
+            for name in [
+                'exec', 'eval', 'compile', 'open', 'input',
+                '__import__', 'globals', 'locals', 'vars'
+            ]:
+                safe_builtins.pop(name, None)
         # Add safe import function
         safe_builtins['__import__'] = safe_import
 
@@ -116,26 +127,31 @@ class SafePythonExecutor:
         Returns:
             Dict containing execution status and result
         """
-        # Security check patterns
-        dangerous_patterns = [
-            r'(exec|eval)\s*\(',
-            r'__import__\s*\(',
-            r'\bsys\.',
-            r'(rmdir|unlink|chmod)',
-            r'socket\.',
-        ]
+        if not self.unsafe_mode:
+            # Security check patterns
+            dangerous_patterns = [
+                r'(exec|eval)\s*\(',
+                r'__import__\s*\(',
+                r'\bos\.',
+                r'\bsys\.',
+                r'(rmdir|unlink|chmod)',
+                r'socket\.',
+            ]
 
-        for pattern in dangerous_patterns:
-            if re.search(pattern, script_str):
-                raise ValueError(f"Dangerous code pattern detected: {pattern}")
+            for pattern in dangerous_patterns:
+                if re.search(pattern, script_str):
+                    raise ValueError(f"Dangerous code pattern detected: {pattern}")
 
         try:
             # Parse AST
             tree = ast.parse(script_str)
 
             # Analyze and transform import statements
-            transformer = ImportTransformer(self.allowed_modules)
-            transformed_tree = transformer.visit(tree)
+            if not self.unsafe_mode:
+                transformer = ImportTransformer(self.allowed_modules)
+                transformed_tree = transformer.visit(tree)
+            else:
+                transformed_tree = tree
 
             # function definition
             formatted_functions = self._extract_functions_from_script(tree)

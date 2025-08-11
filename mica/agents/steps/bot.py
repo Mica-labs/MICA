@@ -3,7 +3,7 @@ from typing import Optional, Text
 from mica.agents.steps.base import Base
 from mica.event import BotUtter
 from mica.tracker import Tracker, FlowInfo
-from mica.utils import replace_args_in_string
+from mica.utils import replace_args_in_string, logger
 
 
 class Bot(Base):
@@ -32,4 +32,5 @@ class Bot(Base):
         text = self.text
         if self.flow_name is not None:
             text = replace_args_in_string(text, self.flow_name, tracker)
+        logger.info(f"Agent: [{self.flow_name}] execute bot step: {text}")
         return "Finished", [BotUtter(text=text)]
