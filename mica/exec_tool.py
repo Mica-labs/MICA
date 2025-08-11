@@ -132,7 +132,6 @@ class SafePythonExecutor:
             dangerous_patterns = [
                 r'(exec|eval)\s*\(',
                 r'__import__\s*\(',
-                r'\bos\.',
                 r'\bsys\.',
                 r'(rmdir|unlink|chmod)',
                 r'socket\.',
