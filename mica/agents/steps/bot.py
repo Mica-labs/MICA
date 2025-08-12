@@ -32,5 +32,5 @@ class Bot(Base):
         text = self.text
         if self.flow_name is not None:
             text = replace_args_in_string(text, self.flow_name, tracker)
-        logger.info(f"Agent: [{self.flow_name}] execute bot step: {text}")
+        logger.info(f"[{self.flow_name}]: bot: {text}")
         return "Finished", [BotUtter(text=text)]

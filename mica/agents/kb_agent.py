@@ -144,7 +144,7 @@ class KBAgent(Agent):
             Dict containing matches and their scores if similarity threshold is met,
             None otherwise
         """
-        logger.info(f"KB agent: [{self.name}] is running")
+        logger.debug(f"KB agent: [{self.name}] is running")
         if not self.vector_store:
             raise ValueError("Knowledge base not prepared. Call prepare() first.")
 
@@ -174,8 +174,9 @@ class KBAgent(Agent):
             answer = await self.generate(tracker, metadata, user_input)
             if answer:
                 metadata['answer'] = answer.text
-
+                logger.info(f"[{self.name}]: bot: {answer.text}")
             return True, [AgentComplete(provider=self.name, metadata=metadata)]
+        logger.info(f"[{self.name}]: didn't find any answer")
         return True, [AgentComplete(provider=self.name, metadata=None)]
 
     async def generate(self, tracker, context, query):
