@@ -29,8 +29,7 @@ class UserInput(Event):
         super().__init__(timestamp, metadata)
 
     def __repr__(self):
-        return f"UserInput(text={self.text}, " \
-               f"timestamp={self.timestamp})"
+        return f"UserInput(text={self.text})"
 
 
 class BotUtter(Event):
@@ -56,8 +55,7 @@ class BotUtter(Event):
         return cls(text, timestamp, metadata, additional)
 
     def __repr__(self):
-        return f"BotUtter(text={self.text}, " \
-               f"timestamp={self.timestamp})"
+        return f"BotUtter(text={self.text})"
 
 
 class SetSlot(Event):
@@ -74,10 +72,7 @@ class SetSlot(Event):
         super().__init__(timestamp, metadata)
 
     def __repr__(self):
-        return f"SetSlot(slot_name={self.slot_name}, " \
-               f"value={self.value}, " \
-               f"provider={self.provider}, " \
-               f"timestamp={self.timestamp})"
+        return f"SetSlot(slot_name={self.slot_name}, value={self.value}, provider={self.provider})"
 
     @classmethod
     def from_dict(cls, data: Dict):

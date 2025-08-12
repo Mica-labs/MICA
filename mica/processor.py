@@ -7,7 +7,7 @@ from mica.agents.flow_agent import FlowAgent
 from mica.bot import Bot
 from mica.event import Event, CurrentAgent, BotUtter, FollowUpAgent, AgentFail, AgentComplete
 from mica.tracker import Tracker
-from mica.utils import replace_args_in_string, logger
+from mica.utils import replace_args_in_string, user_info_logger, logger
 
 
 class Processor(object):
@@ -29,7 +29,7 @@ class DispatcherProcessor(Processor):
                             tracker: Optional[Tracker] = None,
                             bot: Optional[Bot] = None
                             ) -> List[Event]:
-        logger.info("Received user message: %s", tracker.latest_message.text)
+        user_info_logger.info("User: %s", tracker.latest_message.text)
         meta_agent = bot.entrypoint
         meta_event = CurrentAgent(agent=meta_agent)
         tracker.push_agent(meta_event)
@@ -89,7 +89,6 @@ class PriorityProcessor(Processor):
                                   tracker: Optional[Tracker] = None,
                                   bot: Optional[Bot] = None
                                   ) -> List[Event]:
-        logger.info("Received user message: %s", tracker.latest_message.text)
         user_text: Text = tracker.latest_message.text
         # block click operation
         if user_text.startswith("/click link"):
