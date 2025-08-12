@@ -22,7 +22,7 @@ from mica.exec_tool import SafePythonExecutor
 from mica.llm.openai_model import OpenAIModel
 from mica.model_config import ModelConfig
 from mica.tracker_store import TrackerStore, InMemoryTrackerStore
-from mica.utils import find_config_files, save_file, replace_args_in_string, logger, short_uuid
+from mica.utils import find_config_files, save_file, replace_args_in_string, logger, short_uuid, bot_info_logger, user_info_logger
 
 
 class InvalidBot(Exception):
@@ -159,9 +159,15 @@ class Bot(object):
         user_event = UserInput(text=message, metadata=channel)
         tracker.update(user_event)
         tracker.latest_message = user_event
+        user_info_logger.info("=" * (len("User:" + message)+ 5))
+        user_info_logger.info("User: %s", tracker.latest_message.text)
+        user_info_logger.info("-"  * (len("User:" + message)+ 5))
+        
         start = time.time()
         response = await self.scheduler.predict_next_action(user_id, tracker, self)
-        logger.info("Bot: " + " ".join(response))
+        bot_info_logger.info("-" * (len("Bot: " + " ".join(response)) + 5))
+        bot_info_logger.info("Bot: " + " ".join(response))
+        bot_info_logger.info("=" * (len("Bot: " + " ".join(response)) + 5))
         end = time.time()
         print("####response time:", end-start)
         self.count += 1

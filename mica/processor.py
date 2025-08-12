@@ -89,7 +89,6 @@ class PriorityProcessor(Processor):
                                   tracker: Optional[Tracker] = None,
                                   bot: Optional[Bot] = None
                                   ) -> List[Event]:
-        user_info_logger.info("User: %s", tracker.latest_message.text)
         user_text: Text = tracker.latest_message.text
         # block click operation
         if user_text.startswith("/click link"):
