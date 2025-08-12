@@ -24,5 +24,5 @@ class User(Base):
             **kwargs):
         if tracker.has_bot_response_after_user_input():
             info.is_listen = True
-        logger.info(f"Agent: [{self.flow_name}] wait for user input.")
+        logger.info(f"[{self.flow_name}]: wait for user input")
         return "Finished", []
