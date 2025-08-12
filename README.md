@@ -93,7 +93,7 @@ TWILIO_AUTH_TOKEN=your_auth_token
 ````
 
 - The sender's phone number must be a verified or purchased number from your Twilio account.
-- In addition, you must intsall the twilio module before running:
+- In addition, you must install the twilio module before running:
 
 ````
 
