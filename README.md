@@ -1,6 +1,6 @@
 # Dental Assistant Chatbot – Agent Functionality Guide
 
-This assistant supports 5 core functionalities using database operations, OpenAI's GPT-4o, and Twilio SMS. Each function is handled by a dedicated agent and a corresponding backend tool function.
+This assistant supports 5 core functionalities using database operations, GPT-4o, and Twilio SMS. Each function is handled by a dedicated agent and a corresponding backend tool function.
 
 
 ## 1. Create Patient Record
@@ -83,7 +83,7 @@ Sends an SMS message using Twilio from a sender number to a recipient with the d
 - Sends SMS via Twilio API and confirms status
 
 **Note: Twilio Setup Required**
-To use this functionality, you must set the following environment variables in your `.env` file:
+- To use this functionality, you must set the following environment variables in your `.env` file:
 
 ````
 
@@ -92,7 +92,14 @@ TWILIO_AUTH_TOKEN=your_auth_token
 
 ````
 
-The sender's phone number must be a verified or purchased number from your Twilio account.
+- The sender's phone number must be a verified or purchased number from your Twilio account.
+- In addition, you must intsall the twilio module before running:
+
+````
+
+pip install twilio
+
+````
 
 
 
