@@ -115,12 +115,12 @@ class EnsembleAgent(Agent):
         if next_agent is not None:
             if next_agent in self.contains:
                 agent_result.append(FollowUpAgent(provider=self.name, next_agent=next_agent))
-                logger.info(f"Ensemble agent: [{self.name}] select an agent: [{next_agent}]")
+                logger.info(f"[{self.name}]: select an agent: [{next_agent}]")
                 return is_end, agent_result
             elif isinstance(next_agent, str):
                 ensemble_response = next_agent
                 agent_result.append(BotUtter(text=ensemble_response, provider=self.name))
-                logger.info(f"Ensemble agent: [{self.name}] > Bot: {ensemble_response}")
+                logger.info(f"[{self.name}]: bot: {ensemble_response}")
                 return True, agent_result
 
         # if agent fail to answer and there are no response from the user input
@@ -129,13 +129,13 @@ class EnsembleAgent(Agent):
                 _, fallback_response = await self.fallback.run(tracker)
                 agent_result.extend(fallback_response)
             is_end = True
-            logger.info(f"Ensemble agent: [{self.name}] select fallback agent and get response: {fallback_response}")
+            logger.info(f"[{self.name}]: select fallback agent and get response: {fallback_response}")
             return is_end, agent_result
 
         if self.exit_agent is not None and len(agent_result) == 0:
             _, exit_response = await self.exit_agent.run(tracker)
             agent_result.extend(exit_response)
-            logger.info(f"Ensemble agent: [{self.name}] select exit agent and get response: {exit_response}")
+            logger.info(f"[{self.name}]: select exit agent and get response: {exit_response}")
         return True, agent_result
 
     def _is_agent_found(self, event):

@@ -29,7 +29,7 @@ class Set(Base):
                   **kwargs):
         if info is not None:
             info.is_listen = False
-        logger.info(f"Agent: [{self.flow_name}] > step > set: {self.data}")
+        logger.info(f"[{self.flow_name}]: set: {self.data}")
         result = []
         for target, source in self.data.items():
             target_arg_info = arg_format(target, self.flow_name)

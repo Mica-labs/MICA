@@ -156,12 +156,12 @@ class Tracker(object):
 
         if agent_name in self.func_args:
             self.func_args[agent_name][arg_name] = arg_value
-            logger.info(f"Set argument: {agent_name}.{arg_name} = {arg_value}")
+            logger.info(f"system: set {agent_name}.{arg_name} = {arg_value}")
             logger.debug(f"Set argument Success. This is an argument in Functions: {self.func_args}")
             return True
 
         self.args[agent_name][arg_name] = arg_value
-        logger.info(f"Set argument: {agent_name}.{arg_name} = {arg_value}")
+        logger.info(f"system: set {agent_name}.{arg_name} = {arg_value}")
         if self.args['__mapping__'].get(agent_name) \
                 and self.args['__mapping__'][agent_name].get(arg_name) \
                 and self.args['__mapping__'][agent_name][arg_name]['type'] == "ref":

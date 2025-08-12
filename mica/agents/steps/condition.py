@@ -65,9 +65,9 @@ class If(Base):
             response = llm_result[0].text
             response_flag = "True" in response
             if response_flag:
-                logger.info(f"Agent: [{self.flow_name}] > step > if: {self.statement} is True.")
+                logger.info(f"[{self.flow_name}]: (True) if: {self.statement}")
                 return "Do", []
-            logger.info(f"Agent: [{self.flow_name}] > step > if: {self.statement} is False.")
+            logger.info(f"[{self.flow_name}]: (False) if: {self.statement}")
             return "Skip", []
         elif "the user clicks" in self.statement:
             target_button_name = self._extract_button_name(self.statement)
@@ -77,16 +77,16 @@ class If(Base):
             user_input = tracker.latest_message.text
             extracted_button_name = self._extract_button_name(user_input)
             if extracted_button_name and extracted_button_name == target_button_name:
-                logger.info(f"Agent: [{self.flow_name}] > step > if: {self.statement} is True.")
+                logger.info(f"[{self.flow_name}]: (True) if: {self.statement}")
                 return "Do", []
-            logger.info(f"Agent: [{self.flow_name}] > step > if: {self.statement} is False.")
+            logger.info(f"[{self.flow_name}]: (False) if: {self.statement}")
             return "Skip", []
         else:
             flag = parse_and_evaluate(self.statement, tracker, self.flow_name)
             if flag:
-                logger.info(f"Agent: [{self.flow_name}] > step > if: {self.statement} is True.")
+                logger.info(f"[{self.flow_name}]: (True) if: {self.statement}")
                 return "Do", []
-            logger.info(f"Agent: [{self.flow_name}] > step > if: {self.statement} is False.")
+            logger.info(f"[{self.flow_name}]: (False) if: {self.statement}")
             return "Skip", []
             # arg_name_str, comparator, value = extract_expression_parts(self.statement)
             # if arg_name_str is not None:
@@ -185,10 +185,10 @@ class ElseIf(Base):
             response = llm_result[0].text
             response_flag = "True" in response
             if response_flag:
-                logger.info(f"Agent: [{self.flow_name}] > step > else if: {self.statement} is True.")
+                logger.info(f"[{self.flow_name}]: (True) else if: {self.statement}")
                 return "Do", []
             else:
-                logger.info(f"Agent: [{self.flow_name}] > step > else if: {self.statement} is False.")
+                logger.info(f"[{self.flow_name}]: (False) else if: {self.statement}")
                 return "Skip", []
         elif "the user clicks" in self.statement:
             target_button_name = self._extract_button_name(self.statement)
@@ -198,16 +198,16 @@ class ElseIf(Base):
             user_input = tracker.latest_message.text
             extracted_button_name = self._extract_button_name(user_input)
             if extracted_button_name and extracted_button_name == target_button_name:
-                logger.info(f"Agent: [{self.flow_name}] > step > else if: {self.statement} is True.")
+                logger.info(f"[{self.flow_name}]: (True) else if: {self.statement}")
                 return "Do", []
-            logger.info(f"Agent: [{self.flow_name}] > step > else if: {self.statement} is False.")
+            logger.info(f"[{self.flow_name}]: (False) else if: {self.statement}")
             return "Skip", []
         else:
             flag = parse_and_evaluate(self.statement, tracker, self.flow_name)
             if flag:
-                logger.info(f"Agent: [{self.flow_name}] > step > else if: {self.statement} is True.")
+                logger.info(f"[{self.flow_name}]: (True) else if: {self.statement}")
                 return "Do", []
-            logger.info(f"Agent: [{self.flow_name}] > step > else if: {self.statement} is False.")
+            logger.info(f"[{self.flow_name}]: (False) else if: {self.statement}")
             return "Skip", []
             # arg_name_str, comparator, value = extract_expression_parts(self.statement)
             # if arg_name_str is not None:
@@ -279,8 +279,8 @@ class Else(Base):
                   **kwargs):
         info.is_listen = False
         if info.get_counter(id(self)) >= self.tries:
-            logger.info(f"Agent: [{self.flow_name}] > step > skip else: {self.name} because of tries limit ({self.tries}).")
+            logger.info(f"[{self.flow_name}]: (skip) else because of tries limit ({self.tries}).")
             return "Skip", []
         info.count(id(self))
-        logger.info(f"Agent: [{self.flow_name}] > step > else: {self.name}.")
+        logger.info(f"[{self.flow_name}]: else")
         return "Do", []

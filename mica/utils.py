@@ -14,19 +14,32 @@ LOGGING_CONFIG = {
     "disable_existing_loggers": False,
     "formatters": {
         "default": {
-            "format": "%(asctime)s - %(name)s.%(filename)-10s - %(levelname)-6s - %(message)s",
+            "format": "%(asctime)s - %(filename)-18s - %(levelname)-6s - %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
         "console_file": {
-            "format": "%(levelname)s - %(message)s",
+            "format": "%(asctime)s - %(filename)-18s - %(levelname)-6s -     %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
     },
     "handlers": {
-        "console": {
+        "console-default": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+            "level": "DEBUG",
+        },
+        "console-indent": {
             "class": "logging.StreamHandler",
             "formatter": "console_file",
             "level": "DEBUG",
         },
-        "file": {
+        "file-default": {
+            "class": "logging.FileHandler",
+            "filename": "app.log",
+            "formatter": "default",
+            "level": "DEBUG",
+        },
+        "file-indent": {
             "class": "logging.FileHandler",
             "filename": "app.log",
             "formatter": "console_file",
@@ -34,18 +47,23 @@ LOGGING_CONFIG = {
         },
     },
     "root": {
-        "handlers": ["console", "file"],
+        "handlers": ["console-default", "file-default"],
         "level": "INFO",
     },
     "loggers": {
         "user_info": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
+            "handlers": ["console-default", "file-default"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "sys_info": {
+            "handlers": ["console-indent", "file-indent"],
+            "level": "DEBUG",
             "propagate": False,
         },
         "bot_info": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
+            "handlers": ["console-default", "file-default"],
+            "level": "DEBUG",
             "propagate": False,
         },
     },
@@ -68,8 +86,8 @@ class WebLogFormatter(logging.Formatter):
         for char in text:
             if ord(char) > 127:  # Non-ASCII characters (including Chinese)
                 width += 2
-            elif char in '[](){}/?\\|<>.,;:!@#$%^&*-=+`~"\'':  # Special symbols that might be narrower
-                width += 0.8  # Slightly less than full width
+            elif char in '[](){}/?\\|<>.,;:!@#$%^&*+`~"\'':  # Special symbols that might be narrower
+                width += 0.9  # Slightly less than full width
             else:
                 width += 1
         return width
@@ -79,13 +97,13 @@ class WebLogFormatter(logging.Formatter):
         display_width = self.get_display_width(content)
         padding_needed = target_width - display_width
         
-        # Add extra compensation for potential font rendering differences
-        # This is an empirical adjustment based on your observation
-        if padding_needed > 0:
-            # For every special character, add a bit more padding
-            special_chars = sum(1 for c in content if c in '[](){}/?\\|<>.,;:!@#$%^&*-=+`~"\'')
-            compensation = special_chars * 0.2
-            padding_needed += compensation
+        # # Add extra compensation for potential font rendering differences
+        # # This is an empirical adjustment based on your observation
+        # if padding_needed > 0:
+        #     # For every special character, add a bit more padding
+        #     special_chars = sum(1 for c in content if c in '[](){}/?\\|<>.,;:!@#$%^&*-=+`~"\'')
+        #     compensation = special_chars * 0.2
+        #     padding_needed += compensation
         
         return max(0, int(padding_needed))
     
@@ -116,7 +134,10 @@ class WebLogFormatter(logging.Formatter):
             # Truncate if too long to prevent line wrapping
             formatted_message = self.truncate_to_width(base_message, self.total_width)
             return formatted_message
-            
+        elif record.name == "sys_info":
+            base_message = f"    {message}"
+            formatted_message = self.truncate_to_width(base_message, self.total_width)
+            return formatted_message
         elif record.name == "bot_info":
             # Right-aligned format: level | spaces + message (message ends at right edge)
             available_width = self.total_width
@@ -137,7 +158,7 @@ class WebLogFormatter(logging.Formatter):
         
         else:
             # Default format for any other loggers
-            return f"{level} | {message}"
+            return f" {message}"
 
 web_log_stream = io.StringIO()
 web_handler = logging.StreamHandler(web_log_stream)
@@ -151,9 +172,10 @@ web_handler.setLevel(logging.INFO)  # Only record INFO and above
 # Add web handler to the specific loggers
 user_info_logger = logging.getLogger("user_info")
 user_info_logger.addHandler(web_handler)
-
-logger = logging.getLogger("bot_info")
+logger = logging.getLogger("sys_info")
 logger.addHandler(web_handler)
+bot_info_logger = logging.getLogger("bot_info")
+bot_info_logger.addHandler(web_handler)
 
 def get_web_log_contents():
     """Get the log contents for the frontend (only INFO level and above)"""
