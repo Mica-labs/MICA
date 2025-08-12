@@ -61,7 +61,7 @@ class SafePythonExecutor:
             'itertools', 'functools', 'collections',
             'requests', 'urllib', 'subprocess', 'sqlite3',
             'mysql.connector', 'logging', 'pathlib', 'typing',
-            'jsonpath', 'inspect'
+            'jsonpath', 'inspect', 'openai', 'dotenv', 'os', 'twilio', 'twilio.rest'
         ]
         self.script_namespace: Dict[Text, Any] = {}
         self.imported_modules: Dict[Text, Any] = {}
@@ -132,7 +132,6 @@ class SafePythonExecutor:
             dangerous_patterns = [
                 r'(exec|eval)\s*\(',
                 r'__import__\s*\(',
-                r'\bos\.',
                 r'\bsys\.',
                 r'(rmdir|unlink|chmod)',
                 r'socket\.',
