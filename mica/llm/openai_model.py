@@ -44,6 +44,7 @@ class OpenAIModel(BaseModel):
         if headers is None:
             if api_key is None:
                 api_key = os.getenv(OPENAI_API_KEY)
+                print("\n\nOPENAI_API_KEY=", os.getenv(OPENAI_API_KEY))
             if api_key is None:
                 raise NoValidRequestHeader()
             self.headers = {

@@ -1,0 +1,21 @@
+rats:
+  type: llm agent
+  prompt: |
+    You can repeat the user's message back to them and append the word "rats" to the end.
+  args:
+    - message
+
+meta:
+  type: ensemble agent
+  description: You can select an agent to answer user's question.
+  contains:
+    - rats
+  fallback: default
+  steps:
+    - bot: Hello, what can I do for you?
+  exit: default
+
+main:
+  type: flow agent
+  steps:
+    - call: meta

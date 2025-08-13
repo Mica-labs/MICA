@@ -1,0 +1,146 @@
+internet_flow:
+  type: flow agent
+  description: You can ask the user about what Internet-related or billing-related help they need,
+    and then call the corresponding functions to help them.
+  fallback: "You can ask say 'I need help with my Internet' or 'I need help with billing'"
+  steps:
+    - label: start
+    - user
+    - if: the user claims "I have a problem with my Wi-Fi connection", "I need help with my Internet"
+      then:
+        - bot: I'm sorry to hear that.
+        - call: test_llm
+    - else if: the user claims "I need help with billing", "I want help with billing"
+      then:
+        - call: billing_flow
+    - bot: Did I answer all of your questions?
+    - user
+    - if: the user claims "No", "no"
+      then:
+        - bot: Would you like to be connected to a human representative?
+        - if: the user claims "Yes"
+          then:
+            - call: human
+          else:
+            - bot: Hi, how can I help you?
+            - next: start
+              tries: 3
+    - else if: the user claims "Yes", "yes", "yeah"
+      then:
+        - bot: Have a nice day?
+        - return: Conversation closed by user
+
+test_flow:
+  type: flow agent
+  description: You can help the user with problems
+    related to their Internet connection.
+  fallback: "I'm sorry, I didn't understand that"
+  args:
+    - speed
+  steps:
+    - label: start
+    - user
+    - if: the user claims "Yes" or "yes"
+      then:
+        - call: run_diagnostic
+        - set:
+            speed: run_diagnostic.speed
+        - bot: Your speed is ${speed}.
+        - bot: If your Internet speed is below 50,
+            try restarting your router. Otherwise,
+            it should be fine.
+  uses:
+    - run_diagnostic
+
+test_llm:
+  type: llm agent
+  description: You can help the user with problems
+    related to their Internet connection.
+  prompt: |
+    You can help users run a simple Internet speed
+    test. First, ask the user if they would like
+    an Internet speed test. If they respond "yes",
+    call the function 'run_diagnostic' and report
+    to them the results. Then, recommend that they
+    restart their router if the speed is below 50.
+  uses:
+    - run_diagnostic
+
+billing_flow:
+  type: flow agent
+  description: You can help the user with problems related to the billing of their Internet.
+  fallback: I'm sorry, I didn't understand that
+  args:
+    - user_name
+    - month
+    - amount
+    - results
+  steps:
+    - call: billing
+    - set:
+        user_name: billing.user_name
+        month: billing.month
+    - call: query_bill
+      args:
+        user_name: user_name
+        month: month
+    - set:
+        amount: query_bill.amount
+    - if: amount == None
+      then:
+        - bot: There was an error when retrieving your data from the server.
+    - bot: Your total for ${month} is $ ${amount}.
+    - bot: Would you like to see a breakdown?
+    - user
+    - if: the user claims "Yes"
+      then:
+      - call: bill_breakdown
+        args:
+          user_name: user_name
+          month: month
+      - bot: Your breakdown is ${results}
+    - else if: the user claims "No", "no"
+      then:
+        - bot: If you have any other questions, feel free to ask.
+      else:
+        - bot: I'm sorry, I didn't understand that.
+  uses:
+    - query_bill
+    - bill_breakdown
+
+billing:
+  type: llm agent
+  description: You can help the user with problems related to the billing of their Internet.
+  args:
+    - user_name
+    - month
+  prompt: |
+    1. Ask the user what their username is to obtain the value of "user_name"
+    2. Ask the user which month they want to see bills for to obtain the value of "month"
+
+human:
+  type: flow agent
+  description: You can ask the user if they want to connect to a human agent.
+  fallback: default
+  steps:
+    - bot: We're sorry to hear that. Do you want us to connect you to human agents?
+    - user
+    - if: the user claims "Yes"
+      then:
+        - bot: Hold on while we connect you...
+      else:
+       - bot: Conversation closed by user
+
+meta:
+  type: ensemble agent
+  description: You can select an agent to respond to the user's question.
+  contains:
+    - internet_flow
+  steps:
+    - bot: Hi, how can I help you?
+    - user
+
+main:
+  type: flow agent
+  steps:
+    - call: meta

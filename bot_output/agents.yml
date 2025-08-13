@@ -1,0 +1,110 @@
+internet_flow:
+  type: flow agent
+  description: You can ask the user about what Internet-related help they need,
+    and then call the corresponding functions to help them.
+  fallback: "You can ask say 'I need help with my Internet' or 'I need help with billing'"
+  args:
+    - speed
+    - results
+  steps:
+    - label: start
+    - user
+    - if: the user claims "I have a problem with my Wi-Fi connection" or "I need help with my Internet"
+      then:
+        - bot: I'm sorry to hear that. Would you like me to perform an Internet speed test?
+        - call: test_flow
+        - set:
+            speed: test_flow.speed
+    - else if: the user claims "I need help with billing"
+      then:
+        - bot: What is your username?
+        - call: billing_flow
+        - set:
+            results: billing_flow.results
+      else:
+      - bot: "You can ask say 'I need help with my Internet' or 'I need help with billing'"
+    - bot: Did I answer all of your questions?
+    - user
+    - if: the user claims "No"
+      then:
+        - call: human
+      else:
+      - bot: Have a nice day?
+      - return: Conversation closed by user
+
+test_flow:
+  type: flow agent
+  description: You can help the user with problems related to their Internet connection.
+  fallback: "I'm sorry, I didn't understand that"
+  args:
+    - speed
+  steps:
+    - label: start
+    - user
+    - if: the user claims "Yes" or "yes"
+      then:
+        - call: run_diagnostic
+        - set:
+            speed: run_diagnostic.speed
+        - bot: Your speed is ${speed}.
+        - bot: If your Internet speed is below 50, try restarting your router. Otherwise, it should be fine.
+      else:
+        - return: return
+  uses:
+    - run_diagnostic
+
+billing_flow:
+  type: flow agent
+  description: You can help the user with problems related to the billing of their Internet.
+  args:
+    - user_name
+    - month
+    - amount
+    - results
+  steps:
+    - call: billing
+    - set:
+        user_name: billing.user_name
+        month: billing.month
+    - call: query_bill
+    - set:
+        amount: query_bill.month
+  uses:
+    - query_bill
+
+billing:
+  type: llm agent
+  description: You can help the user with problems related to the billing of their Internet.
+  args:
+    - user_name
+    - month
+  prompt: |
+    1. Ask the user what their username is to obtain the value of "user_name"
+    2. Ask the user which month they want to see bills for to obtain the value of "month"
+
+human:
+  type: flow agent
+  description: You can ask the user if they want to connect to a human agent.
+  fallback: default
+  steps:
+    - bot: We're sorry to hear that. Do you want us to connect you to human agents?
+    - user
+    - if: the user claims "Yes"
+      then:
+        - bot: Hold on while we connect you...
+      else:
+       - bot: Conversation closed by user
+
+meta:
+  type: ensemble agent
+  description: You can select an agent to response user's question.
+  contains:
+    - internet_flow
+  steps:
+    - bot: Hi, how can I help you?
+    - user
+
+main:
+  type: flow agent
+  steps:
+    - call: meta
