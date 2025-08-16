@@ -1,0 +1,76 @@
+shopping_flow:
+  type: flow agent
+  description: This is an agent that assists users in placing orders.
+  args:
+    - discount
+  steps:
+    - bot: Hi. I'm your shopping assistant. What can I do for you today?
+    - label: start
+    - user
+    - if: the user claims "Is there any discount?"
+      then:
+        - next: discount
+        - if: discount.success
+          then:
+            - bot: We are glad to tell you that your get 10% discount.
+          else:
+            - bot: Sorry. There's no discount for you.
+    - else if: the user claims "I'd like to buy something"
+      then:
+        - call: order
+        - call: shipment
+        - call: submit_info
+          args:
+            user_name: meta.user_name
+            items: order.items
+            discount: discount
+            address: shipment.address
+            contact: shipment.contact
+      else:
+        - bot: "You can ask me something like \"Any discount?\" or \"Start shopping.\"."
+        - call: start
+          tries: 3
+
+  discount:
+    - if: meta.is_new_customer == True
+      then:
+        - set: 
+            discount: 0.9
+        - return: success, Load discount successful.
+      else:
+        - return: error, No discount applied.
+
+  fallback: "Give a fallback message: I'm sorry, I didn't understand that. Can you please rephrase? If fallback three times consecutively, then terminate the conversation."
+
+order:
+  type: llm agent
+  description: This is an agent that collects order information.
+  prompt: You are an intelligent robot. You can assist users in placing orders, and you need to ask and confirm the products the user wants.
+  args:
+    - items
+
+shipment:
+  type: llm agent
+  description: This is an agent that collects shipping information.
+  prompt: You are an intelligent robot. You need to collect the user’s address and contact information to determine the shipping method.
+  args:
+    - address
+    - contact
+
+meta:
+  type: ensemble agent
+  description: You can select an agent to response user's question.
+  args:
+    - user_name
+    - is_new_customer
+  contains:
+    - shopping_flow
+  steps:
+    - user
+
+main:
+  type: flow agent
+  steps:
+    - call: meta
+
+

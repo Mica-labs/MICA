@@ -1,0 +1,189 @@
+kb:
+  type: kb agent
+  sources: 
+    - ./examples/retail_banking/docs
+
+what_can_you_do:
+  type: flow agent
+  description: This flow addresses user inquiries about the assistant's capabilities.
+  steps:
+    - bot: "I am your Banking assistant. I can help you with transferring money, managing authorised payees, checking an account balance, blocking a card, and answering your general finance enquiries."
+
+transfer_money:
+  type: llm agent
+  description: Guides the user through the process of initiating a bank transfer.
+  prompt: |  
+    1.	First, confirm that you understand the user wants to transfer money.
+    2.	Ask for the username. Based on the username, call the function “action_ask_account_from” to display the account name and balance. Ask which account to use and fill in account_from with the corresponding number (do not show the account number to the user, just populate account_from directly).
+    3.	Ask for payee_name. Using account_from and payee_name, call the function “action_check_payee_existence”.
+    4a. If the payee does not exist, prompt the user to enter the “add payee” agent and exit this agent.
+    4b. If the payee exists, continue collecting the transfer amount amount. If amount ≤ 0, prompt that the amount is invalid.
+    5.	Once all required details are collected, call “action_check_sufficient_funds”.
+    6a. If there are sufficient funds, proceed to step 7.
+    6b. If there are insufficient funds, terminate this agent immediately.
+    7.	Collect the transfer timing timing.
+    8a. If timing is “now”, confirm whether to proceed with the immediate transfer.
+    	•	If confirmed, call “action_process_immediate_payment”, then output “Transfer successful”, and exit this agent.
+    	•	If not proceeding immediately, output “Transfer canceled”, and exit this agent.
+    8b. If timing is not “now”, ask for the specific transfer date, ensuring it is formatted as “DD/MM/YYYY”. Proceed to step 9.
+    9.	Call “action_validate_payment_date”.
+    	•	If the date is a future date, confirm whether to schedule the transfer.
+    	•	If confirmed, call “action_schedule_payment”, output “Transfer scheduled”, and exit this agent.
+    	•	If not scheduling, output “Transfer canceled”, and exit this agent.
+  args:
+    - username
+    - account_from
+    - payee_name
+    - amount
+    - timing
+    - payment_date
+  uses:
+    - action_check_payee_existence
+    - action_check_sufficient_funds
+    - action_process_immediate_payment
+    - action_validate_payment_date
+    - action_schedule_payment
+
+remove_payee:
+  type: llm agent
+  description: delete an existing authorised payee
+  prompt: |
+    This flow guides the user through specifying the payee to be removed, 
+    call "action_remove_payee", and provides appropriate feedback on the success or failure of the operation.
+  args:
+    - payee_name
+    - username
+  uses:
+    - action_remove_payee
+
+list_payees:
+  type: llm agent
+  description: "Retrieve and display the user’s list of authorized payees, allowing them to view all accounts available for transactions."
+  prompt: ｜
+    After knowing "username", call function "action_list_payees", Retrieve and display the user’s list of authorized payees. The task ends.
+  uses:
+    - action_list_payees
+  args:
+    - username
+
+check_balance:
+  type: llm agent
+  description: check an account balance
+  prompt: |
+    1.	You need to ask for the username. Based on the username, call the function “action_ask_account” to display the account information to the user and ask which account name they want to inquire about.
+    2.	Based on the user’s response, fill the variable “account” with the corresponding account_number, then call “action_check_balance” to inform the user of the balance for the requested account.
+  args:
+    - username
+    - account
+  uses:
+    - action_ask_account
+    - action_check_balance
+
+block_card:
+  type: llm agent
+  description: ask for reason and block the card
+  prompt: |
+    You are an agent assisting users in blocking their cards.
+    
+    1. Based on the username, directly call "action_ask_card" to retrieve the user's available cards. Ask the user:  
+       "Select the card you require assistance with:" and fill in the "card" field.  
+    
+    2. Ask the user for the reason they want to block the card (reason_for_blocking):  
+       - The reason should be described as lost, damaged, stolen, suspected of fraud, malfunctioning, or expired.  
+       - The user may also say they are traveling or moving, or that they want to temporarily freeze their card.  
+       - For any other responses, set the "reason_for_blocking" slot to "unknown".  
+    
+    3a. If "reason_for_blocking" is "damaged" or "expired", inform the user:  
+       "Thank you for letting us know. I'm sorry to hear the card was {reason_for_blocking}." 
+       Proceed to Step 4.  
+    
+    3b. If "reason_for_blocking" is "fraud", "stolen", or "lost", inform the user:  
+       "As your card was potentially stolen, it's crucial to report this incident to the authorities. Please contact your local law enforcement agency immediately."  
+       Proceed to Step 4.  
+    
+    3c. If "reason_for_blocking" is "traveling" or "moving", inform the user:  
+       "Thanks for informing us about moving."  
+       Proceed to Step 4.  
+    
+    3d. For all other cases, instruct the user to contact "020 7777 7777" and call the function "action_update_card_status", then end the agent process.  
+    
+    4. Inform the user that their card will be blocked due to the specified reason.  
+       - Confirm whether they want to **issue a new card** or if they prefer to visit the bank themselves.  
+       - If the user confirms they want to issue a new card, proceed to Step 5.  
+       - If the user declines, call "action_update_card_status" and end the agent process.  
+    
+    5. Confirm the user's "physical_address".  
+       - If the user confirms the address is correct, inform them:  
+         "The new card will be sent to this address."  
+       - If the user indicates the address is incorrect, go back to Step 3d.  
+
+  args:
+    - username
+    - card
+    - physical_address
+    - reason_for_blocking
+  uses:
+    - action_ask_card
+    - action_update_card_status
+
+add_payee:
+  type: llm agent
+  description: Add a new payee to the user’s account
+  prompt: |
+    1.	Prompt the user sequentially for payee_name, account_number, payee_type (person/business), and reference (a short note to identify the payee or purpose).
+    2.	Confirm whether all the provided information is correct. If correct, call “action_add_payee”.
+    3.	If the action is successful, respond with ”{payee_name} has been successfully added to your list of authorized payees.”
+    Otherwise, respond with “I’m sorry, but there was an error adding {payee_name}. Please try again later or contact Customer Support.”
+  args:
+    - username
+    - payee_name
+    - account_number
+    - payee_type
+    - reference
+  uses:
+    - action_add_payee
+
+meta:
+  type: ensemble agent
+  contains:
+    - kb
+    - check_balance:
+        args:
+          username: ref username
+    - remove_payee:
+        args:
+          username: ref username
+    - transfer_money:
+        args:
+          username: ref username
+    - what_can_you_do
+    - list_payees:
+        args:
+          username: ref username
+    - block_card:
+        args:
+          username: ref username
+          physical_address: ref physical_address
+    - add_payee:
+        args:
+          username: ref username
+  args:
+    - username
+    - segment
+    - email_address
+    - physical_address
+  steps:
+    - set:
+        username: "Mary Brown"
+    - call: action_session_start
+      args:
+        username: username
+    - set:
+        segment: action_session_start.segment
+        email_address: action_session_start.email_address
+        physical_address: action_session_start.physical_address
+
+main:
+  type: flow agent
+  steps:
+    - call: meta

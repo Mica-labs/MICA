@@ -1,0 +1,33 @@
+database_kb_agent:
+  type: kb agent
+  description: I can give/answer informations about the pseudo database
+
+database_llm_agent:
+  type: llm agent
+  description: I can help the donoars fill their information once they provide their name, if they are already in database
+  args:
+    - address
+  prompt: |
+    1. Ask the user if they are already in database and their name.
+    2. If the user says yes and provide their name, call "get_donor_info" function with their name to obtain their address.
+    3. After getting their address from database, append the address to the argument "address"
+  uses:
+    - get_donor_info
+
+meta:
+  type: ensemble agent
+  description: You can select an agent to answer user's question. 
+  contains:
+    - database_kb_agent
+    - database_llm_agent:
+      args:
+        user_name: name_provided
+
+  steps:
+    - bot: Hello, I can help you register with blood donation.
+    - call: database_llm_agent
+   
+main:
+  type: flow agent
+  steps:
+    - call: meta
