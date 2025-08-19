@@ -51,7 +51,7 @@ Define your agents using simple natural language descriptions without complex co
 **3. Real-time Editing**:
 Customize your bot through an intuitive interface with immediate feedback.
 
-![generate-sussess.png](static/generate-sussess.png)
+![generate-sussess.png](static/generate-success.png)
 
 **4. Local Examples**:
 Load pre-built bots from local examples to jumpstart your development.
@@ -61,9 +61,12 @@ Load pre-built bots from local examples to jumpstart your development.
 **5. State Tracking**:
 Monitor the conversation state and agent arguments in real-time.
 
+**6. Friendly Debugging Information Display**:
+Real-time display of each agent’s execution results and the switching process between agents during the conversation, making debugging more convenient.
+
 ![chat with bot](static/chat.png)
 
-**6. Local Deployment**:
+**7. Local Deployment**:
 Deploy your bot as a service on your own infrastructure.
 
 ## Using MICA
