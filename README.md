@@ -23,7 +23,7 @@ ADL emphasizes three key characteristics: declarative language, agent-centric, a
 
 </br>
 
-The easiest way to start is through MICA Workbench,  a local GUI frontend:
+The easiest way to start is through [MICA Workbench](https://mica-labs.github.io/docs/introduction/debug/),  a local GUI frontend:
 
 ```bash
 # Install dependencies
