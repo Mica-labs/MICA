@@ -56,7 +56,7 @@ Real-time display of each agent’s execution results and the switching process 
 
 **4. State Tracking**:
 Monitor the conversation state and agent argument change in real-time.
-![chat with bot](static/chat.png)
+<!-- ![chat with bot](static/chat.png) -->
 
 **5. Prebuilt Examples**:
 Load pre-built bots to jumpstart your development.
