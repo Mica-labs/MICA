@@ -13,7 +13,7 @@ Below is a [bookstore](https://github.com/Mica-labs/MICA/tree/main/examples/book
 
 ![bookstore chatbot](./bookstore.jpg)
 
-ADL emphasizes three key characteristics: declarative language, modular design, and natural language oriented—features that are largely overlooked in existing frameworks. It is designed to simplify the development of customer service bots.
+ADL emphasizes three key characteristics: declarative language, agent-centric, and natural language oriented—features that are largely overlooked in existing frameworks. It is designed to simplify the development of customer service bots.
 
 ## Quick Start
 > Before installing MICA, make sure your machine meets the following minimum system requirements:
@@ -23,7 +23,7 @@ ADL emphasizes three key characteristics: declarative language, modular design, 
 
 </br>
 
-The easiest way to start using MICA is through its local GUI frontend, MICA Workbench:
+The easiest way to start is through MICA Workbench,  a local GUI frontend:
 
 ```bash
 # Install dependencies
@@ -36,7 +36,7 @@ export OPENAI_API_KEY=<your key>
 python -m mica.demo
 ```
 
-After running, you can access the MICA Workbench in your browser at [http://localhost:7860](http://localhost:7860) and start designing your bot through an intuitive interface. 
+After running, you can access the MICA Workbench in your browser at [http://localhost:7860](http://localhost:7860) and start designing your bot. 
 
 ![generate-sussess.png](static/generate-success.png)
 
@@ -70,15 +70,15 @@ Deploy your bot as a service on your own infrastructure.
 
 MICA Workbench provides features for online editing, testing, loading bots from local files, and saving bots to local storage.
 
-#### Real-time Editing
-You can customize your bot on the left side of the page. After editing, click the `Run` button at the top right to generate the bot. If the generation fails, an alert will be displayed. Please check if your agents' format is correct.
+#### Edit a chatbot
+You can edit your chatbot on the left side of the page. After editing, click the `Run` button at the top right to generate the bot. If the generation fails, an alert will be displayed. Please check if your agents' format is correct.
 
-#### Load from Prebuilt Examples
+#### Load from pre-built examples
 You can also load a bot from prebuilt examples and modify it as needed. Select a directory to load the bot. You can then start a conversation immediately or modify it further.
 
-> Note: If you modify the examples, you need to click the `Run` button before testing the latest bot. Additionally, selecting multiple directories at the same time will cause a bot loading error. When deselecting, all unsaved changes will be lost immediately.
+> Note: If you modify the examples, you need to click the `Run` button before testing it. Selecting multiple examples at the same time will cause a bot loading error. When deselecting, all unsaved changes will be lost immediately.
 
-#### Conversation and State
+#### Conversation and state
 Once the bot is generated, you can start a conversation with it. Enter your message in the `You` dialog box and press `Enter` to send it. The `Clear the conversation` button clears the conversation history and also resets the `States` panel. The `States` panel displays the current argument values for each agent in the bot.
 
 #### Save your design
@@ -101,7 +101,7 @@ python -m mica.server
 
 ## Staying Ahead
 
-Star Mica on GitHub and be instantly notified of new releases.
+Star MICA on GitHub and get notified of new releases.
 
 ![star-us](static/star.gif)
 
