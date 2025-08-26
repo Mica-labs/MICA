@@ -52,11 +52,11 @@ Define your agents using simple natural language descriptions without complex co
 
 **3. User-Friendly Debugging Information**:
 Real-time display of each agent’s execution results and the switching process between agents during a conversation, making debugging more convenient.
-![chat with bot](static/chat.png)
+![Load example bot](static/load-from-disk.png)
 
 **4. State Tracking**:
 Monitor the conversation state and agent argument change in real-time.
-![Load example bot](static/load-from-disk.png)
+![chat with bot](static/chat.png)
 
 **5. Prebuilt Examples**:
 Load pre-built bots to jumpstart your development.
