@@ -23,7 +23,7 @@ ADL emphasizes three key characteristics: declarative language, modular design, 
 
 </br>
 
-The easiest way to start using MICA is through the local GUI frontend:
+The easiest way to start using MICA is through its local GUI frontend, MICA Workbench:
 
 ```bash
 # Install dependencies
