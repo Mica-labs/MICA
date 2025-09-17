@@ -52,16 +52,71 @@ async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
         _, chatbot, user_id, tracker = await init_conversation(bot, [], user_id)
         return bot, chatbot, user_id, tracker
     except AssertionError as e:
-        msgs = [f"Error Type: {err.rule_name}, Message: {err.message}" for err in result]
-        msgs_str = '\n'.join(msgs)
-        raise gr.Error(f"Did not pass the validation. "
-                       f"Identified the following potential issues: {msgs_str}", duration=10)
+        # Format validation errors with detailed guidance
+        formatted_msgs = []
+        for err in result:
+            error_msg = f"[{err.rule_name} Error]\n"
+            error_msg += f"   Problem: {err.message}\n"
+            error_msg += f"   Location: {err.path}\n"
+            
+            # Add specific solutions based on error type
+            if "Missing required key" in err.message:
+                missing_key = err.message.split("'")[1]
+                error_msg += f"   Solution: Add the required '{missing_key}' field to your agent configuration\n"
+            elif "spelling error" in err.message.lower():
+                error_msg += f"   Solution: Check your field names for typos. {err.message.split('.')[-1].strip()}\n"
+            elif "Type mismatch" in err.message:
+                error_msg += f"   Solution: {err.message}. Please correct the data type\n"
+            elif "Invalid agent type" in err.message:
+                valid_types = err.message.split("Valid types are: ")[1] if "Valid types are: " in err.message else "flow agent, llm agent, ensemble agent, kb agent"
+                error_msg += f"   Solution: Use one of these valid agent types: {valid_types}\n"
+            elif "cannot be null" in err.message:
+                error_msg += f"   Solution: Provide a value for this field - it cannot be empty\n"
+            else:
+                error_msg += f"   Solution: Please review and correct the configuration according to the error message\n"
+            
+            formatted_msgs.append(error_msg)
+        
+        msgs_str = '\n'.join(formatted_msgs)
+        raise gr.Error(f"Validation Failed\n\n{msgs_str}\nTip: Check the examples folder for reference configurations", duration=15)
     except yaml.YAMLError as e:
-        raise gr.Error(f"A valid YAML structure is required.", duration=10)
+        error_details = str(e)
+        line_info = ""
+        
+        # Extract line number information if available
+        if hasattr(e, 'problem_mark') and e.problem_mark:
+            line_info = f" at line {e.problem_mark.line + 1}, column {e.problem_mark.column + 1}"
+        
+        # Provide specific guidance based on common YAML errors
+        if "mapping values are not allowed" in error_details:
+            solution = "Check for missing colons (:) after field names or incorrect indentation"
+        elif "could not find expected" in error_details:
+            solution = "Check for missing quotes around strings or unmatched brackets/braces"
+        elif "found character that cannot start any token" in error_details:
+            solution = "Check for invalid characters or incorrect indentation (use spaces, not tabs)"
+        elif "expected <block end>" in error_details:
+            solution = "Check your indentation - all items at the same level should have the same indentation"
+        else:
+            solution = "Verify your YAML syntax - check indentation, colons, and quotes"
+        
+        raise gr.Error(f"YAML Syntax Error{line_info}\n\nProblem: {error_details}\n\nSolution: {solution}\n\nTip: Use a YAML validator to check your syntax", duration=12)
     except Exception as e:
-        tb = traceback.format_exc()
-        error_message = f"Unexpected error: {str(e)}\n\nTraceback:\n{tb}"
-        raise gr.Error(error_message, duration=10)
+        error_type = type(e).__name__
+        error_msg = str(e)
+        
+        # Provide user-friendly messages for common errors
+        if "Bot.from_json" in traceback.format_exc():
+            user_message = f"Bot Creation Failed\n\nProblem: Failed to create bot from configuration\nError: {error_msg}\n\nSolutions:\n- Check that all referenced agents exist\n- Verify tool functions are properly defined\n- Ensure config.yml is valid"
+        elif "parse_agents" in traceback.format_exc():
+            user_message = f"Agent Parsing Failed\n\nProblem: Failed to parse agent definitions\nError: {error_msg}\n\nSolutions:\n- Check agent structure and syntax\n- Ensure all required fields are present\n- Verify step definitions are correct"
+        elif "yaml.safe_load" in traceback.format_exc():
+            user_message = f"Configuration Parsing Failed\n\nProblem: Failed to parse yaml file\nError: {error_msg}\n\nSolutions:\n- Check all yaml files syntax\n- Ensure proper YAML formatting\n"
+        else:
+            # For truly unexpected errors, still show traceback but make it more user-friendly
+            tb = traceback.format_exc()
+            user_message = f"Unexpected Error ({error_type})\n\nProblem: {error_msg}\n\nDebug Information:\n{tb}\n\nTip: If this persists, please report this issue with your chatbot program"
+        
+        raise gr.Error(user_message, duration=15)
 
 
 async def init_conversation(bot: Bot, chatbot, user_id):
@@ -111,7 +166,17 @@ def save_bot(bot_name: str, agents: str, tools: str = None, config: str = None):
                 f.write(config)
         gr.Info(f"Success save to {base_path}", duration=3)
     except OSError as e:
-        raise gr.Error(f"Error creating folders or saving files: {str(e)}", duration=10)
+        error_msg = str(e)
+        if "Permission denied" in error_msg:
+            solution = "Check that you have write permissions to the bot_output directory"
+        elif "No space left on device" in error_msg:
+            solution = "Free up disk space and try again"
+        elif "File name too long" in error_msg:
+            solution = "Use a shorter bot name"
+        else:
+            solution = "Check file system permissions and available space"
+        
+        raise gr.Error(f"File Save Failed\n\nProblem: Cannot save bot files\nError: {error_msg}\n\nSolution: {solution}", duration=10)
 
 
 async def load_bot(files, chatbot, user_id):
@@ -131,14 +196,26 @@ async def load_bot(files, chatbot, user_id):
                             tools += f.read() + "\n"
 
                     if file_path.endswith('.yml') or file_path.endswith('.yaml'):
-                        if "agent" in file_path:
-                            with open(file_path, 'r', encoding='utf-8') as f:
-                                agents = f.read()
-                        else:
+                        if "config" in file_path:
                             with open(file_path, 'r', encoding='utf-8') as f:
                                 config = f.read()
+                        else:
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                agents = f.read()
                 except Exception as e:
-                    gr.Error(f"Cannot load file {file_path}: {str(e)}\n")
+                    error_msg = str(e)
+                    file_type = "Python code" if file_path.endswith('.py') else "YAML configuration"
+                    
+                    if "UnicodeDecodeError" in str(type(e)):
+                        solution = "File encoding issue - ensure the file is saved as UTF-8"
+                    elif "PermissionError" in str(type(e)):
+                        solution = "Permission denied - check file access permissions"
+                    elif "FileNotFoundError" in str(type(e)):
+                        solution = "File not found - ensure the file exists at the specified path"
+                    else:
+                        solution = f"Check {file_type} syntax and formatting"
+                    
+                    raise gr.Error(f"File Load Failed\n\nProblem: Cannot read {file_type} from {os.path.basename(file_path)}\nError: {error_msg}\n\nSolution: {solution}", duration=10)
         if bot_name is None and files:
             first_path = files[0]
             if os.path.isfile(first_path):
@@ -149,7 +226,18 @@ async def load_bot(files, chatbot, user_id):
     except Exception as e:
         demo_logger.error(f"Failed to load bot: {bot_name} from disk, {e}")
         demo_logger.error(traceback.format_exc())
-        gr.Error(f"Failed")
+        
+        error_msg = str(e)
+        
+        # Find the most relevant error information
+        if "generate_bot" in traceback.format_exc():
+            user_message = f"Bot Loading Failed\n\nProblem: Failed to create bot from loaded files\nError: {error_msg}\n\nSolutions:\n- Check that agents.yml has correct structure\n- Verify tools.py has valid Python syntax\n- Ensure config.yml is properly formatted\n- Review file contents for any missing or invalid fields"
+        elif "yaml.safe_load" in traceback.format_exc():
+            user_message = f"YAML Parsing Failed\n\nProblem: Invalid YAML format in loaded files\nError: {error_msg}\n\nSolutions:\n- Check YAML syntax (indentation, colons, quotes)\n- Ensure proper structure in agents.yml or config.yml\n- Remove any special characters or formatting issues"
+        else:
+            user_message = f"Loading Failed\n\nProblem: Failed to load bot from selected files\nError: {error_msg}\n\nSolutions:\n- Check file permissions and accessibility\n- Verify file contents are valid\n- Try loading files individually to identify issues\n- Check the console logs for more details"
+        
+        raise gr.Error(user_message, duration=12)
         return None, bot_name or "", agents or "", tools or "", config or "", "", user_id, ""
 
 
