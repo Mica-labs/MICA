@@ -99,6 +99,17 @@ export OPENAI_API_KEY=<your key>
 python -m mica.server
 ```
 
+## Roadmap
+We are building an **end-to-end, plug-and-play solution** for chatbot development, testing, and deployment.  
+Our goal is to make it simple for developers to go from **design** → **evaluation** → **deployment** with minimal friction.
+
+### Q4 2025 (Current Focus)
+- [ ] Explore automated methods for test case generation and evaluation metrics.
+
+### 2026 Roadmap
+- [ ] Simplify chatbot definition workflow (e.g., declarative configuration, workbench).
+- [ ] Improve developer experience with better documentation and examples.
+
 ## Staying Ahead
 
 Star MICA on GitHub and get notified of new releases.
