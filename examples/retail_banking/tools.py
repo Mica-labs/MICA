@@ -305,7 +305,7 @@ def action_check_payee_existence(username, payee_name):
         print("The payee exists.")
         return
     print("The payee does not exist.")
-    return [{"text": f"{payee_name} is not an authorised payee. Let's add them!"}]
+    return [{"bot": f"{payee_name} is not an authorised payee. Let's add them!"}]
 
 
 def action_check_sufficient_funds(account_from, amount: float):
@@ -448,9 +448,9 @@ def action_session_start(username):
     if result:
         username, segment, email, address = result
         return [
-            {"slot_name": "segment", "value": segment},
-            {"slot_name": "email_address", "value": email},
-            {"slot_name": "physical_address", "value": address},
+            {"arg": "segment", "value": segment},
+            {"arg": "email_address", "value": email},
+            {"arg": "physical_address", "value": address},
         ]
     else:
         return

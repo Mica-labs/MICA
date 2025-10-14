@@ -20,6 +20,7 @@ from mica.channel import ChatChannel
 from mica.event import UserInput, BotUtter, FollowUpAgent, AgentComplete, AgentFail, CurrentAgent
 from mica.exec_tool import SafePythonExecutor
 from mica.llm.openai_model import OpenAIModel
+from mica.llm.model_factory import ModelFactory
 from mica.model_config import ModelConfig
 from mica.tracker_store import TrackerStore, InMemoryTrackerStore
 from mica.utils import find_config_files, save_file, replace_args_in_string, logger, short_uuid, bot_info_logger, user_info_logger
@@ -78,7 +79,9 @@ class Bot(object):
         from mica.processor import DispatcherProcessor, PriorityProcessor
         scheduler = PriorityProcessor.create()
 
-        llm_model = OpenAIModel.create(config)
+        # Create LLM model using factory - supports both OpenAI and custom providers
+        llm_config = config.get('llm', {}).get('chat') if 'llm' in config else config
+        llm_model = ModelFactory.create_llm(llm_config)
 
         # create agent objs
         create_agents = {
