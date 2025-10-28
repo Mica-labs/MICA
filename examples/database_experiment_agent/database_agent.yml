@@ -1,0 +1,21 @@
+database_llm_agent:
+  type: llm agent
+  description: I can make changes to user email in example database as the user requested
+  args:
+    - status
+    - email
+    - code
+  prompt: |
+    1. Ask the user what their email is, and store it in your argument.
+    2. Uses the "send_verification_code" function, the argument is the email provided, the rest two argument are set default, do not fill them. I should now ask the user what the verification code is.
+    3. If the code is right, proceed to next step; if the code is wrong, tell the user its wrong.
+    4. After verifying the code, call the "update_json_field" function, the first argument should be the person's email, second argument is which information (like email) to change, thrid argument is new information, the rest two argument are set default, do not fill them.
+  uses:
+    - send_verification_code
+    - update_json_field
+
+main:
+  type: flow agent
+  steps:
+    - call: database_llm_agent
+    

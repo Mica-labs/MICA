@@ -1,0 +1,26 @@
+[
+  {
+    "claim number": "440304",
+    "User ID": "114514",
+    "what caused damage": "Someone hit my car in a traffic light",
+    "date of incident": "02/03/2025",
+    "time of incident": "3pm",
+    "location of incident": "552 University Rd"
+  },
+  {
+    "claim number": "440305",
+    "User ID": "1919810",
+    "what caused damage": "Tree fell on my car during a storm",
+    "date of incident": "09/25/2025",
+    "time of incident": "10am",
+    "location of incident": "123 Main St"
+  },
+  {
+    "claim number": "123456",
+    "User ID": "651233",
+    "what caused damage": "Tree fell on my car during a storm",
+    "date of incident": "09/25/2025",
+    "time of incident": "10 am",
+    "location of incident": "isla vista"
+  }
+]
