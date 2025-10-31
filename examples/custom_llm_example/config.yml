@@ -1,0 +1,21 @@
+# Example configuration using custom LLM and embedding models
+# This example shows how to use local/open-source models
+
+unsafe_mode: true
+
+llm:
+  # Chat model configuration - using a commercial api
+  chat:
+    provider: custom
+    server: https://localhost:8000
+    api_key: <your_api_key>  # Remove this line if your server doesn't need auth
+    model: <model_name>
+  
+  # Embedding model configuration - using a commercial api
+  embedding:
+    provider: custom
+    server: https://localhost:8001
+    api_key: <your_api_key>
+    model: <model_name>
+    
+
