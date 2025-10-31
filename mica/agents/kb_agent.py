@@ -13,6 +13,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from mica.agents.agent import Agent
 from mica.event import AgentComplete
 from mica.llm.openai_model import OpenAIModel
+from mica.llm.model_factory import ModelFactory
 from mica.tracker import Tracker
 from mica.utils import logger
 
@@ -35,11 +36,24 @@ class KBAgent(Agent):
         self.similarity_threshold = similarity_threshold
         self.top_k = top_k
         self.vector_store = None
-        self.embeddings = OpenAIEmbeddings(
-            openai_api_key=config.get('api_key') or "open-api-key",
-            base_url=config.get('server') + "/v1",
-            default_headers=config.get('headers')
-        ) if (config and config.get('server')) else OpenAIEmbeddings()
+        
+        # Create embedding model using factory - supports both OpenAI and custom providers
+        # Check if config has nested 'llm' structure with 'embedding' section
+        if config and 'llm' in config and 'embedding' in config['llm']:
+            embedding_config = config['llm']['embedding']
+        elif config and config.get('server'):
+            # Backward compatibility: if server is provided directly in config
+            embedding_config = {
+                'provider': 'openai',
+                'server': config.get('server'),
+                'api_key': config.get('api_key'),
+                'headers': config.get('headers')
+            }
+        else:
+            # Default to None, will use default OpenAI embeddings
+            embedding_config = None
+        
+        self.embeddings = ModelFactory.create_embedding(embedding_config)
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
