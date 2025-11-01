@@ -11,7 +11,7 @@ from mica.agents.ensemble_agent import EnsembleAgent
 from mica.agents.flow_agent import FlowAgent
 from mica.agents.steps.call import Call
 from mica.bot import Bot
-
+from mica.llm.openai_model import NoValidRequestHeader
 import random
 import string
 
@@ -100,6 +100,8 @@ async def generate_bot(bot_name, yaml_input, code, config_input, user_id):
             solution = "Verify your YAML syntax - check indentation, colons, and quotes"
         
         raise gr.Error(f"YAML Syntax Error{line_info}\n\nProblem: {error_details}\n\nSolution: {solution}\n\nTip: Use a YAML validator to check your syntax", duration=12)
+    except NoValidRequestHeader:
+        raise gr.Error(f"Did not find the OpenAI API key. Please set the OpenAI API key in the environment variables.", duration=12)
     except Exception as e:
         error_type = type(e).__name__
         error_msg = str(e)

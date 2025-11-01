@@ -102,8 +102,11 @@ async def deploy_zip(file: UploadFile = File(...)):
             else:
                 bot_name = Path(file.filename).stem
 
-            llm_config = config.get('llm_config')
-            connector = {key: value for key, value in config.items() if key in ['facebook', 'slack']}
+            llm_config = None
+            connector = None
+            if config:
+                llm_config = config.get('llm_config') or config.get('llm')
+                connector = {key: value for key, value in config.items() if key in ['facebook', 'slack']}
 
             # Create a directory for this bot
             bot_dir = os.path.join(BOTS_DIR, bot_name)
