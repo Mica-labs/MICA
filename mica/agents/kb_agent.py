@@ -149,6 +149,50 @@ class KBAgent(Agent):
             self.vector_store = FAISS.from_documents(texts, self.embeddings)
             logger.debug(f"Indexed {len(texts)} text chunks from {len(documents)} documents")
 
+    # async def run_v2(self, tracker: Tracker, **kwargs) -> AgentResult:
+    #     """
+    #     Process a user query against the knowledge base.
+    #     Args:
+    #
+    #     Returns:
+    #         Dict containing matches and their scores if similarity threshold is met,
+    #         None otherwise
+    #     """
+    #     logger.debug(f"KB agent: [{self.name}] is running")
+    #     if not self.vector_store:
+    #         raise ValueError("Knowledge base not prepared. Call prepare() first.")
+    #
+    #     user_input = tracker.latest_message.text
+    #     # Search for similar documents
+    #     docs_and_scores = self.vector_store.similarity_search_with_score(
+    #         user_input,
+    #         k=self.top_k
+    #     )
+    #
+    #     # Filter and format results
+    #     matches = []
+    #     for doc, score in docs_and_scores:
+    #         if score >= self.similarity_threshold:
+    #             matches.append({
+    #                 "content": doc.page_content,
+    #                 "metadata": doc.metadata,
+    #                 "similarity_score": score
+    #             })
+    #     metadata = None
+    #     if matches:
+    #         metadata = {
+    #             "matches": matches,
+    #             "query": user_input,
+    #             "total_matches": len(matches)
+    #         }
+    #         answer = await self.generate(tracker, metadata, user_input)
+    #         if answer:
+    #             metadata['answer'] = answer.text
+    #             logger.info(f"[{self.name}]: bot: {answer.text}")
+    #     else:
+    #         logger.info(f"[{self.name}]: didn't find any answer")
+    #     return AgentResult.success(return_value=metadata)
+    #
     async def run(self, tracker: Tracker, **kwargs):
         """
         Process a user query against the knowledge base.
