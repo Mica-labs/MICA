@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Professor Yan",
+    "email": "xyan@cs.ucsb.edu",
+    "sex": "male"
+  },
+  {
+    "name": "Sirui",
+    "email": "sirui_zeng@ucsb.edu",
+    "sex": "female"
+  },
+  {
+    "name": "bob",
+    "email": "hanzhezhang@ucsb.edu",
+    "sex": "male"
+  }
+]
