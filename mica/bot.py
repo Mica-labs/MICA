@@ -162,15 +162,15 @@ class Bot(object):
         user_event = UserInput(text=message, metadata=channel)
         tracker.update(user_event)
         tracker.latest_message = user_event
-        user_info_logger.info("=" * (len("User:" + message)+ 5))
+        user_info_logger.info("=" * (len("User:" + message)))
         user_info_logger.info("User: %s", tracker.latest_message.text)
-        user_info_logger.info("-"  * (len("User:" + message)+ 5))
+        user_info_logger.info("-"  * (len("User:" + message)))
         
         start = time.time()
         response = await self.scheduler.predict_next_action(user_id, tracker, self)
-        bot_info_logger.info("-" * (len("Bot: " + " ".join(response)) + 5))
+        bot_info_logger.info("-" * (len("Bot: " + " ".join(response))))
         bot_info_logger.info("Bot: " + " ".join(response))
-        bot_info_logger.info("=" * (len("Bot: " + " ".join(response)) + 5))
+        bot_info_logger.info("=" * (len("Bot: " + " ".join(response))))
         end = time.time()
         print("####response time:", end-start)
         self.count += 1

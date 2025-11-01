@@ -190,6 +190,141 @@ class LLMAgent(Agent):
 
         return is_end, final_result
 
+    # async def run_v2(self, tracker: Tracker, is_tool=False, **kwargs) -> AgentResult:
+    #     logger.debug(f"LLM agent: [{self.name}] is running")
+    #     llm_result = []
+    #     # TODO: This is a temporary solution to execute the initial steps of the agent.
+    #     # initiate agent
+    #     current_evt = tracker.peek_agent()
+    #     init_idx = current_evt.metadata
+    #     if current_evt.status == "initiate" and init_idx < len(self.steps):
+    #         for i, step in enumerate(self.steps[init_idx:]):
+    #             step_flag, step_result = await step.run(tracker, **kwargs)
+    #             current_evt.metadata = init_idx + i
+    #             llm_result.extend(step_result)
+    #             if step_flag in ["Await"]:
+    #                 current_evt.metadata += 1
+    #                 is_end = False
+    #                 return AgentResult.delegate(next_agent=self.name, events=llm_result)
+    #
+    #         current_evt.status = "running"
+    #
+    #     prompt = self._generate_agent_prompt(tracker, is_tool=is_tool)
+    #     logger.debug("LLM agent prompt: \n%s", json.dumps(prompt, indent=2, ensure_ascii=False))
+    #     functions = self._generate_function_prompt(**kwargs)
+    #     logger.debug("LLM agent functions prompt: \n%s", json.dumps(functions, indent=2, ensure_ascii=False))
+    #     llm_result.extend(await self.llm_model.generate_message(prompt,
+    #                                                             functions=functions,
+    #                                                             tracker=tracker,
+    #                                                             provider=self.name))
+    #     final_result = []
+    #
+    #     for event in llm_result:
+    #         if isinstance(event, FunctionCall):
+    #             tracker.set_conv_history(self.name, event.metadata)
+    #             tools: SafePythonExecutor = kwargs.get("tools")
+    #             if tools is None:
+    #                 msg = f"Cannot find any functions."
+    #                 logger.error(msg)
+    #                 raise ValueError(msg)
+    #
+    #             tool_rst = tools.execute_function(event.function_name, **event.args)
+    #             logger.info(f"[{self.name}]: call: {event.function_name}, get result: {tool_rst}")
+    #             if tool_rst['status'] == 'error':
+    #                 return AgentResult.await_user(events=[BotUtter("function call ["+event.function_name+"] error: "+tool_rst['error'],
+    #                                          provider=self.name)])
+    #
+    #             for evt in tool_rst['result']:
+    #                 if isinstance(evt, BotUtter):
+    #                     evt.provider = self.name
+    #                     final_result.append(evt)
+    #                 elif isinstance(evt, SetSlot):
+    #                     slot_info = arg_format(evt.slot_name, self.name)
+    #                     tracker.set_arg(slot_info.get("flow_name"), slot_info.get("arg_name"), evt.value)
+    #
+    #             if tool_rst['stdout'] is not None and len(tool_rst['stdout']) > 0:
+    #                 tracker.set_conv_history(self.name, {"role": "tool",
+    #                                                      "tool_call_id": event.call_id,
+    #                                                      "name": event.function_name,
+    #                                                      "content": tool_rst['stdout']
+    #                                                      })
+    #                 sec_call_result = await self.run_v2(tracker, is_tool=True, **kwargs)
+    #                 final_result.extend(sec_call_result.events)
+    #
+    #         if isinstance(event, SetSlot):
+    #             logger.info(f"[{self.name}]: extract: {event.slot_name} = {event.value}")
+    #             tracker.set_arg(self.name, event.slot_name, event.value)
+    #         if isinstance(event, AgentFail):
+    #             logger.info(f"[{self.name}]: failed")
+    #             return AgentResult.failed(events=final_result)
+    #         if isinstance(event, BotUtter):
+    #             try:
+    #                 try:
+    #                     response = json.loads(event.text)
+    #                 except json.JSONDecodeError:
+    #                     # Only look for JSON objects starting with '{'
+    #                     json_starts = [m.start() for m in re.finditer(r'\{', event.text)]
+    #
+    #                     for start in json_starts:
+    #                         stack = []
+    #                         found_end = False
+    #
+    #                         for i, char in enumerate(event.text[start:], start):
+    #                             if char == '{':
+    #                                 stack.append(char)
+    #                             elif char == '}':
+    #                                 stack.pop()
+    #                                 if not stack:  # Found matching closing bracket
+    #                                     json_candidate = event.text[start:i+1]
+    #                                     try:
+    #                                         response = json.loads(json_candidate)
+    #                                         found_end = True
+    #                                         break
+    #                                     except json.JSONDecodeError:
+    #                                         continue  # Try next possible ending position
+    #
+    #                         if found_end:
+    #                             break
+    #                     else:  # No valid JSON found
+    #                         raise json.JSONDecodeError("No valid JSON object found", event.text, 0)
+    #
+    #             except json.JSONDecodeError as e:
+    #                 logger.debug(f"JSON extraction failed: {e}. Get response from llm: {event.text}")
+    #                 response = {
+    #                     "bot": event.text
+    #                 }
+    #             if len(llm_result) == 1:
+    #                 tracker.set_conv_history(self.name, {"role": "assistant", "content": event.text})
+    #             data = response.get("data")
+    #             bot_reply = response.get("bot")
+    #             status = response.get("status")
+    #
+    #             if data is not None:
+    #                 for name, value in data.items():
+    #                     logger.info(f"[{self.name}]: extract: {name} = {value}")
+    #                     tracker.set_arg(self.name, name, value)
+    #                     final_result.append(SetSlot(name, value, self.name))
+    #             if status is not None and status == "quit":
+    #                 logger.info(f"[{self.name}]: failed")
+    #                 if bot_reply is not None:
+    #                     logger.info(f"[{self.name}]: bot: {bot_reply}")
+    #                     final_result.append(BotUtter(bot_reply, metadata=self.name))
+    #                 return AgentResult.failed(events=final_result)
+    #             elif status == "complete":
+    #                 logger.info(f"[{self.name}]: complete")
+    #                 tracker.clear_conv_history(self.name)
+    #
+    #                 if bot_reply is not None:
+    #                     logger.info(f"[{self.name}]: bot: {bot_reply}")
+    #                     final_result.append(BotUtter(bot_reply, metadata=self.name))
+    #                 return AgentResult.success(events=final_result)
+    #             else:
+    #                 event = BotUtter(bot_reply, metadata=self.name)
+    #                 logger.info(f"[{self.name}]: bot: {bot_reply}")
+    #         final_result.append(event)
+    #     return AgentResult.await_user(events=final_result)
+
+
     def contains_args(self):
         return self.args
 
