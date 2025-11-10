@@ -14,6 +14,7 @@ from pydantic import BaseModel
 import uvicorn
 
 from mica.channel import WebSocketChannel
+from mica.llm.openai_model import NoValidRequestHeader
 from mica.manager import Manager
 from mica.utils import read_yaml_string, logger, read_yaml_file
 from mica.connector.facebook import verify_facebook_webhook, handle_facebook_webhook
@@ -136,6 +137,8 @@ async def deploy_zip(file: UploadFile = File(...)):
 
     except zipfile.BadZipFile:
         raise HTTPException(status_code=400, detail="Invalid ZIP file")
+    except NoValidRequestHeader as e:
+        return HTTPException(status_code=400, detail="Lack of valid LLM API Key.")
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
