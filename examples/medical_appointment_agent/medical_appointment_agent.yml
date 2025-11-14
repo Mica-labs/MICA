@@ -1,0 +1,125 @@
+# should contain ensemble agent, kb agent, llm agent, and flow agent
+# General Steps: 
+# 1. Flow agent: Ask what syndromes the user has. Can skip to booking. 
+# 2. LLM agent: assign a temp diagnosis to user
+# 3. kb agent: recommend a doctor based on file
+# 4. LLM agent: check if the user is registerred.
+
+procedure:
+  type: flow agent
+  description: I am an agent that helps user book medical appointment.
+  steps: 
+    - if: the user claims "prefers to describe syndromes"
+      then:
+        - call: temporary_diagnosis
+        - call: account_balance
+    - else:
+      then:
+        - call: meta
+
+temporary_diagnosis:
+  type: llm agent
+  description: I will temporarily diagnose the user and decide what kind of medical assistance the user needs.
+  prompt: |
+    1. Ask the user what syndromes they are experiencing. 
+      Briefly summarize the syndrome and fill it in "syndrome" argument. This should be done right after user described their syndrome. 
+      Fill in "recommended_med_asi" argument your recommended medical argument. This should be done right after user described their syndrome. 
+      After filling the arguments, ask the user if they would like to set up an appointment with a selected doctor (of your choice) from the list in 4.
+    2. When asking the user to describe their syndrome, make sure the information they give is sufficient for basic diagnose. If their description of
+      syndromes is less than 10 words, ask them to elaborate.
+    3. Do not say things such as "You should consult a doctor."
+    4. After the user confirms an appointment, put 50 on "appointment_fee" argument and terminates this agent and run account_balance agent.
+    5. Here is a list of doctors:
+        [
+      {
+        "name": "Dr. Emily Chen",
+        "specialty": "Family Medicine",
+        "location": "Downtown Health Center, Los Angeles, CA",
+        "availability": [
+          "Monday 9:00 AM - 12:00 PM",
+          "Wednesday 1:00 PM - 5:00 PM",
+          "Friday 10:00 AM - 2:00 PM"
+        ]
+      },
+      {
+        "name": "Dr. Raj Patel",
+        "specialty": "Cardiology",
+        "location": "Pacific Heart Institute, Santa Monica, CA",
+        "availability": [
+          "Tuesday 8:00 AM - 4:00 PM",
+          "Thursday 10:00 AM - 3:00 PM"
+        ]
+      },
+      {
+        "name": "Dr. Sarah Morales",
+        "specialty": "Pediatrics",
+        "location": "Sunrise Children’s Clinic, San Diego, CA",
+        "availability": [
+          "Monday - Friday 8:30 AM - 5:00 PM"
+        ]
+      },
+      {
+        "name": "Dr. Jason Lee",
+        "specialty": "Dermatology",
+        "location": "Westside Skin & Laser, Irvine, CA",
+        "availability": [
+          "Monday 1:00 PM - 6:00 PM",
+          "Wednesday 9:00 AM - 12:00 PM",
+          "Friday 2:00 PM - 6:00 PM"
+        ]
+      },
+      {
+        "name": "Dr. Aisha Hassan",
+        "specialty": "Obstetrics & Gynecology",
+        "location": "Women's Care Group, Pasadena, CA",
+        "availability": [
+          "Tuesday 10:00 AM - 3:00 PM",
+          "Thursday 9:00 AM - 1:00 PM"
+        ]
+      }
+    ]
+  args:
+    - syndrome
+    - recommended_med_asi
+    - appointment_time
+    - appointment_doctor
+    - appointment_fee 
+
+account_balance:
+  type: llm agent
+  description: I will help with handling the user's account balance.
+  prompt: |
+    1. Ask the user what their name is.
+    2. Call "modify_balance" function with the user's name and appointment_fee argument.
+    3. "modify_balance" will return the account balance, notify the user of their balance.
+  args:
+    - name
+    - remaining_balance
+  uses: 
+    - modify_balance
+
+# booking_agent:
+#   type: llm agent
+#   description: I will help the user confirm appointment time.
+#   prompt: |
+#     Ask the user at what time they are avaliable and fill in the "appointment_time" argument.
+#     Here is a list of doctors. 
+#   args:
+#     - appointment_time
+
+main:
+  type: flow agent
+  steps:
+    - call: meta
+
+meta: 
+  type: ensemble agent
+  description: You can select an agent to answer user's question.
+  contains:
+    - temporary_diagnosis
+    - procedure
+  steps:
+    - bot: Hello! This is XXX hospital. Would you like to describe what syndromes you are experiencing or skip directly to booking?
+    - call: procedure
+
+

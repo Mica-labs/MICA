@@ -80,7 +80,18 @@ class Bot(object):
         scheduler = PriorityProcessor.create()
 
         # Create LLM model using factory - supports both OpenAI and custom providers
-        llm_config = config.get('llm', {}).get('chat') if 'llm' in config else config
+        # Extract llm.chat if it exists, otherwise fall back to the entire config
+        if 'llm' in config and isinstance(config.get('llm'), dict):
+            llm_config = config['llm'].get('chat')
+            # If llm.chat doesn't exist, try using the entire llm dict
+            if llm_config is None:
+                llm_config = config.get('llm')
+        else:
+            # If no llm key, use the entire config
+            llm_config = config
+        
+        logger.info(f"Bot.from_json: config keys = {list(config.keys()) if config else 'None'}")
+        logger.info(f"Bot.from_json: extracted llm_config = {llm_config}")
         llm_model = ModelFactory.create_llm(llm_config)
 
         # create agent objs
@@ -98,7 +109,7 @@ class Bot(object):
             if isinstance(agent, EnsembleAgent):
                 if agent.exit_agent is not None:
                     if agent.exit_agent == "default":
-                        exit_agent = DefaultExitAgent.create(name=f"DefaultExitAgent_{agent.name}")
+                        exit_agent = DefaultExitAgent.create(llm_model=llm_model)
                         agents[exit_agent.name] = exit_agent
                     else:
                         exit_agent = agents.get(agent.exit_agent) or \
@@ -111,7 +122,7 @@ class Bot(object):
             if isinstance(agent, (FlowAgent, EnsembleAgent)):
                 if agent.fallback is not None:
                     if agent.fallback == 'default':
-                        fallback_agent = DefaultFallbackAgent.create(name=f"DefaultFallbackAgent_{agent.name}")
+                        fallback_agent = DefaultFallbackAgent.create(llm_model=llm_model)
                         agents[fallback_agent.name] = fallback_agent
                     else:
                         fallback_agent = agents.get(agent.fallback) or \

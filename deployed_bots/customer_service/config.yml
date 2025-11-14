@@ -1,0 +1,16 @@
+unsafe_mode: true
+
+llm:
+  # Chat model configuration - using a custom api
+  chat:
+    provider: custom
+    server: https://localhost:8000
+    model: <model_name>
+    # api_key: <your_api_key>  # Remove this line if your server doesn't need auth
+    
+  # Embedding model configuration - using a custom api
+  embedding:
+    provider: custom
+    server: https://localhost:8001
+    model: <model_name>
+    # api_key: <your_api_key>  # Remove this line if your server doesn't need auth
