@@ -151,7 +151,6 @@ class Bot(object):
                    tools=tools,
                    connector=connector)
 
-    # TODO: logic about the stop sign of this turn
     async def handle_message(self,
                              user_id: Text,
                              message: Any,
@@ -164,7 +163,7 @@ class Bot(object):
         tracker.latest_message = user_event
         user_info_logger.info("=" * (len("User:" + message)))
         user_info_logger.info("User: %s", tracker.latest_message.text)
-        user_info_logger.info("-"  * (len("User:" + message)))
+        user_info_logger.info("-" * (len("User:" + message)))
         
         start = time.time()
         response = await self.scheduler.predict_next_action(user_id, tracker, self)
@@ -211,7 +210,6 @@ class Bot(object):
 
         return all_args
 
-    # TODO: instead of returning the first one, find the parent.
     def _find_meta_agent(self):
         if self.agents is None:
             return None
