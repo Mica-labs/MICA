@@ -80,7 +80,14 @@ class Bot(object):
         scheduler = PriorityProcessor.create()
 
         # Create LLM model using factory - supports both OpenAI and custom providers
-        llm_config = config.get('llm', {}).get('chat') if 'llm' in config else config
+        if 'llm' in config and isinstance(config.get('llm'), dict):
+            llm_config = config['llm'].get('chat')
+            # If llm.chat doesn't exist, try using the entire llm dict
+            if llm_config is None:
+                llm_config = config.get('llm')
+        else:
+            # If no llm key, use the entire config
+            llm_config = config
         llm_model = ModelFactory.create_llm(llm_config)
 
         # create agent objs
