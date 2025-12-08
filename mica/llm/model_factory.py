@@ -54,16 +54,16 @@ class ModelFactory:
             }
         """
         if config is None:
-            logger.info("No LLM config provided, using default OpenAI model")
+            logger.debug("No LLM config provided, using default OpenAI model")
             return OpenAIModel.create(None)
         
         provider = config.get('provider', 'openai').lower()
         
         if provider == 'custom':
-            logger.info(f"Creating custom LLM model with config: {config}")
+            logger.debug(f"Creating custom LLM model with config: {config}")
             return CustomLLMModel.create(config)
         elif provider == 'openai':
-            logger.info(f"Creating OpenAI model with config")
+            logger.debug(f"Creating OpenAI model with config")
             return OpenAIModel.create(config)
         else:
             logger.warning(f"Unknown provider '{provider}', falling back to OpenAI")
@@ -105,16 +105,16 @@ class ModelFactory:
             }
         """
         if config is None:
-            logger.info("No embedding config provided, using default OpenAI embeddings")
+            logger.debug("No embedding config provided, using default OpenAI embeddings")
             return OpenAIEmbeddings()
         
         provider = config.get('provider', 'openai').lower()
         
         if provider == 'custom':
-            logger.info(f"Creating custom embedding model with config: {config}")
+            logger.debug(f"Creating custom embedding model with config: {config}")
             return CustomEmbedding.create(config)
         elif provider == 'openai':
-            logger.info(f"Creating OpenAI embedding model")
+            logger.debug(f"Creating OpenAI embedding model")
             # Extract OpenAI-specific parameters
             openai_config = {}
             if 'api_key' in config:

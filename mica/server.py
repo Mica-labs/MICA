@@ -103,10 +103,8 @@ async def deploy_zip(file: UploadFile = File(...)):
             else:
                 bot_name = Path(file.filename).stem
 
-            llm_config = None
             connector = None
             if config:
-                llm_config = config.get('llm_config') or config.get('llm')
                 connector = {key: value for key, value in config.items() if key in ['facebook', 'slack']}
 
             # Create a directory for this bot
@@ -127,9 +125,13 @@ async def deploy_zip(file: UploadFile = File(...)):
                     f.write(python_script)
             
             # Load the bot
+            # Pass the full config to manager.load, which will pass it to Bot.from_json
+            # Bot.from_json will then extract llm.chat correctly
+            # logger.info(f"deploy_zip: config = {config}")
+            # logger.info(f"deploy_zip: config keys = {list(config.keys()) if config else 'None'}")
             manager.load(bot_name=bot_name,
                          data=data,
-                         llm_config=llm_config,
+                         llm_config=config,  # Pass full config instead of just llm_config
                          python_script=python_script,
                          connector=connector)
 
@@ -138,9 +140,13 @@ async def deploy_zip(file: UploadFile = File(...)):
     except zipfile.BadZipFile:
         raise HTTPException(status_code=400, detail="Invalid ZIP file")
     except NoValidRequestHeader as e:
-        return HTTPException(status_code=400, detail="Lack of valid LLM API Key.")
+        logger.error("LLM initialization failed: no OpenAI API key and no custom LLM configuration were detected. "
+                     "Please set either the OPENAI_API_KEY environment variable "
+                     "or provide a valid custom LLM configuration.")
+        raise HTTPException(status_code=400, detail="Lack of valid LLM API Key.")
     except Exception as e:
         traceback.print_exc()
+        logger.error(f"Error deploying bot: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/v1/slack/webhook/{bot}")
@@ -238,14 +244,15 @@ async def startup_event():
             else:
                 bot_name = bot_dir_name
             
-            llm_config = config.get("llm_config", {}) if config else {}
+            # Pass full config to manager.load, which will pass it to Bot.from_json
+            # Bot.from_json will then extract llm.chat correctly
             connector = {key: value for key, value in config.items() if key in ['facebook', 'slack']}
             # Load the bot
             if data:  # Only load if we have agent definitions
                 try:
                     manager.load(bot_name=bot_name,
                                           data=data,
-                                          llm_config=llm_config,
+                                          llm_config=config,  # Pass full config instead of just llm_config
                                           python_script=python_script,
                                           connector=connector)
                     logger.info(f"Loaded bot: {bot_name} from {bot_dir}")
