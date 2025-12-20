@@ -249,11 +249,13 @@ class SafePythonExecutor:
                 total_args = len(node.args.args)
                 for i, arg in enumerate(node.args.args):
                     arg_name = arg.arg
-                    arg_type = ast.unparse(arg.annotation) if arg.annotation else "string"
+                    arg_type = ast.unparse(arg.annotation) if arg.annotation else "str"
                     if arg_type in ["int", "float"]:
                         arg_type = "number"
                     elif arg_type == "bool":
                         arg_type = "boolean"
+                    elif arg_type == "str":
+                        arg_type = "string"
 
                     # if it is not a default parameter, then it will not in the required list
                     default_index = i - (total_args - num_defaults)

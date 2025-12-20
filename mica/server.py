@@ -275,4 +275,4 @@ async def startup_event():
 
 
 if __name__ == "__main__":
-    uvicorn.run("mica.server:app", port=5001, host="0.0.0.0", log_level="info")
+    uvicorn.run("mica.server:app", port=5003, host="0.0.0.0", log_level="info")
