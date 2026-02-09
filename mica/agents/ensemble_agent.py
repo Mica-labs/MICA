@@ -128,8 +128,8 @@ class EnsembleAgent(Agent):
             if self.fallback is not None:
                 _, fallback_response = await self.fallback.run(tracker)
                 agent_result.extend(fallback_response)
+                logger.info(f"[{self.name}]: select fallback agent and get response: {fallback_response}")
             is_end = True
-            logger.info(f"[{self.name}]: select fallback agent and get response: {fallback_response}")
             return is_end, agent_result
 
         if self.exit_agent is not None and len(agent_result) == 0:
